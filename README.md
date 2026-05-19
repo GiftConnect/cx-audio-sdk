@@ -17,29 +17,19 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 ## Implementation Matrix
 | Placement | Android | iOS | React Native | Unity |
 | --- | --- | --- | --- | --- |
-| Background audio | Planned | Planned | Planned | Planned |
+| Background audio | Supported | Planned | Planned | Planned |
 | Sticky player | Supported | Planned | Planned | Planned |
 | Full screen / interstitial | Planned | Planned | Planned | Planned |
 
 The matrix is represented in code by `PlacementMatrix`, `PlacementType`, `TargetPlatform`, and `PlacementSupportStatus`.
 
-## Android Sticky Player
-The Android sticky player is the first supported placement. It:
-
-- Fetches a VAST tag URL over HTTP(S).
-- Resolves up to five VAST wrappers.
-- Parses the best image companion ad, preferring dimensions closest to 300x250.
-- Downloads the companion image.
-- Renders a clickable sticky overlay at the top or bottom of the host `Activity`.
-- Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
-
+## Android Build
 Android module: `:android`
 
 Minimum SDK: 23
 
 Runtime dependencies: none beyond the Android platform.
 
-### Build
 Prerequisites:
 
 - JDK 17 or 21 for running Gradle.
@@ -53,6 +43,64 @@ Build the Android library:
 ```
 
 If the default `java` on the machine is newer than Gradle supports, set `JAVA_HOME` to a supported JDK before running the wrapper.
+
+## Android Background Audio
+The Android background audio placement:
+
+- Fetches a VAST tag URL over HTTP(S).
+- Resolves up to five VAST wrappers.
+- Parses the best audio `MediaFile`, preferring progressive delivery and common mobile audio MIME types.
+- Streams the ad audio through Android `MediaPlayer`.
+- Defaults to low-volume playback suitable for gameplay or app usage.
+
+### Usage
+```java
+BackgroundAudioRequest request = BackgroundAudioRequest
+        .builder("https://ads.example.com/vast.xml")
+        .build();
+
+BackgroundAudioOptions options = BackgroundAudioOptions.builder()
+        .volume(0.2f)
+        .build();
+
+BackgroundAudioHandle handle = AndroidBackgroundAudio.play(
+        this,
+        request,
+        options,
+        new BackgroundAudioListener() {
+            @Override
+            public void onBackgroundAudioStarted(BackgroundAudioHandle handle) {
+                // The background audio ad is playing.
+            }
+
+            @Override
+            public void onBackgroundAudioCompleted() {
+                // The ad audio reached the end.
+            }
+
+            @Override
+            public void onBackgroundAudioStopped() {
+                // The host app stopped playback programmatically.
+            }
+
+            @Override
+            public void onBackgroundAudioFailed(Throwable error) {
+                // No audio media file was found or playback failed.
+            }
+        });
+```
+
+Call `handle.stop()` from the host app when playback should end programmatically. Call `handle.setVolume(0.0f)` through `handle.setVolume(1.0f)` to adjust playback volume after starting.
+
+## Android Sticky Player
+The Android sticky player:
+
+- Fetches a VAST tag URL over HTTP(S).
+- Resolves up to five VAST wrappers.
+- Parses the best image companion ad, preferring dimensions closest to 300x250.
+- Downloads the companion image.
+- Renders a clickable sticky overlay at the top or bottom of the host `Activity`.
+- Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
 
 ### Usage
 ```java

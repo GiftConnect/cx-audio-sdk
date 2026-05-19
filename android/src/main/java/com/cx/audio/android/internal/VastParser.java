@@ -51,6 +51,40 @@ public final class VastParser {
         return bestCompanion;
     }
 
+    public VastMediaFile parseBestAudioMediaFile(String vastXml) throws Exception {
+        Document document = parseDocument(vastXml);
+        NodeList mediaFiles = document.getElementsByTagName("MediaFile");
+
+        VastMediaFile bestMediaFile = null;
+        int bestScore = Integer.MAX_VALUE;
+        for (int i = 0; i < mediaFiles.getLength(); i++) {
+            Node node = mediaFiles.item(i);
+            if (!(node instanceof Element)) {
+                continue;
+            }
+
+            Element mediaFileElement = (Element) node;
+            String mediaFileUrl = textOf(mediaFileElement);
+            String type = normalizedAttribute(mediaFileElement, "type");
+            if (mediaFileUrl == null || !isAudioResource(type, mediaFileUrl)) {
+                continue;
+            }
+
+            String delivery = normalizedAttribute(mediaFileElement, "delivery");
+            int bitrate = parseBitrate(mediaFileElement);
+            int score = scoreAudioMediaFile(type, delivery, bitrate);
+            if (bestMediaFile == null || score < bestScore) {
+                bestScore = score;
+                bestMediaFile = new VastMediaFile(mediaFileUrl, type, delivery, bitrate);
+            }
+        }
+
+        if (bestMediaFile == null) {
+            throw new IllegalArgumentException("VAST response did not include an audio media file");
+        }
+        return bestMediaFile;
+    }
+
     public String parseWrapperUrl(String vastXml) throws Exception {
         Document document = parseDocument(vastXml);
         String wrapperUrl = textOf(firstElement(document, "VASTAdTagURI"));
@@ -137,6 +171,82 @@ public final class VastParser {
                 || url.endsWith(".png")
                 || url.endsWith(".gif")
                 || url.endsWith(".webp");
+    }
+
+    private static boolean isAudioResource(String type, String mediaFileUrl) {
+        if (type != null && type.toLowerCase().startsWith("audio/")) {
+            return true;
+        }
+
+        String url = mediaFileUrl.toLowerCase();
+        int queryStart = url.indexOf('?');
+        if (queryStart >= 0) {
+            url = url.substring(0, queryStart);
+        }
+        int fragmentStart = url.indexOf('#');
+        if (fragmentStart >= 0) {
+            url = url.substring(0, fragmentStart);
+        }
+        return url.endsWith(".mp3")
+                || url.endsWith(".m4a")
+                || url.endsWith(".aac")
+                || url.endsWith(".ogg")
+                || url.endsWith(".oga")
+                || url.endsWith(".wav");
+    }
+
+    private static int scoreAudioMediaFile(String type, String delivery, int bitrate) {
+        int score = 0;
+        if (!"progressive".equals(delivery)) {
+            score += 50;
+        }
+
+        if ("audio/mpeg".equals(type)) {
+            score += 0;
+        } else if ("audio/mp4".equals(type) || "audio/aac".equals(type)) {
+            score += 5;
+        } else if ("audio/ogg".equals(type)) {
+            score += 20;
+        } else if ("audio/wav".equals(type) || "audio/x-wav".equals(type)) {
+            score += 30;
+        } else if (type == null) {
+            score += 15;
+        } else {
+            score += 25;
+        }
+
+        if (bitrate > 0) {
+            score += Math.abs(128 - bitrate) / 8;
+        } else {
+            score += 10;
+        }
+        return score;
+    }
+
+    private static String normalizedAttribute(Element element, String name) {
+        String value = element.getAttribute(name);
+        if (value == null) {
+            return null;
+        }
+        value = value.trim();
+        return value.isEmpty() ? null : value.toLowerCase();
+    }
+
+    private static int parseBitrate(Element mediaFileElement) {
+        int bitrate = parseInt(mediaFileElement.getAttribute("bitrate"));
+        if (bitrate > 0) {
+            return bitrate;
+        }
+
+        int minBitrate = parseInt(mediaFileElement.getAttribute("minBitrate"));
+        int maxBitrate = parseInt(mediaFileElement.getAttribute("maxBitrate"));
+        if (minBitrate > 0 && maxBitrate > 0) {
+            return (minBitrate + maxBitrate) / 2;
+        }
+        if (minBitrate > 0) {
+            return minBitrate;
+        }
+        return maxBitrate;
     }
 
     private static int parseInt(String rawValue) {

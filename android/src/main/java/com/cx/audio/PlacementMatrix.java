@@ -48,6 +48,8 @@ public final class PlacementMatrix {
 
         mutableMatrix.get(PlacementType.STICKY_PLAYER)
                 .put(TargetPlatform.ANDROID, PlacementSupportStatus.SUPPORTED);
+        mutableMatrix.get(PlacementType.BACKGROUND_AUDIO)
+                .put(TargetPlatform.ANDROID, PlacementSupportStatus.SUPPORTED);
 
         Map<PlacementType, Map<TargetPlatform, PlacementSupportStatus>> matrix =
                 new EnumMap<>(PlacementType.class);

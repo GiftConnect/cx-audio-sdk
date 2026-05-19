@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 
+import com.cx.audio.android.BackgroundAudioRequest;
 import com.cx.audio.android.StickyPlayerRequest;
 
 import java.io.ByteArrayOutputStream;
@@ -25,24 +26,15 @@ public final class VastAdLoader {
     }
 
     public static VastCompanion loadCompanion(StickyPlayerRequest request) throws Exception {
-        URL currentUrl = request.getVastTagUrl();
-        for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
-            String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
-            try {
-                return VAST_PARSER.parseBestCompanion(vastXml);
-            } catch (IllegalArgumentException noCompanion) {
-                String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
-                if (wrapperUrl == null) {
-                    throw noCompanion;
-                }
-                currentUrl = new URL(currentUrl, wrapperUrl);
-            }
-        }
-        throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+        return loadCompanion(RequestConfig.from(request));
+    }
+
+    public static VastMediaFile loadAudioMediaFile(BackgroundAudioRequest request) throws Exception {
+        return loadAudioMediaFile(RequestConfig.from(request));
     }
 
     public static Bitmap loadBitmap(String imageUrl, StickyPlayerRequest request) throws IOException {
-        HttpURLConnection connection = openConnection(new URL(imageUrl), request);
+        HttpURLConnection connection = openConnection(new URL(imageUrl), RequestConfig.from(request));
         requireSuccessfulResponse(connection);
         try (InputStream inputStream = connection.getInputStream()) {
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
@@ -64,7 +56,42 @@ public final class VastAdLoader {
         context.startActivity(intent);
     }
 
-    private static String readUrl(URL url, StickyPlayerRequest request, int maxBytes) throws IOException {
+    private static VastCompanion loadCompanion(RequestConfig request) throws Exception {
+        URL currentUrl = request.vastTagUrl;
+        for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
+            String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            try {
+                return VAST_PARSER.parseBestCompanion(vastXml);
+            } catch (IllegalArgumentException noCompanion) {
+                String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
+                if (wrapperUrl == null) {
+                    throw noCompanion;
+                }
+                currentUrl = new URL(currentUrl, wrapperUrl);
+            }
+        }
+        throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
+    private static VastMediaFile loadAudioMediaFile(RequestConfig request) throws Exception {
+        URL currentUrl = request.vastTagUrl;
+        for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
+            String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            try {
+                VastMediaFile mediaFile = VAST_PARSER.parseBestAudioMediaFile(vastXml);
+                return mediaFile.withUrl(new URL(currentUrl, mediaFile.getUrl()).toString());
+            } catch (IllegalArgumentException noMediaFile) {
+                String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
+                if (wrapperUrl == null) {
+                    throw noMediaFile;
+                }
+                currentUrl = new URL(currentUrl, wrapperUrl);
+            }
+        }
+        throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
+    private static String readUrl(URL url, RequestConfig request, int maxBytes) throws IOException {
         HttpURLConnection connection = openConnection(url, request);
         requireSuccessfulResponse(connection);
         try (InputStream inputStream = connection.getInputStream()) {
@@ -85,15 +112,15 @@ public final class VastAdLoader {
         }
     }
 
-    private static HttpURLConnection openConnection(URL url, StickyPlayerRequest request) throws IOException {
+    private static HttpURLConnection openConnection(URL url, RequestConfig request) throws IOException {
         URLConnection rawConnection = url.openConnection();
         if (!(rawConnection instanceof HttpURLConnection)) {
             throw new IOException("Unsupported URL protocol: " + url.getProtocol());
         }
         HttpURLConnection connection = (HttpURLConnection) rawConnection;
-        connection.setConnectTimeout(request.getConnectTimeoutMs());
-        connection.setReadTimeout(request.getReadTimeoutMs());
-        connection.setRequestProperty("User-Agent", request.getUserAgent());
+        connection.setConnectTimeout(request.connectTimeoutMs);
+        connection.setReadTimeout(request.readTimeoutMs);
+        connection.setRequestProperty("User-Agent", request.userAgent);
         connection.setInstanceFollowRedirects(true);
         return connection;
     }
@@ -102,6 +129,40 @@ public final class VastAdLoader {
         int statusCode = connection.getResponseCode();
         if (statusCode < 200 || statusCode >= 300) {
             throw new IOException("HTTP " + statusCode + " loading " + connection.getURL());
+        }
+    }
+
+    private static final class RequestConfig {
+        private final URL vastTagUrl;
+        private final int connectTimeoutMs;
+        private final int readTimeoutMs;
+        private final String userAgent;
+
+        private RequestConfig(
+                URL vastTagUrl,
+                int connectTimeoutMs,
+                int readTimeoutMs,
+                String userAgent) {
+            this.vastTagUrl = vastTagUrl;
+            this.connectTimeoutMs = connectTimeoutMs;
+            this.readTimeoutMs = readTimeoutMs;
+            this.userAgent = userAgent;
+        }
+
+        private static RequestConfig from(StickyPlayerRequest request) {
+            return new RequestConfig(
+                    request.getVastTagUrl(),
+                    request.getConnectTimeoutMs(),
+                    request.getReadTimeoutMs(),
+                    request.getUserAgent());
+        }
+
+        private static RequestConfig from(BackgroundAudioRequest request) {
+            return new RequestConfig(
+                    request.getVastTagUrl(),
+                    request.getConnectTimeoutMs(),
+                    request.getReadTimeoutMs(),
+                    request.getUserAgent());
         }
     }
 }
