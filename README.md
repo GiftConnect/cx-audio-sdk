@@ -21,8 +21,6 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 | Sticky player | Supported | Planned | Planned | Planned |
 | Full screen / interstitial | Supported | Planned | Planned | Planned |
 
-The matrix is represented in code by `PlacementMatrix`, `PlacementType`, `TargetPlatform`, and `PlacementSupportStatus`.
-
 ## Android Build
 Android module: `:android`
 
