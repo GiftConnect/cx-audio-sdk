@@ -15,3 +15,6 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 - Full screen / interstitial
   - Static slate image or video on the top.
   - Clickable 300x250 companion banner ad on the bottom (if present).
+
+## TODO
+- Investigate implementing this as a mediation layer in AdMob SDK.
