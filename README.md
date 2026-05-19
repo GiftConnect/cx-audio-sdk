@@ -17,9 +17,9 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 ## Implementation Matrix
 | Placement | Android | iOS | React Native | Unity |
 | --- | --- | --- | --- | --- |
-| Background audio | Supported | Planned | Planned | Planned |
-| Sticky player | Supported | Planned | Planned | Planned |
-| Full screen / interstitial | Supported | Planned | Planned | Planned |
+| Background audio | Supported | Planned | Supported on Android hosts | Planned |
+| Sticky player | Supported | Planned | Supported on Android hosts | Planned |
+| Full screen / interstitial | Supported | Planned | Supported on Android hosts | Planned |
 
 ## Android Build
 Android module: `:android`
@@ -192,6 +192,75 @@ StickyPlayerHandle handle = AndroidStickyPlayer.show(
 ```
 
 Call `handle.dismiss()` from the host app when the placement should be removed programmatically.
+
+## React Native
+The React Native package exposes all three placement types and delegates to the Android native implementation. iOS hosts are not implemented yet.
+
+Package entry point: `cx-audio-sdk`
+
+Android native module: `react-native/android`
+
+Runtime peer dependencies: `react` and `react-native`
+
+The React Native Android bridge compiles against the React Native Android SDK artifact `com.facebook.react:react-android`, which is normally supplied by a React Native app build.
+
+### Events
+```js
+import { addCxAudioListener } from 'cx-audio-sdk';
+
+const subscription = addCxAudioListener((event) => {
+  // event.type: started, loaded, clicked, completed, stopped, dismissed, or failed
+  // event.placement: backgroundAudio, stickyPlayer, or fullscreenInterstitial
+});
+
+subscription.remove();
+```
+
+### Background Audio
+```js
+import { BackgroundAudio } from 'cx-audio-sdk';
+
+const handleId = await BackgroundAudio.play(
+  { vastTagUrl: 'https://ads.example.com/vast.xml' },
+  { volume: 0.2 }
+);
+
+await BackgroundAudio.setVolume(handleId, 0.1);
+await BackgroundAudio.stop(handleId);
+```
+
+### Sticky Player
+```js
+import { StickyPlayer, StickyPlayerPosition } from 'cx-audio-sdk';
+
+const handleId = await StickyPlayer.show(
+  { vastTagUrl: 'https://ads.example.com/vast.xml' },
+  {
+    position: StickyPlayerPosition.BOTTOM,
+    heightDp: 72,
+    showCloseButton: true,
+  }
+);
+
+await StickyPlayer.dismiss(handleId);
+```
+
+### Full Screen Interstitial
+```js
+import { FullscreenInterstitial } from 'cx-audio-sdk';
+
+const handleId = await FullscreenInterstitial.show(
+  { vastTagUrl: 'https://ads.example.com/vast.xml' },
+  {
+    showCloseButton: true,
+    companionHeightDp: 250,
+    companionMaxWidthDp: 300,
+    autoPlayVideo: true,
+  }
+);
+
+await FullscreenInterstitial.dismiss(handleId);
+```
 
 ## TODO
 - Investigate implementing this as a mediation layer in AdMob SDK.

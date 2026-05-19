@@ -1,0 +1,31 @@
+{
+  "name": "cx-audio-sdk",
+  "version": "0.1.0",
+  "description": "React Native bindings for the CX audio ad SDK.",
+  "main": "react-native/src/index.js",
+  "react-native": "react-native/src/index.js",
+  "types": "react-native/src/index.d.ts",
+  "files": [
+    "README.md",
+    "android/src/main/java",
+    "react-native.config.js",
+    "react-native/src",
+    "react-native/android/build.gradle",
+    "react-native/android/consumer-rules.pro",
+    "react-native/android/src/main"
+  ],
+  "scripts": {
+    "check:react-native": "node --check react-native/src/index.js"
+  },
+  "peerDependencies": {
+    "react": ">=18.2.0",
+    "react-native": ">=0.71.0"
+  },
+  "keywords": [
+    "audio",
+    "ads",
+    "vast",
+    "react-native"
+  ],
+  "license": "UNLICENSED"
+}
