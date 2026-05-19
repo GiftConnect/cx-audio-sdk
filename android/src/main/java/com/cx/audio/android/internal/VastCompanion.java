@@ -28,4 +28,8 @@ public final class VastCompanion {
     public int getHeight() {
         return height;
     }
+
+    VastCompanion withStaticResourceUrl(String staticResourceUrl) {
+        return new VastCompanion(staticResourceUrl, clickThroughUrl, width, height);
+    }
 }

@@ -13,6 +13,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 public final class VastParser {
     private static final int TARGET_COMPANION_WIDTH = 300;
     private static final int TARGET_COMPANION_HEIGHT = 250;
+    private static final int TARGET_INTERSTITIAL_WIDTH = 1280;
+    private static final int TARGET_INTERSTITIAL_HEIGHT = 720;
 
     public VastCompanion parseBestCompanion(String vastXml) throws Exception {
         Document document = parseDocument(vastXml);
@@ -81,6 +83,42 @@ public final class VastParser {
 
         if (bestMediaFile == null) {
             throw new IllegalArgumentException("VAST response did not include an audio media file");
+        }
+        return bestMediaFile;
+    }
+
+    public VastMediaFile parseBestInterstitialMediaFile(String vastXml) throws Exception {
+        Document document = parseDocument(vastXml);
+        NodeList mediaFiles = document.getElementsByTagName("MediaFile");
+
+        VastMediaFile bestMediaFile = null;
+        int bestScore = Integer.MAX_VALUE;
+        for (int i = 0; i < mediaFiles.getLength(); i++) {
+            Node node = mediaFiles.item(i);
+            if (!(node instanceof Element)) {
+                continue;
+            }
+
+            Element mediaFileElement = (Element) node;
+            String mediaFileUrl = textOf(mediaFileElement);
+            String type = normalizedAttribute(mediaFileElement, "type");
+            if (mediaFileUrl == null || !isVisualResource(type, mediaFileUrl)) {
+                continue;
+            }
+
+            String delivery = normalizedAttribute(mediaFileElement, "delivery");
+            int bitrate = parseBitrate(mediaFileElement);
+            int width = parseInt(mediaFileElement.getAttribute("width"));
+            int height = parseInt(mediaFileElement.getAttribute("height"));
+            int score = scoreInterstitialMediaFile(type, delivery, width, height);
+            if (bestMediaFile == null || score < bestScore) {
+                bestScore = score;
+                bestMediaFile = new VastMediaFile(mediaFileUrl, type, delivery, bitrate, width, height);
+            }
+        }
+
+        if (bestMediaFile == null) {
+            throw new IllegalArgumentException("VAST response did not include an interstitial media file");
         }
         return bestMediaFile;
     }
@@ -195,6 +233,34 @@ public final class VastParser {
                 || url.endsWith(".wav");
     }
 
+    private static boolean isVisualResource(String type, String mediaFileUrl) {
+        if (type != null) {
+            String normalizedType = type.toLowerCase();
+            if (normalizedType.startsWith("video/") || normalizedType.startsWith("image/")) {
+                return true;
+            }
+        }
+
+        String url = mediaFileUrl.toLowerCase();
+        int queryStart = url.indexOf('?');
+        if (queryStart >= 0) {
+            url = url.substring(0, queryStart);
+        }
+        int fragmentStart = url.indexOf('#');
+        if (fragmentStart >= 0) {
+            url = url.substring(0, fragmentStart);
+        }
+        return url.endsWith(".mp4")
+                || url.endsWith(".m4v")
+                || url.endsWith(".webm")
+                || url.endsWith(".3gp")
+                || url.endsWith(".jpg")
+                || url.endsWith(".jpeg")
+                || url.endsWith(".png")
+                || url.endsWith(".gif")
+                || url.endsWith(".webp");
+    }
+
     private static int scoreAudioMediaFile(String type, String delivery, int bitrate) {
         int score = 0;
         if (!"progressive".equals(delivery)) {
@@ -219,6 +285,35 @@ public final class VastParser {
             score += Math.abs(128 - bitrate) / 8;
         } else {
             score += 10;
+        }
+        return score;
+    }
+
+    private static int scoreInterstitialMediaFile(String type, String delivery, int width, int height) {
+        int score = 0;
+        if (!"progressive".equals(delivery)) {
+            score += 50;
+        }
+
+        if ("video/mp4".equals(type)) {
+            score += 0;
+        } else if ("image/jpeg".equals(type) || "image/png".equals(type)) {
+            score += 10;
+        } else if (type != null && type.startsWith("video/")) {
+            score += 15;
+        } else if (type != null && type.startsWith("image/")) {
+            score += 20;
+        } else if (type == null) {
+            score += 25;
+        } else {
+            score += 30;
+        }
+
+        if (width > 0 && height > 0) {
+            score += Math.abs(TARGET_INTERSTITIAL_WIDTH - width) / 80;
+            score += Math.abs(TARGET_INTERSTITIAL_HEIGHT - height) / 45;
+        } else {
+            score += 20;
         }
         return score;
     }

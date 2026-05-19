@@ -19,7 +19,7 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 | --- | --- | --- | --- | --- |
 | Background audio | Supported | Planned | Planned | Planned |
 | Sticky player | Supported | Planned | Planned | Planned |
-| Full screen / interstitial | Planned | Planned | Planned | Planned |
+| Full screen / interstitial | Supported | Planned | Planned | Planned |
 
 The matrix is represented in code by `PlacementMatrix`, `PlacementType`, `TargetPlatform`, and `PlacementSupportStatus`.
 
@@ -91,6 +91,58 @@ BackgroundAudioHandle handle = AndroidBackgroundAudio.play(
 ```
 
 Call `handle.stop()` from the host app when playback should end programmatically. Call `handle.setVolume(0.0f)` through `handle.setVolume(1.0f)` to adjust playback volume after starting.
+
+## Android Full Screen Interstitial
+The Android full screen interstitial placement:
+
+- Fetches a VAST tag URL over HTTP(S).
+- Resolves up to five VAST wrappers.
+- Parses a visual `MediaFile` for the main full-screen area.
+- Parses an optional 300x250 companion image for the lower call-to-action area.
+- Supports image or video media in the main full-screen area.
+- Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
+
+### Usage
+```java
+FullscreenInterstitialRequest request = FullscreenInterstitialRequest
+        .builder("https://ads.example.com/vast.xml")
+        .build();
+
+FullscreenInterstitialOptions options = FullscreenInterstitialOptions.builder()
+        .showCloseButton(true)
+        .companionHeightDp(250)
+        .companionMaxWidthDp(300)
+        .autoPlayVideo(true)
+        .build();
+
+FullscreenInterstitialHandle handle = AndroidFullscreenInterstitial.show(
+        this,
+        request,
+        options,
+        new FullscreenInterstitialListener() {
+            @Override
+            public void onFullscreenInterstitialLoaded(FullscreenInterstitialHandle handle) {
+                // The interstitial is visible.
+            }
+
+            @Override
+            public void onFullscreenInterstitialClicked(String clickThroughUrl) {
+                // Track click analytics here.
+            }
+
+            @Override
+            public void onFullscreenInterstitialDismissed() {
+                // The user or host app dismissed the placement.
+            }
+
+            @Override
+            public void onFullscreenInterstitialFailed(Throwable error) {
+                // No usable media was found or rendering failed.
+            }
+        });
+```
+
+Call `handle.dismiss()` from the host app when the interstitial should be removed programmatically.
 
 ## Android Sticky Player
 The Android sticky player:

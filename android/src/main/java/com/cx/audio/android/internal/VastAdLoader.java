@@ -7,6 +7,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 
 import com.cx.audio.android.BackgroundAudioRequest;
+import com.cx.audio.android.FullscreenInterstitialRequest;
 import com.cx.audio.android.StickyPlayerRequest;
 
 import java.io.ByteArrayOutputStream;
@@ -33,6 +34,10 @@ public final class VastAdLoader {
         return loadAudioMediaFile(RequestConfig.from(request));
     }
 
+    public static VastInterstitialAd loadInterstitial(FullscreenInterstitialRequest request) throws Exception {
+        return loadInterstitial(RequestConfig.from(request));
+    }
+
     public static Bitmap loadBitmap(String imageUrl, StickyPlayerRequest request) throws IOException {
         HttpURLConnection connection = openConnection(new URL(imageUrl), RequestConfig.from(request));
         requireSuccessfulResponse(connection);
@@ -40,6 +45,21 @@ public final class VastAdLoader {
             Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
             if (bitmap == null) {
                 throw new IOException("Companion image could not be decoded");
+            }
+            return bitmap;
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    public static Bitmap loadBitmap(String imageUrl, FullscreenInterstitialRequest request)
+            throws IOException {
+        HttpURLConnection connection = openConnection(new URL(imageUrl), RequestConfig.from(request));
+        requireSuccessfulResponse(connection);
+        try (InputStream inputStream = connection.getInputStream()) {
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            if (bitmap == null) {
+                throw new IOException("Image media could not be decoded");
             }
             return bitmap;
         } finally {
@@ -89,6 +109,47 @@ public final class VastAdLoader {
             }
         }
         throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
+    private static VastInterstitialAd loadInterstitial(RequestConfig request) throws Exception {
+        URL currentUrl = request.vastTagUrl;
+        for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
+            String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            VastMediaFile mediaFile = parseOptionalInterstitialMediaFile(vastXml, currentUrl);
+            VastCompanion companion = parseOptionalCompanion(vastXml, currentUrl);
+            if (mediaFile != null || companion != null) {
+                return new VastInterstitialAd(mediaFile, companion);
+            }
+
+            String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
+            if (wrapperUrl == null) {
+                throw new IllegalArgumentException(
+                        "VAST response did not include interstitial media or companion");
+            }
+            currentUrl = new URL(currentUrl, wrapperUrl);
+        }
+        throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
+    private static VastMediaFile parseOptionalInterstitialMediaFile(String vastXml, URL baseUrl)
+            throws Exception {
+        try {
+            VastMediaFile mediaFile = VAST_PARSER.parseBestInterstitialMediaFile(vastXml);
+            return mediaFile.withUrl(new URL(baseUrl, mediaFile.getUrl()).toString());
+        } catch (IllegalArgumentException noMediaFile) {
+            return null;
+        }
+    }
+
+    private static VastCompanion parseOptionalCompanion(String vastXml, URL baseUrl)
+            throws Exception {
+        try {
+            VastCompanion companion = VAST_PARSER.parseBestCompanion(vastXml);
+            return companion.withStaticResourceUrl(
+                    new URL(baseUrl, companion.getStaticResourceUrl()).toString());
+        } catch (IllegalArgumentException noCompanion) {
+            return null;
+        }
     }
 
     private static String readUrl(URL url, RequestConfig request, int maxBytes) throws IOException {
@@ -158,6 +219,14 @@ public final class VastAdLoader {
         }
 
         private static RequestConfig from(BackgroundAudioRequest request) {
+            return new RequestConfig(
+                    request.getVastTagUrl(),
+                    request.getConnectTimeoutMs(),
+                    request.getReadTimeoutMs(),
+                    request.getUserAgent());
+        }
+
+        private static RequestConfig from(FullscreenInterstitialRequest request) {
             return new RequestConfig(
                     request.getVastTagUrl(),
                     request.getConnectTimeoutMs(),
