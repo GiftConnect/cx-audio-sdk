@@ -17,9 +17,9 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 ## Implementation Matrix
 | Placement | Android | iOS | React Native | Unity |
 | --- | --- | --- | --- | --- |
-| Background audio | Supported | Planned | Supported on Android hosts | Planned |
-| Sticky player | Supported | Planned | Supported on Android hosts | Planned |
-| Full screen / interstitial | Supported | Planned | Supported on Android hosts | Planned |
+| Background audio | Supported | Scaffolded | Supported on Android hosts | Planned |
+| Sticky player | Supported | Scaffolded | Supported on Android hosts | Planned |
+| Full screen / interstitial | Supported | Scaffolded | Supported on Android hosts | Planned |
 
 ## Android Build
 Android module: `:android`
@@ -193,8 +193,70 @@ StickyPlayerHandle handle = AndroidStickyPlayer.show(
 
 Call `handle.dismiss()` from the host app when the placement should be removed programmatically.
 
+## iOS Scaffold
+The iOS target is scaffolded as a Swift Package in `Package.swift`, with source under `ios/Sources/CxAudioSDK`.
+
+Minimum iOS: 13
+
+Runtime dependencies: none beyond Apple platform frameworks.
+
+Frameworks used: `Foundation`, `UIKit`, and `AVFoundation`.
+
+The iOS scaffold cannot be compiled in this Linux environment because the Swift toolchain and Apple SDK frameworks are not installed. Validate it on macOS with Xcode before treating it as production-ready.
+
+### Background Audio
+```swift
+let request = try VastRequest(vastTagURLString: "https://ads.example.com/vast.xml")
+
+let handle = CxBackgroundAudio.play(
+    request: request,
+    options: BackgroundAudioOptions(volume: 0.2),
+    listener: listener
+)
+
+handle.setVolume(0.1)
+handle.stop()
+```
+
+### Sticky Player
+```swift
+let request = try VastRequest(vastTagURLString: "https://ads.example.com/vast.xml")
+
+let handle = CxStickyPlayer.show(
+    in: viewController,
+    request: request,
+    options: StickyPlayerOptions(
+        position: .bottom,
+        height: 72,
+        showCloseButton: true
+    ),
+    listener: listener
+)
+
+handle.dismiss()
+```
+
+### Full Screen Interstitial
+```swift
+let request = try VastRequest(vastTagURLString: "https://ads.example.com/vast.xml")
+
+let handle = CxFullscreenInterstitial.show(
+    from: viewController,
+    request: request,
+    options: FullscreenInterstitialOptions(
+        showCloseButton: true,
+        companionHeight: 250,
+        companionMaxWidth: 300,
+        autoPlayVideo: true
+    ),
+    listener: listener
+)
+
+handle.dismiss()
+```
+
 ## React Native
-The React Native package exposes all three placement types and delegates to the Android native implementation. iOS hosts are not implemented yet.
+The React Native package exposes all three placement types and delegates to the Android native implementation. The standalone iOS SDK scaffold exists, but the React Native iOS bridge is not implemented yet.
 
 Package entry point: `cx-audio-sdk`
 
@@ -261,6 +323,37 @@ const handleId = await FullscreenInterstitial.show(
 
 await FullscreenInterstitial.dismiss(handleId);
 ```
+
+## Verification
+Run the Linux-verifiable checks from the repository root:
+
+```sh
+npm run check:react-native
+npm --cache /tmp/cx-audio-sdk-npm-cache pack --dry-run
+./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint
+```
+
+These commands verify JavaScript syntax, npm package contents, Android SDK unit tests/build/lint, and React Native Android bridge build/lint.
+
+### iOS Validation
+The iOS scaffold cannot be validated on Linux because it depends on Apple platform frameworks. To validate it, use a macOS machine with:
+
+- Xcode 15 or newer.
+- Swift 5.9 or newer through Xcode.
+- An installed iOS SDK and iOS Simulator runtime.
+- A simulator or device for playback and overlay smoke testing.
+
+Suggested macOS checks from the repository root:
+
+```sh
+xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' build
+```
+
+Then integrate `Package.swift` into a small iOS host app and smoke-test all three placements with known-good VAST tags:
+
+- Background audio starts, stops, completes, and applies volume changes.
+- Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.
+- Full screen interstitial renders image or video media, shows the companion area when present, dismisses, and opens companion click-through URLs.
 
 ## TODO
 - Investigate implementing this as a mediation layer in AdMob SDK.
