@@ -1,0 +1,16 @@
+{
+  "name": "com.cx.audio-sdk",
+  "version": "0.1.0",
+  "displayName": "CX Audio SDK",
+  "description": "Unity Android bindings for the CX audio ad SDK.",
+  "unity": "2021.3",
+  "keywords": [
+    "audio",
+    "ads",
+    "vast",
+    "android"
+  ],
+  "author": {
+    "name": "CX"
+  }
+}

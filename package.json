@@ -11,6 +11,9 @@
     "android/src/main/java",
     "ios/README.md",
     "ios/Sources",
+    "unity/README.md",
+    "unity/package.json",
+    "unity/Runtime",
     "react-native.config.js",
     "react-native/src",
     "react-native/android/build.gradle",
@@ -28,7 +31,8 @@
     "audio",
     "ads",
     "vast",
-    "react-native"
+    "react-native",
+    "unity"
   ],
   "license": "UNLICENSED"
 }

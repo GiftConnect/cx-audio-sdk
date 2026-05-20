@@ -17,9 +17,9 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 ## Implementation Matrix
 | Placement | Android | iOS | React Native | Unity |
 | --- | --- | --- | --- | --- |
-| Background audio | Supported | Scaffolded | Supported on Android hosts | Planned |
-| Sticky player | Supported | Scaffolded | Supported on Android hosts | Planned |
-| Full screen / interstitial | Supported | Scaffolded | Supported on Android hosts | Planned |
+| Background audio | Supported | Scaffolded | Supported on Android hosts | Supported on Android hosts |
+| Sticky player | Supported | Scaffolded | Supported on Android hosts | Supported on Android hosts |
+| Full screen / interstitial | Supported | Scaffolded | Supported on Android hosts | Supported on Android hosts |
 
 ## Android Build
 Android module: `:android`
@@ -324,16 +324,88 @@ const handleId = await FullscreenInterstitial.show(
 await FullscreenInterstitial.dismiss(handleId);
 ```
 
+## Unity
+The Unity package exposes all three placement types and delegates to the Android native implementation. Unity iOS bindings are not implemented yet.
+
+Package source: `unity/`
+
+Runtime namespace: `Cx.Audio.Unity`
+
+Supported host: Android player builds
+
+The Unity package uses Unity's Android JNI bridge, so Android builds must include the Android SDK AAR. Build it from this repository:
+
+```sh
+./gradlew :android:assembleRelease
+```
+
+Then add `android/build/outputs/aar/android-release.aar` to the Unity project as an Android plugin, for example under `Assets/Plugins/Android/`.
+
+### Background Audio
+```csharp
+using Cx.Audio.Unity;
+
+BackgroundAudioHandle handle = BackgroundAudio.Play(
+    new VastRequest("https://ads.example.com/vast.xml"),
+    new BackgroundAudioOptions
+    {
+        Volume = 0.2f
+    },
+    listener);
+
+handle.SetVolume(0.1f);
+handle.Stop();
+handle.Dispose();
+```
+
+### Sticky Player
+```csharp
+using Cx.Audio.Unity;
+
+StickyPlayerHandle handle = StickyPlayer.Show(
+    new VastRequest("https://ads.example.com/vast.xml"),
+    new StickyPlayerOptions
+    {
+        Position = StickyPlayerPosition.Bottom,
+        HeightDp = 72,
+        ShowCloseButton = true
+    },
+    listener);
+
+handle.Dismiss();
+handle.Dispose();
+```
+
+### Full Screen Interstitial
+```csharp
+using Cx.Audio.Unity;
+
+FullscreenInterstitialHandle handle = FullscreenInterstitial.Show(
+    new VastRequest("https://ads.example.com/vast.xml"),
+    new FullscreenInterstitialOptions
+    {
+        ShowCloseButton = true,
+        CompanionHeightDp = 250,
+        CompanionMaxWidthDp = 300,
+        AutoPlayVideo = true
+    },
+    listener);
+
+handle.Dismiss();
+handle.Dispose();
+```
+
 ## Verification
 Run the Linux-verifiable checks from the repository root:
 
 ```sh
 npm run check:react-native
+node -e "JSON.parse(require('fs').readFileSync('unity/package.json', 'utf8'))"
 npm --cache /tmp/cx-audio-sdk-npm-cache pack --dry-run
 ./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint
 ```
 
-These commands verify JavaScript syntax, npm package contents, Android SDK unit tests/build/lint, and React Native Android bridge build/lint.
+These commands verify JavaScript syntax, Unity package metadata, npm package contents, Android SDK unit tests/build/lint, and React Native Android bridge build/lint. The Unity C# package must also be compiled in Unity because this Linux environment does not include the Unity Editor or UnityEngine assemblies.
 
 ### iOS Validation
 The iOS scaffold cannot be validated on Linux because it depends on Apple platform frameworks. To validate it, use a macOS machine with:

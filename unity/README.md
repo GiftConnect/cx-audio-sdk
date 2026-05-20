@@ -1,0 +1,150 @@
+# CX Audio SDK for Unity
+
+Unity package source for the CX audio ad SDK.
+
+The Unity bindings expose the same three placement types as Android:
+
+- Background audio
+- Sticky player
+- Fullscreen interstitial
+
+This package currently supports Android player builds. It delegates to the native Android SDK through Unity's Android JNI bridge, so the Android AAR must be included in the Unity project for Android builds.
+
+## Installation
+
+Add this package with Unity Package Manager from the repository's `unity` folder.
+
+Build the Android SDK AAR from the repository root:
+
+```sh
+./gradlew :android:assembleRelease
+```
+
+Then include `android/build/outputs/aar/android-release.aar` as an Android plugin in the Unity project, for example under `Assets/Plugins/Android/`.
+
+## Background Audio
+
+```csharp
+using Cx.Audio.Unity;
+using UnityEngine;
+
+public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
+{
+    private BackgroundAudioHandle backgroundAudio;
+
+    public void PlayBackgroundAudio()
+    {
+        backgroundAudio = BackgroundAudio.Play(
+            new VastRequest("https://ads.example.com/vast.xml"),
+            new BackgroundAudioOptions
+            {
+                Volume = 0.2f
+            },
+            this);
+    }
+
+    public void StopBackgroundAudio()
+    {
+        if (backgroundAudio != null)
+        {
+            backgroundAudio.Stop();
+            backgroundAudio.Dispose();
+            backgroundAudio = null;
+        }
+    }
+
+    public void OnBackgroundAudioStarted(BackgroundAudioHandle handle) {}
+    public void OnBackgroundAudioCompleted() {}
+    public void OnBackgroundAudioStopped() {}
+    public void OnBackgroundAudioFailed(CxAudioError error) {}
+}
+```
+
+## Sticky Player
+
+```csharp
+using Cx.Audio.Unity;
+using UnityEngine;
+
+public sealed class StickyAd : MonoBehaviour, IStickyPlayerListener
+{
+    private StickyPlayerHandle stickyPlayer;
+
+    public void ShowStickyPlayer()
+    {
+        stickyPlayer = StickyPlayer.Show(
+            new VastRequest("https://ads.example.com/vast.xml"),
+            new StickyPlayerOptions
+            {
+                Position = StickyPlayerPosition.Bottom,
+                HeightDp = 72,
+                ShowCloseButton = true
+            },
+            this);
+    }
+
+    public void DismissStickyPlayer()
+    {
+        if (stickyPlayer != null)
+        {
+            stickyPlayer.Dismiss();
+            stickyPlayer.Dispose();
+            stickyPlayer = null;
+        }
+    }
+
+    public void OnStickyPlayerLoaded(StickyPlayerHandle handle) {}
+    public void OnStickyPlayerClicked(string clickThroughUrl) {}
+    public void OnStickyPlayerDismissed() {}
+    public void OnStickyPlayerFailed(CxAudioError error) {}
+}
+```
+
+## Fullscreen Interstitial
+
+```csharp
+using Cx.Audio.Unity;
+using UnityEngine;
+
+public sealed class InterstitialAd : MonoBehaviour, IFullscreenInterstitialListener
+{
+    private FullscreenInterstitialHandle interstitial;
+
+    public void ShowInterstitial()
+    {
+        interstitial = FullscreenInterstitial.Show(
+            new VastRequest("https://ads.example.com/vast.xml"),
+            new FullscreenInterstitialOptions
+            {
+                ShowCloseButton = true,
+                CompanionHeightDp = 250,
+                CompanionMaxWidthDp = 300,
+                AutoPlayVideo = true
+            },
+            this);
+    }
+
+    public void DismissInterstitial()
+    {
+        if (interstitial != null)
+        {
+            interstitial.Dismiss();
+            interstitial.Dispose();
+            interstitial = null;
+        }
+    }
+
+    public void OnFullscreenInterstitialLoaded(FullscreenInterstitialHandle handle) {}
+    public void OnFullscreenInterstitialClicked(string clickThroughUrl) {}
+    public void OnFullscreenInterstitialDismissed() {}
+    public void OnFullscreenInterstitialFailed(CxAudioError error) {}
+}
+```
+
+## Validation
+
+Validate the package in a Unity project with Android Build Support installed. Build an Android player and smoke-test with known-good VAST tags:
+
+- Background audio starts, stops, completes, and applies volume changes.
+- Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.
+- Fullscreen interstitial renders image or video media, shows the companion area when present, dismisses, and opens companion click-through URLs.
