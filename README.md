@@ -14,7 +14,7 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 | Sticky player | Clickable small horizontal banner at the top or bottom of the screen showing a scaled-down version of the 300x250 companion banner ad, if present. |
 | Full screen / interstitial | Static slate image or video on the top, with a clickable 300x250 companion banner ad on the bottom, if present. |
 
-![Placement Types Visualization](placement-types-visualization.png)
+![Placement Types Visualization](docs/placement-types-visualization.png)
 
 ## Implementation Matrix
 | Placement | Android | iOS | React Native | Unity |
