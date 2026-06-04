@@ -22,7 +22,8 @@
     "react-native/android/src/main",
     "samples/android/build.gradle",
     "samples/android/src",
-    "samples/ios"
+    "samples/ios/CxAudioSample.xcodeproj/project.pbxproj",
+    "samples/ios/CxAudioSample"
   ],
   "scripts": {
     "check:react-native": "node --check react-native/src/index.js"

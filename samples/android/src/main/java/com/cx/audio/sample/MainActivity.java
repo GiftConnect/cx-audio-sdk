@@ -2,6 +2,8 @@ package com.cx.audio.sample;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
@@ -31,6 +33,10 @@ import com.cx.audio.android.StickyPlayerRequest;
 
 public final class MainActivity extends Activity {
     private static final String DEFAULT_VAST_TAG_URL = "https://ads.example.com/vast.xml";
+    private static final int BLUE = Color.rgb(25, 111, 215);
+    private static final int GREEN = Color.rgb(36, 172, 54);
+    private static final int PURPLE = Color.rgb(111, 78, 198);
+    private static final int INK = Color.rgb(12, 28, 58);
 
     private EditText vastTagInput;
     private TextView statusText;
@@ -63,58 +69,216 @@ public final class MainActivity extends Activity {
 
     private View buildContentView() {
         ScrollView scrollView = new ScrollView(this);
+        scrollView.setBackgroundColor(Color.rgb(244, 248, 252));
+
         LinearLayout content = new LinearLayout(this);
         content.setOrientation(LinearLayout.VERTICAL);
-        content.setPadding(dp(20), dp(24), dp(20), dp(24));
+        content.setPadding(dp(18), dp(18), dp(18), dp(24));
         scrollView.addView(content);
 
-        TextView title = new TextView(this);
-        title.setText("CX Audio SDK Sample");
-        title.setTextSize(24);
-        title.setTextColor(Color.rgb(22, 33, 38));
-        title.setGravity(Gravity.START);
-        content.addView(title, matchWidthWrapHeight());
+        content.addView(header(), matchWidthWrapHeight());
+        content.addView(tagInputSection(), matchWidthWrapHeight());
+        content.addView(sectionTitle("3 placement types. Maximum impact."), matchWidthWrapHeight());
+
+        content.addView(placementCard(
+                "Background Audio",
+                "Audio ads play at low volume during gameplay or app usage.",
+                "AUDIO",
+                BLUE,
+                new String[]{
+                        "VAST 4.x audio support",
+                        "Streams audio with low-latency playback",
+                        "Volume control and lifecycle callbacks"
+                },
+                "Play background audio",
+                this::playBackgroundAudio,
+                "Stop",
+                this::stopBackgroundAudio));
+
+        content.addView(placementCard(
+                "Sticky Player",
+                "Clickable companion banner stays at the top or bottom while users engage.",
+                "STICKY",
+                GREEN,
+                new String[]{
+                        "Shows scaled 300x250 companion creative",
+                        "Top or bottom placement options",
+                        "Clickable and dismissible"
+                },
+                "Show sticky player",
+                this::showStickyPlayer,
+                "Dismiss",
+                this::dismissStickyPlayer));
+
+        content.addView(placementCard(
+                "Full Screen / Interstitial",
+                "Engaging full screen experience with optional companion banner action.",
+                "FULL",
+                PURPLE,
+                new String[]{
+                        "Supports image and video media",
+                        "Optional 300x250 companion ad",
+                        "Close button and programmatic dismiss"
+                },
+                "Show interstitial",
+                this::showFullscreenInterstitial,
+                "Dismiss",
+                this::dismissFullscreenInterstitial));
+
+        statusText = new TextView(this);
+        statusText.setText("Ready. Replace the VAST tag URL with a known-good test tag before running placements.");
+        statusText.setTextColor(INK);
+        statusText.setTextSize(15);
+        statusText.setPadding(dp(14), dp(14), dp(14), dp(14));
+        statusText.setBackground(cardBackground(Color.WHITE, Color.rgb(196, 215, 236), dp(1)));
+        LinearLayout.LayoutParams statusParams = matchWidthWrapHeight();
+        statusParams.topMargin = dp(14);
+        content.addView(statusText, statusParams);
+
+        return scrollView;
+    }
+
+    private View header() {
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.VERTICAL);
+        header.setPadding(dp(18), dp(18), dp(18), dp(18));
+        header.setBackground(cardBackground(Color.rgb(2, 6, 12), Color.TRANSPARENT, 0));
+
+        TextView brand = new TextView(this);
+        brand.setText("CX  AUDIO SDK");
+        brand.setTextColor(Color.WHITE);
+        brand.setTextSize(30);
+        brand.setTypeface(Typeface.DEFAULT_BOLD);
+        header.addView(brand, matchWidthWrapHeight());
+
+        TextView tagline = new TextView(this);
+        tagline.setText("Integrate audio ads. Drive results.");
+        tagline.setTextColor(Color.rgb(69, 151, 255));
+        tagline.setTextSize(18);
+        tagline.setTypeface(Typeface.DEFAULT_BOLD);
+        tagline.setPadding(0, dp(8), 0, 0);
+        header.addView(tagline, matchWidthWrapHeight());
+
+        TextView summary = new TextView(this);
+        summary.setText("A mobile SDK demo for VAST 4.x audio ad placements.");
+        summary.setTextColor(Color.rgb(225, 231, 240));
+        summary.setTextSize(15);
+        summary.setPadding(0, dp(8), 0, 0);
+        header.addView(summary, matchWidthWrapHeight());
+
+        return header;
+    }
+
+    private View tagInputSection() {
+        LinearLayout section = new LinearLayout(this);
+        section.setOrientation(LinearLayout.VERTICAL);
+        section.setPadding(0, dp(16), 0, 0);
 
         TextView label = new TextView(this);
-        label.setText("VAST tag URL");
-        label.setTextColor(Color.rgb(65, 75, 80));
-        label.setPadding(0, dp(18), 0, dp(6));
-        content.addView(label, matchWidthWrapHeight());
+        label.setText("Test VAST tag URL");
+        label.setTextColor(INK);
+        label.setTextSize(15);
+        label.setTypeface(Typeface.DEFAULT_BOLD);
+        section.addView(label, matchWidthWrapHeight());
 
         vastTagInput = new EditText(this);
         vastTagInput.setSingleLine(false);
         vastTagInput.setMinLines(2);
         vastTagInput.setInputType(InputType.TYPE_TEXT_VARIATION_URI);
         vastTagInput.setText(DEFAULT_VAST_TAG_URL);
-        content.addView(vastTagInput, matchWidthWrapHeight());
+        vastTagInput.setTextSize(14);
+        vastTagInput.setBackground(cardBackground(Color.WHITE, Color.rgb(196, 215, 236), dp(1)));
+        vastTagInput.setPadding(dp(12), dp(8), dp(12), dp(8));
+        LinearLayout.LayoutParams inputParams = matchWidthWrapHeight();
+        inputParams.topMargin = dp(6);
+        section.addView(vastTagInput, inputParams);
 
-        content.addView(button("Play Background Audio", this::playBackgroundAudio), matchWidthWrapHeight());
-        content.addView(button("Stop Background Audio", this::stopBackgroundAudio), matchWidthWrapHeight());
-        content.addView(button("Show Sticky Player", this::showStickyPlayer), matchWidthWrapHeight());
-        content.addView(button("Dismiss Sticky Player", this::dismissStickyPlayer), matchWidthWrapHeight());
-        content.addView(button("Show Fullscreen Interstitial", this::showFullscreenInterstitial), matchWidthWrapHeight());
-        content.addView(button("Dismiss Fullscreen Interstitial", this::dismissFullscreenInterstitial), matchWidthWrapHeight());
-
-        statusText = new TextView(this);
-        statusText.setText("Ready. Replace the VAST tag URL with a known-good test tag before running placements.");
-        statusText.setTextColor(Color.rgb(34, 44, 50));
-        statusText.setTextSize(15);
-        statusText.setPadding(0, dp(18), 0, 0);
-        content.addView(statusText, matchWidthWrapHeight());
-
-        return scrollView;
+        return section;
     }
 
-    private Button button(String title, View.OnClickListener listener) {
+    private TextView sectionTitle(String text) {
+        TextView title = new TextView(this);
+        title.setText(text.toUpperCase());
+        title.setTextColor(INK);
+        title.setTextSize(18);
+        title.setGravity(Gravity.CENTER);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        title.setPadding(0, dp(18), 0, dp(6));
+        return title;
+    }
+
+    private View placementCard(
+            String title,
+            String subtitle,
+            String badge,
+            int accentColor,
+            String[] bullets,
+            String primaryTitle,
+            View.OnClickListener primaryAction,
+            String secondaryTitle,
+            View.OnClickListener secondaryAction) {
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.VERTICAL);
+        card.setPadding(dp(16), dp(16), dp(16), dp(16));
+        card.setBackground(cardBackground(Color.WHITE, Color.rgb(210, 222, 236), dp(1)));
+
+        LinearLayout.LayoutParams cardParams = matchWidthWrapHeight();
+        cardParams.topMargin = dp(12);
+        card.setLayoutParams(cardParams);
+
+        TextView badgeView = new TextView(this);
+        badgeView.setText(badge);
+        badgeView.setTextColor(Color.WHITE);
+        badgeView.setTextSize(12);
+        badgeView.setTypeface(Typeface.DEFAULT_BOLD);
+        badgeView.setGravity(Gravity.CENTER);
+        badgeView.setPadding(dp(10), dp(5), dp(10), dp(5));
+        badgeView.setBackground(pillBackground(accentColor));
+        card.addView(badgeView, wrapContent());
+
+        TextView titleView = new TextView(this);
+        titleView.setText(title);
+        titleView.setTextColor(accentColor);
+        titleView.setTextSize(22);
+        titleView.setTypeface(Typeface.DEFAULT_BOLD);
+        titleView.setPadding(0, dp(10), 0, 0);
+        card.addView(titleView, matchWidthWrapHeight());
+
+        TextView subtitleView = new TextView(this);
+        subtitleView.setText(subtitle);
+        subtitleView.setTextColor(Color.rgb(23, 32, 45));
+        subtitleView.setTextSize(15);
+        subtitleView.setPadding(0, dp(4), 0, dp(8));
+        card.addView(subtitleView, matchWidthWrapHeight());
+
+        for (String bullet : bullets) {
+            TextView bulletView = new TextView(this);
+            bulletView.setText("✓  " + bullet);
+            bulletView.setTextColor(Color.rgb(31, 43, 57));
+            bulletView.setTextSize(14);
+            bulletView.setPadding(0, dp(5), 0, 0);
+            card.addView(bulletView, matchWidthWrapHeight());
+        }
+
+        LinearLayout actions = new LinearLayout(this);
+        actions.setOrientation(LinearLayout.HORIZONTAL);
+        actions.setPadding(0, dp(12), 0, 0);
+        actions.addView(button(primaryTitle, accentColor, primaryAction), weightedButtonParams());
+        actions.addView(button(secondaryTitle, Color.rgb(89, 104, 123), secondaryAction), weightedButtonParams());
+        card.addView(actions, matchWidthWrapHeight());
+
+        return card;
+    }
+
+    private Button button(String title, int color, View.OnClickListener listener) {
         Button button = new Button(this);
         button.setText(title);
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(13);
         button.setAllCaps(false);
+        button.setGravity(Gravity.CENTER);
+        button.setBackground(pillBackground(color));
         button.setOnClickListener(listener);
-        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        params.topMargin = dp(10);
-        button.setLayoutParams(params);
         return button;
     }
 
@@ -279,6 +443,38 @@ public final class MainActivity extends Activity {
         return new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT);
+    }
+
+    private LinearLayout.LayoutParams wrapContent() {
+        return new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+    }
+
+    private LinearLayout.LayoutParams weightedButtonParams() {
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1);
+        params.rightMargin = dp(8);
+        return params;
+    }
+
+    private GradientDrawable cardBackground(int color, int strokeColor, int strokeWidth) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(12));
+        if (strokeWidth > 0) {
+            drawable.setStroke(strokeWidth, strokeColor);
+        }
+        return drawable;
+    }
+
+    private GradientDrawable pillBackground(int color) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(color);
+        drawable.setCornerRadius(dp(18));
+        return drawable;
     }
 
     private int dp(int value) {

@@ -5,6 +5,8 @@ build/
 .idea/
 .DS_Store
 .swiftpm/
+*.xcuserstate
+xcuserdata/
 *.iml
 local.properties
 node_modules/
