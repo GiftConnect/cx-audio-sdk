@@ -107,8 +107,7 @@ public enum CxFullscreenInterstitial {
                 }
             },
             onDismiss: {
-                handle.markDismissed()
-                listener.fullscreenInterstitialDidDismiss()
+                handle.dismiss()
             }
         )
 
@@ -200,7 +199,7 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         }
 
         isDismissed = true
-        overlay?.removeFromSuperview()
+        overlay?.dismiss()
         listener.fullscreenInterstitialDidDismiss()
     }
 
@@ -212,9 +211,6 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         self.overlay = overlay
     }
 
-    func markDismissed() {
-        isDismissed = true
-    }
 }
 
 private final class FullscreenInterstitialOverlayView: UIView {
@@ -353,8 +349,16 @@ private final class FullscreenInterstitialOverlayView: UIView {
     }
 
     @objc private func handleDismiss() {
-        player?.pause()
         onDismiss()
+    }
+
+    func dismiss() {
+        player?.pause()
+        removeFromSuperview()
+    }
+
+    deinit {
+        player?.pause()
     }
 }
 

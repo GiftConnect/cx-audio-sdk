@@ -11,6 +11,7 @@
     "android/src/main/java",
     "ios/README.md",
     "ios/Sources",
+    "ios/Tests",
     "unity/README.md",
     "unity/package.json",
     "unity/Runtime",
@@ -18,7 +19,10 @@
     "react-native/src",
     "react-native/android/build.gradle",
     "react-native/android/consumer-rules.pro",
-    "react-native/android/src/main"
+    "react-native/android/src/main",
+    "samples/android/build.gradle",
+    "samples/android/src",
+    "samples/ios"
   ],
   "scripts": {
     "check:react-native": "node --check react-native/src/index.js"

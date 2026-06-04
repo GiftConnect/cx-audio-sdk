@@ -17,4 +17,6 @@ dependencyResolutionManagement {
 rootProject.name = "cx-audio-sdk"
 include ":android"
 include ":react-native-android"
+include ":sample-android"
 project(":react-native-android").projectDir = file("react-native/android")
+project(":sample-android").projectDir = file("samples/android")

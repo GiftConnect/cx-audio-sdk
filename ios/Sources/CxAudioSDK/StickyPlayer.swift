@@ -111,8 +111,7 @@ public enum CxStickyPlayer {
                 }
             },
             onDismiss: {
-                handle.markDismissed()
-                listener.stickyPlayerDidDismiss()
+                handle.dismiss()
             }
         )
 
@@ -169,9 +168,6 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
         self.overlay = overlay
     }
 
-    func markDismissed() {
-        isDismissed = true
-    }
 }
 
 private final class StickyPlayerOverlayView: UIView {

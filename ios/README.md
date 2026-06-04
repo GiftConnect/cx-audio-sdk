@@ -1,11 +1,139 @@
 # CxAudioSDK iOS
 
-Swift Package scaffold for the iOS CX audio ad SDK.
+Native iOS implementation for the CX audio ad SDK.
 
-This target exposes the same three placement types as Android:
+## Requirements
 
-- Background audio
-- Sticky player
-- Full screen interstitial
+- iOS 13 or newer.
+- Xcode 15 or newer.
+- Swift 5.9 or newer through Xcode.
+- `Foundation`, `UIKit`, and `AVFoundation`.
 
-The implementation uses `Foundation`, `UIKit`, and `AVFoundation`, so it must be built with Xcode or another Apple SDK-capable toolchain. It is source-scaffolded from Linux but has not been compiled or smoke-tested on an Apple platform yet.
+## Installation
+
+Add the Swift package from the repository root:
+
+1. In Xcode, choose **File > Add Package Dependencies**.
+2. Select this repository URL or local package checkout.
+3. Add the `CxAudioSDK` product to the host iOS app target.
+
+## Placements
+
+The iOS SDK exposes the same placement types as Android:
+
+- Background audio.
+- Sticky player.
+- Full screen interstitial.
+
+All placements fetch a VAST tag URL, resolve up to five wrappers, and select the best usable creative for the placement.
+
+## Request Setup
+
+```swift
+import CxAudioSDK
+
+let request = try VastRequest(
+    vastTagURLString: "https://ads.example.com/vast.xml",
+    timeoutInterval: 8,
+    userAgent: "my-ios-app/1.0"
+)
+```
+
+## Background Audio
+
+```swift
+final class AudioAdListener: BackgroundAudioListener {
+    func backgroundAudioDidStart(_ handle: BackgroundAudioHandle) {}
+    func backgroundAudioDidComplete() {}
+    func backgroundAudioDidStop() {}
+    func backgroundAudioDidFail(_ error: Error) {}
+}
+
+let listener = AudioAdListener()
+let handle = CxBackgroundAudio.play(
+    request: request,
+    options: BackgroundAudioOptions(volume: 0.2),
+    listener: listener
+)
+
+handle.setVolume(0.1)
+handle.stop()
+```
+
+The SDK selects an audio `MediaFile` and streams it through `AVPlayer`.
+
+## Sticky Player
+
+```swift
+final class StickyAdListener: StickyPlayerListener {
+    func stickyPlayerDidLoad(_ handle: StickyPlayerHandle) {}
+    func stickyPlayerWasClicked(_ clickThroughURL: URL?) {}
+    func stickyPlayerDidDismiss() {}
+    func stickyPlayerDidFail(_ error: Error) {}
+}
+
+let listener = StickyAdListener()
+let handle = CxStickyPlayer.show(
+    in: viewController,
+    request: request,
+    options: StickyPlayerOptions(
+        position: .bottom,
+        height: 72,
+        horizontalPadding: 12,
+        showCloseButton: true
+    ),
+    listener: listener
+)
+
+handle.dismiss()
+```
+
+The SDK selects the image companion closest to 300x250, downloads it, and renders it in a top or bottom safe-area overlay. Companion clicks open through `UIApplication.shared.open`.
+
+## Full Screen Interstitial
+
+```swift
+final class InterstitialAdListener: FullscreenInterstitialListener {
+    func fullscreenInterstitialDidLoad(_ handle: FullscreenInterstitialHandle) {}
+    func fullscreenInterstitialWasClicked(_ clickThroughURL: URL?) {}
+    func fullscreenInterstitialDidDismiss() {}
+    func fullscreenInterstitialDidFail(_ error: Error) {}
+}
+
+let listener = InterstitialAdListener()
+let handle = CxFullscreenInterstitial.show(
+    from: viewController,
+    request: request,
+    options: FullscreenInterstitialOptions(
+        showCloseButton: true,
+        companionHeight: 250,
+        companionMaxWidth: 300,
+        autoPlayVideo: true
+    ),
+    listener: listener
+)
+
+handle.dismiss()
+```
+
+The SDK selects an image or video `MediaFile` for the main area and adds a companion CTA area when a companion image is present.
+
+## Validation
+
+The platform-neutral VAST parser/model files can be typechecked from the repository root:
+
+```sh
+swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
+```
+
+Full iOS validation requires Xcode because the package imports `UIKit` and `AVFoundation`:
+
+```sh
+xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' build
+```
+
+Then smoke-test all three placements in a host app with known-good VAST tags:
+
+- Background audio starts, stops, completes, and applies volume changes.
+- Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.
+- Full screen interstitial renders image or video media, dismisses, and opens companion click-through URLs.

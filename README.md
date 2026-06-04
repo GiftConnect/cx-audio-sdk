@@ -19,9 +19,38 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 ## Implementation Matrix
 | Placement | Android | iOS | React Native | Unity |
 | --- | --- | --- | --- | --- |
-| Background audio | Supported | Scaffolded | Supported on Android hosts | Supported on Android hosts |
-| Sticky player | Supported | Scaffolded | Supported on Android hosts | Supported on Android hosts |
-| Full screen / interstitial | Supported | Scaffolded | Supported on Android hosts | Supported on Android hosts |
+| Background audio | Supported | Supported | Supported on Android hosts | Supported on Android hosts |
+| Sticky player | Supported | Supported | Supported on Android hosts | Supported on Android hosts |
+| Full screen / interstitial | Supported | Supported | Supported on Android hosts | Supported on Android hosts |
+
+## Sample Apps
+Native sample apps live under `samples/` and expose buttons for all three placement types. Each sample includes a VAST tag URL field. Replace the default placeholder with a known-good test tag before running a placement.
+
+### Android Sample
+Android sample module: `:sample-android`
+
+Build the sample APK:
+
+```sh
+./gradlew :sample-android:assembleDebug
+```
+
+Open `samples/android` in Android Studio or install the debug APK on an emulator/device. The sample app lets you test:
+
+- Background audio playback and stop.
+- Sticky player render, click, and dismiss.
+- Full screen interstitial render, click, video/image playback, and dismiss.
+
+### iOS Sample
+iOS sample project: `samples/ios/CxAudioSample.xcodeproj`
+
+Open the project in Xcode, choose an iOS simulator or device, and run the `CxAudioSample` app target. The project links the local `CxAudioSDK` Swift package from the repository root.
+
+The sample app lets you test:
+
+- Background audio playback and stop.
+- Sticky player render, click, and dismiss.
+- Full screen interstitial render, click, video/image playback, and dismiss.
 
 ## Android Build
 Android module: `:android`
@@ -195,8 +224,8 @@ StickyPlayerHandle handle = AndroidStickyPlayer.show(
 
 Call `handle.dismiss()` from the host app when the placement should be removed programmatically.
 
-## iOS Scaffold
-The iOS target is scaffolded as a Swift Package in `Package.swift`, with source under `ios/Sources/CxAudioSDK`.
+## iOS
+The iOS target is implemented as a Swift Package in `Package.swift`, with source under `ios/Sources/CxAudioSDK`.
 
 Minimum iOS: 13
 
@@ -204,7 +233,33 @@ Runtime dependencies: none beyond Apple platform frameworks.
 
 Frameworks used: `Foundation`, `UIKit`, and `AVFoundation`.
 
-The iOS scaffold cannot be compiled in this Linux environment because the Swift toolchain and Apple SDK frameworks are not installed. Validate it on macOS with Xcode before treating it as production-ready.
+Add the package to an iOS app through Xcode:
+
+1. In Xcode, choose **File > Add Package Dependencies**.
+2. Select this repository URL or local package checkout.
+3. Add the `CxAudioSDK` library product to the iOS app target.
+
+The iOS SDK:
+
+- Fetches VAST tag URLs over HTTP(S).
+- Resolves up to five VAST wrappers.
+- Parses audio, visual media, and image companion resources.
+- Plays background audio through `AVPlayer`.
+- Renders sticky and full-screen placements with UIKit overlays.
+- Opens companion click-through URLs through `UIApplication.shared.open`.
+
+Call placement APIs from the main thread when passing view controllers or updating UI-owned handles. Listener callbacks are delivered on the main queue for asynchronous load and render paths.
+
+### Request Setup
+```swift
+import CxAudioSDK
+
+let request = try VastRequest(
+    vastTagURLString: "https://ads.example.com/vast.xml",
+    timeoutInterval: 8,
+    userAgent: "my-ios-app/1.0"
+)
+```
 
 ### Background Audio
 ```swift
@@ -218,6 +273,19 @@ let handle = CxBackgroundAudio.play(
 
 handle.setVolume(0.1)
 handle.stop()
+```
+
+`BackgroundAudioOptions.volume` must be between `0.0` and `1.0`. The default is `0.2`.
+
+Implement `BackgroundAudioListener` to observe start, completion, stop, and failure events:
+
+```swift
+final class AudioAdListener: BackgroundAudioListener {
+    func backgroundAudioDidStart(_ handle: BackgroundAudioHandle) {}
+    func backgroundAudioDidComplete() {}
+    func backgroundAudioDidStop() {}
+    func backgroundAudioDidFail(_ error: Error) {}
+}
 ```
 
 ### Sticky Player
@@ -236,6 +304,19 @@ let handle = CxStickyPlayer.show(
 )
 
 handle.dismiss()
+```
+
+`StickyPlayerOptions.position` supports `.top` and `.bottom`. The SDK downloads the best image companion and displays it in a clickable safe-area overlay.
+
+Implement `StickyPlayerListener` to observe load, click, dismissal, and failure events:
+
+```swift
+final class StickyAdListener: StickyPlayerListener {
+    func stickyPlayerDidLoad(_ handle: StickyPlayerHandle) {}
+    func stickyPlayerWasClicked(_ clickThroughURL: URL?) {}
+    func stickyPlayerDidDismiss() {}
+    func stickyPlayerDidFail(_ error: Error) {}
+}
 ```
 
 ### Full Screen Interstitial
@@ -257,8 +338,21 @@ let handle = CxFullscreenInterstitial.show(
 handle.dismiss()
 ```
 
+The full-screen placement displays the selected visual `MediaFile` as either an image or video, then adds a clickable companion area when a companion image is available.
+
+Implement `FullscreenInterstitialListener` to observe load, click, dismissal, and failure events:
+
+```swift
+final class InterstitialAdListener: FullscreenInterstitialListener {
+    func fullscreenInterstitialDidLoad(_ handle: FullscreenInterstitialHandle) {}
+    func fullscreenInterstitialWasClicked(_ clickThroughURL: URL?) {}
+    func fullscreenInterstitialDidDismiss() {}
+    func fullscreenInterstitialDidFail(_ error: Error) {}
+}
+```
+
 ## React Native
-The React Native package exposes all three placement types and delegates to the Android native implementation. The standalone iOS SDK scaffold exists, but the React Native iOS bridge is not implemented yet.
+The React Native package exposes all three placement types and delegates to the Android native implementation. The standalone native iOS SDK exists, but the React Native iOS bridge is not implemented yet.
 
 Package entry point: `cx-audio-sdk`
 
@@ -398,19 +492,20 @@ handle.Dispose();
 ```
 
 ## Verification
-Run the Linux-verifiable checks from the repository root:
+Run the repository checks from the root:
 
 ```sh
 npm run check:react-native
 node -e "JSON.parse(require('fs').readFileSync('unity/package.json', 'utf8'))"
+swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
 npm --cache /tmp/cx-audio-sdk-npm-cache pack --dry-run
-./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint
+./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint :sample-android:assembleDebug
 ```
 
-These commands verify JavaScript syntax, Unity package metadata, npm package contents, Android SDK unit tests/build/lint, and React Native Android bridge build/lint. The Unity C# package must also be compiled in Unity because this Linux environment does not include the Unity Editor or UnityEngine assemblies.
+These commands verify JavaScript syntax, Unity package metadata, iOS VAST parser/model typechecking, npm package contents, Android SDK unit tests/build/lint, React Native Android bridge build/lint, and Android sample app assembly. The Unity C# package must also be compiled in Unity because this environment does not include the Unity Editor or UnityEngine assemblies.
 
 ### iOS Validation
-The iOS scaffold cannot be validated on Linux because it depends on Apple platform frameworks. To validate it, use a macOS machine with:
+The full iOS target depends on Apple platform frameworks and must be built with Xcode. To validate it, use a macOS machine with:
 
 - Xcode 15 or newer.
 - Swift 5.9 or newer through Xcode.
@@ -421,9 +516,11 @@ Suggested macOS checks from the repository root:
 
 ```sh
 xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' build
+xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' test
+xcodebuild -project samples/ios/CxAudioSample.xcodeproj -scheme CxAudioSample -destination 'platform=iOS Simulator,name=iPhone 15' build
 ```
 
-Then integrate `Package.swift` into a small iOS host app and smoke-test all three placements with known-good VAST tags:
+Then run `samples/ios/CxAudioSample.xcodeproj` and smoke-test all three placements with known-good VAST tags:
 
 - Background audio starts, stops, completes, and applies volume changes.
 - Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.

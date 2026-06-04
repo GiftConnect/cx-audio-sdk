@@ -17,6 +17,11 @@ let package = Package(
         .target(
             name: "CxAudioSDK",
             path: "ios/Sources/CxAudioSDK"
+        ),
+        .testTarget(
+            name: "CxAudioSDKTests",
+            dependencies: ["CxAudioSDK"],
+            path: "ios/Tests/CxAudioSDKTests"
         )
     ]
 )
