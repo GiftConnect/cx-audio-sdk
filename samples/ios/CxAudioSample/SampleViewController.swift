@@ -24,6 +24,8 @@ final class SampleViewController: UIViewController {
     private let interstitialCompanionHeightField = UITextField()
     private let interstitialCompanionMaxWidthField = UITextField()
     private let interstitialAutoplaySwitch = UISwitch()
+    private let interstitialVolumeField = UITextField()
+    private let interstitialMinimumDeviceVolumeField = UITextField()
 
     private var backgroundAudioHandle: BackgroundAudioHandle?
     private var stickyPlayerHandle: StickyPlayerHandle?
@@ -231,6 +233,8 @@ final class SampleViewController: UIViewController {
         interstitialCompanionHeightField.text = "250"
         interstitialCompanionMaxWidthField.text = "300"
         interstitialAutoplaySwitch.isOn = true
+        interstitialVolumeField.text = "0.2"
+        interstitialMinimumDeviceVolumeField.text = "0.1"
 
         container.addArrangedSubview(optionSection("VAST request"))
         container.addArrangedSubview(textOption("Timeout seconds", field: timeoutField, keyboardType: .decimalPad))
@@ -253,6 +257,8 @@ final class SampleViewController: UIViewController {
         container.addArrangedSubview(textOption("Companion height", field: interstitialCompanionHeightField, keyboardType: .numberPad))
         container.addArrangedSubview(textOption("Companion max width", field: interstitialCompanionMaxWidthField, keyboardType: .numberPad))
         container.addArrangedSubview(switchOption("Autoplay video", control: interstitialAutoplaySwitch))
+        container.addArrangedSubview(textOption("Audio volume 0.0-1.0", field: interstitialVolumeField, keyboardType: .decimalPad))
+        container.addArrangedSubview(textOption("Minimum device volume 0.0-1.0", field: interstitialMinimumDeviceVolumeField, keyboardType: .decimalPad))
 
         return container
     }
@@ -486,7 +492,9 @@ final class SampleViewController: UIViewController {
             showCloseButton: interstitialCloseSwitch.isOn,
             companionHeight: try CGFloat(doubleValue(interstitialCompanionHeightField, name: "Companion height", minimum: 48)),
             companionMaxWidth: try CGFloat(doubleValue(interstitialCompanionMaxWidthField, name: "Companion max width", minimum: 48)),
-            autoPlayVideo: interstitialAutoplaySwitch.isOn
+            autoPlayVideo: interstitialAutoplaySwitch.isOn,
+            volume: try floatValue(interstitialVolumeField, name: "Interstitial audio volume", minimum: 0, maximum: 1),
+            minDeviceVolume: try floatValue(interstitialMinimumDeviceVolumeField, name: "Interstitial minimum device volume", minimum: 0, maximum: 1)
         )
     }
 
@@ -579,6 +587,14 @@ extension SampleViewController: StickyPlayerListener {
 extension SampleViewController: FullscreenInterstitialListener {
     func fullscreenInterstitialDidLoad(_ handle: FullscreenInterstitialHandle) {
         updateStatus("Fullscreen interstitial loaded.")
+    }
+
+    func fullscreenInterstitialDidStartAudio(_ handle: FullscreenInterstitialHandle) {
+        updateStatus("Fullscreen interstitial audio started.")
+    }
+
+    func fullscreenInterstitialDidCompleteAudio() {
+        updateStatus("Fullscreen interstitial audio completed.")
     }
 
     func fullscreenInterstitialWasClicked(_ clickThroughURL: URL?) {

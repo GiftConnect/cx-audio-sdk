@@ -129,6 +129,7 @@ The Android full screen interstitial placement:
 - Fetches a VAST tag URL over HTTP(S).
 - Resolves up to five VAST wrappers.
 - Parses a visual `MediaFile` for the main full-screen area.
+- Parses an audio `MediaFile` for audio-only or image/slate interstitial responses.
 - Parses an optional 300x250 companion image for the lower call-to-action area.
 - Supports image or video media in the main full-screen area.
 - Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
@@ -138,10 +139,12 @@ The Android full screen interstitial placement:
 2. Call `AndroidFullscreenInterstitial.show(...)` at a natural break in app flow.
 3. Retain the returned `FullscreenInterstitialHandle`; the SDK loads the VAST response and media asynchronously.
 4. Treat `onFullscreenInterstitialLoaded` as the moment the overlay is visible.
-5. Treat `onFullscreenInterstitialClicked` as a companion click event and forward it to analytics or attribution code as needed.
-6. Treat `onFullscreenInterstitialDismissed` as terminal cleanup; clear your handle reference.
-7. Call `handle.dismiss()` if app navigation, pause, or your own frequency cap requires programmatic removal.
-8. Treat `onFullscreenInterstitialFailed` as terminal cleanup; no overlay should remain active.
+5. Treat `onFullscreenInterstitialAudioStarted` as the moment audio begins for audio-only/image interstitial responses. Video creatives use the video player audio track instead.
+6. Treat `onFullscreenInterstitialClicked` as a companion click event and forward it to analytics or attribution code as needed.
+7. Treat `onFullscreenInterstitialAudioCompleted` followed by `onFullscreenInterstitialDismissed` as normal terminal cleanup for audio-backed responses.
+8. Treat `onFullscreenInterstitialDismissed` as terminal cleanup; clear your handle reference.
+9. Call `handle.dismiss()` if app navigation, pause, or your own frequency cap requires programmatic removal.
+10. Treat `onFullscreenInterstitialFailed` as terminal cleanup; no overlay or audio playback should remain active.
 
 ### Usage
 ```java
@@ -154,6 +157,8 @@ FullscreenInterstitialOptions options = FullscreenInterstitialOptions.builder()
         .companionHeightDp(250)
         .companionMaxWidthDp(300)
         .autoPlayVideo(true)
+        .volume(0.2f)
+        .minDeviceVolume(0.1f)
         .build();
 
 FullscreenInterstitialHandle handle = AndroidFullscreenInterstitial.show(
@@ -164,6 +169,16 @@ FullscreenInterstitialHandle handle = AndroidFullscreenInterstitial.show(
             @Override
             public void onFullscreenInterstitialLoaded(FullscreenInterstitialHandle handle) {
                 // The interstitial is visible.
+            }
+
+            @Override
+            public void onFullscreenInterstitialAudioStarted(FullscreenInterstitialHandle handle) {
+                // Audio started for an audio-only or image/slate interstitial.
+            }
+
+            @Override
+            public void onFullscreenInterstitialAudioCompleted() {
+                // Audio completed.
             }
 
             @Override
@@ -183,7 +198,7 @@ FullscreenInterstitialHandle handle = AndroidFullscreenInterstitial.show(
         });
 ```
 
-Call `handle.dismiss()` from the host app when the interstitial should be removed programmatically.
+Call `handle.dismiss()` from the host app when the interstitial should be removed programmatically. Dismissal stops interstitial audio playback and removes the overlay.
 
 ## Android Sticky Player
 The Android sticky player:
@@ -384,7 +399,9 @@ let handle = CxFullscreenInterstitial.show(
         showCloseButton: true,
         companionHeight: 250,
         companionMaxWidth: 300,
-        autoPlayVideo: true
+        autoPlayVideo: true,
+        volume: 0.2,
+        minDeviceVolume: 0.1
     ),
     listener: listener
 )
@@ -392,7 +409,7 @@ let handle = CxFullscreenInterstitial.show(
 handle.dismiss()
 ```
 
-The full-screen placement displays the selected visual `MediaFile` as either an image or video, then adds a clickable companion area when a companion image is available.
+The full-screen placement displays the selected visual `MediaFile` as either an image or video, then adds a clickable companion area when a companion image is available. For audio-only or image/slate interstitial VAST responses, the SDK starts the selected audio `MediaFile` after the overlay is visible. Video creatives rely on the video player's audio track.
 
 Lifecycle guidance:
 
@@ -400,16 +417,20 @@ Lifecycle guidance:
 2. Call `CxFullscreenInterstitial.show(...)` at a natural break in app flow.
 3. Retain the returned `FullscreenInterstitialHandle`; VAST, image, and video setup happen asynchronously.
 4. Treat `fullscreenInterstitialDidLoad` as the moment the overlay is visible.
-5. Treat `fullscreenInterstitialWasClicked` as a companion click event and forward it to analytics or attribution code as needed.
-6. Treat `fullscreenInterstitialDidDismiss` as terminal cleanup; clear your handle reference.
-7. Call `handle.dismiss()` if app navigation, pause, or your own frequency cap requires programmatic removal.
-8. Treat `fullscreenInterstitialDidFail` as terminal cleanup; no overlay should remain active.
+5. Treat `fullscreenInterstitialDidStartAudio` as the moment audio begins for audio-only/image interstitial responses. Video creatives use the video player audio track instead.
+6. Treat `fullscreenInterstitialWasClicked` as a companion click event and forward it to analytics or attribution code as needed.
+7. Treat `fullscreenInterstitialDidCompleteAudio` followed by `fullscreenInterstitialDidDismiss` as normal terminal cleanup for audio-backed responses.
+8. Treat `fullscreenInterstitialDidDismiss` as terminal cleanup; clear your handle reference.
+9. Call `handle.dismiss()` if app navigation, pause, or your own frequency cap requires programmatic removal.
+10. Treat `fullscreenInterstitialDidFail` as terminal cleanup; no overlay or audio playback should remain active.
 
 Implement `FullscreenInterstitialListener` to observe load, click, dismissal, and failure events:
 
 ```swift
 final class InterstitialAdListener: FullscreenInterstitialListener {
     func fullscreenInterstitialDidLoad(_ handle: FullscreenInterstitialHandle) {}
+    func fullscreenInterstitialDidStartAudio(_ handle: FullscreenInterstitialHandle) {}
+    func fullscreenInterstitialDidCompleteAudio() {}
     func fullscreenInterstitialWasClicked(_ clickThroughURL: URL?) {}
     func fullscreenInterstitialDidDismiss() {}
     func fullscreenInterstitialDidFail(_ error: Error) {}

@@ -30,6 +30,10 @@ namespace Cx.Audio.Unity
     {
         void OnFullscreenInterstitialLoaded(FullscreenInterstitialHandle handle);
 
+        void OnFullscreenInterstitialAudioStarted(FullscreenInterstitialHandle handle);
+
+        void OnFullscreenInterstitialAudioCompleted();
+
         void OnFullscreenInterstitialClicked(string clickThroughUrl);
 
         void OnFullscreenInterstitialDismissed();

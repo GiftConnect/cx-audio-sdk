@@ -140,9 +140,10 @@ public final class VastAdLoader {
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
             VastMediaFile mediaFile = parseOptionalInterstitialMediaFile(vastXml, currentUrl);
+            VastMediaFile audioMediaFile = parseOptionalAudioMediaFile(vastXml, currentUrl);
             VastCompanion companion = parseOptionalCompanion(vastXml, currentUrl);
-            if (mediaFile != null || companion != null) {
-                return new VastInterstitialAd(mediaFile, companion);
+            if (mediaFile != null || audioMediaFile != null || companion != null) {
+                return new VastInterstitialAd(mediaFile, audioMediaFile, companion);
             }
 
             String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);

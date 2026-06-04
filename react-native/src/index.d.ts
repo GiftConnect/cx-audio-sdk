@@ -51,6 +51,8 @@ export interface FullscreenInterstitialOptions {
   companionHeightDp?: number;
   companionMaxWidthDp?: number;
   autoPlayVideo?: boolean;
+  volume?: number;
+  minDeviceVolume?: number;
 }
 
 export declare const StickyPlayerPosition: Readonly<{

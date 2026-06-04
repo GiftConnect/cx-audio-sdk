@@ -1,7 +1,12 @@
 package com.cx.audio.android;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.ViewGroup;
@@ -14,6 +19,7 @@ import com.cx.audio.android.internal.VastCompanion;
 import com.cx.audio.android.internal.VastInterstitialAd;
 import com.cx.audio.android.internal.VastMediaFile;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -35,9 +41,22 @@ public final class AndroidFullscreenInterstitial {
 
         FullscreenInterstitialOptions resolvedOptions =
                 options == null ? FullscreenInterstitialOptions.builder().build() : options;
+        Context appContext = activity.getApplicationContext() == null
+                ? activity
+                : activity.getApplicationContext();
         Handler mainHandler = new Handler(Looper.getMainLooper());
         PendingFullscreenInterstitialHandle handle =
-                new PendingFullscreenInterstitialHandle(listener);
+                new PendingFullscreenInterstitialHandle(
+                        listener,
+                        resolvedOptions.getVolume(),
+                        mainHandler);
+
+        if (!isDeviceVolumeAllowed(appContext, resolvedOptions.getMinDeviceVolume())) {
+            mainHandler.post(() -> handle.fail(new IllegalStateException(
+                    "VOLUME_TOO_LOW: device media volume is below "
+                            + resolvedOptions.getMinDeviceVolume())));
+            return handle;
+        }
 
         EXECUTOR.execute(() -> {
             try {
@@ -46,6 +65,7 @@ public final class AndroidFullscreenInterstitial {
                 Bitmap companionBitmap = loadCompanionBitmapIfNeeded(interstitialAd, request);
                 mainHandler.post(() -> attachOverlay(
                         activity,
+                        appContext,
                         request,
                         interstitialAd,
                         mediaBitmap,
@@ -56,7 +76,7 @@ public final class AndroidFullscreenInterstitial {
             } catch (Throwable error) {
                 mainHandler.post(() -> {
                     if (!handle.isDismissed()) {
-                        listener.onFullscreenInterstitialFailed(error);
+                        handle.fail(error);
                     }
                 });
             }
@@ -94,6 +114,7 @@ public final class AndroidFullscreenInterstitial {
 
     private static void attachOverlay(
             Activity activity,
+            Context appContext,
             FullscreenInterstitialRequest request,
             VastInterstitialAd interstitialAd,
             Bitmap mediaBitmap,
@@ -131,6 +152,82 @@ public final class AndroidFullscreenInterstitial {
                 ViewGroup.LayoutParams.MATCH_PARENT));
         handle.setOverlayView(overlayView);
         listener.onFullscreenInterstitialLoaded(handle);
+        VastMediaFile audioMediaFile = interstitialAd.getAudioMediaFile();
+        if (audioMediaFile != null
+                && (interstitialAd.getMediaFile() == null || !interstitialAd.getMediaFile().isVideo())) {
+            prepareAudioPlayer(appContext, request, audioMediaFile, handle);
+        }
+    }
+
+    private static void prepareAudioPlayer(
+            Context context,
+            FullscreenInterstitialRequest request,
+            VastMediaFile mediaFile,
+            PendingFullscreenInterstitialHandle handle) {
+        if (handle.isInactive()) {
+            return;
+        }
+
+        MediaPlayer mediaPlayer = new MediaPlayer();
+        handle.setMediaPlayer(mediaPlayer);
+        try {
+            mediaPlayer.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build());
+            mediaPlayer.setVolume(handle.getVolume(), handle.getVolume());
+            mediaPlayer.setOnPreparedListener(player -> {
+                if (handle.isInactive()) {
+                    return;
+                }
+                try {
+                    player.setVolume(handle.getVolume(), handle.getVolume());
+                    player.start();
+                    handle.notifyAudioStarted();
+                } catch (Throwable error) {
+                    handle.fail(error);
+                }
+            });
+            mediaPlayer.setOnCompletionListener(handle::completeAudio);
+            mediaPlayer.setOnErrorListener((player, what, extra) -> {
+                handle.fail(new IllegalStateException(
+                        "MediaPlayer failed with what=" + what + ", extra=" + extra));
+                return true;
+            });
+            mediaPlayer.setDataSource(
+                    context,
+                    Uri.parse(mediaFile.getUrl()),
+                    Collections.singletonMap("User-Agent", request.getUserAgent()));
+            mediaPlayer.prepareAsync();
+        } catch (Throwable error) {
+            handle.fail(error);
+        }
+    }
+
+    private static boolean isDeviceVolumeAllowed(Context context, float minDeviceVolume) {
+        validateVolume(minDeviceVolume);
+        if (minDeviceVolume <= 0.0f) {
+            return true;
+        }
+
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager == null) {
+            return true;
+        }
+
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        if (maxVolume <= 0) {
+            return true;
+        }
+
+        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        return currentVolume / (float) maxVolume >= minDeviceVolume;
+    }
+
+    private static void validateVolume(float volume) {
+        if (Float.isNaN(volume) || volume < 0.0f || volume > 1.0f) {
+            throw new IllegalArgumentException("volume must be between 0.0 and 1.0");
+        }
     }
 
     private static void handleCompanionClick(
@@ -153,11 +250,22 @@ public final class AndroidFullscreenInterstitial {
     private static final class PendingFullscreenInterstitialHandle
             implements FullscreenInterstitialHandle {
         private final FullscreenInterstitialListener listener;
+        private final Handler mainHandler;
         private FullscreenInterstitialOverlayView overlayView;
+        private MediaPlayer mediaPlayer;
         private boolean dismissed;
+        private boolean completed;
+        private boolean failed;
+        private boolean audioStarted;
+        private final float volume;
 
-        private PendingFullscreenInterstitialHandle(FullscreenInterstitialListener listener) {
+        private PendingFullscreenInterstitialHandle(
+                FullscreenInterstitialListener listener,
+                float volume,
+                Handler mainHandler) {
             this.listener = listener;
+            this.volume = volume;
+            this.mainHandler = mainHandler;
         }
 
         @Override
@@ -175,16 +283,12 @@ public final class AndroidFullscreenInterstitial {
         }
 
         private void dismissOnMainThread() {
-            if (dismissed) {
+            if (isInactive()) {
                 return;
             }
             dismissed = true;
-            if (overlayView != null) {
-                ViewParent parent = overlayView.getParent();
-                if (parent instanceof ViewGroup) {
-                    ((ViewGroup) parent).removeView(overlayView);
-                }
-            }
+            releasePlayer();
+            removeOverlay();
             listener.onFullscreenInterstitialDismissed();
         }
 
@@ -192,12 +296,79 @@ public final class AndroidFullscreenInterstitial {
             return dismissed;
         }
 
+        private boolean isInactive() {
+            return dismissed || completed || failed;
+        }
+
         private void markDismissed() {
             dismissed = true;
+            releasePlayer();
         }
 
         private void setOverlayView(FullscreenInterstitialOverlayView overlayView) {
             this.overlayView = overlayView;
+        }
+
+        private void setMediaPlayer(MediaPlayer mediaPlayer) {
+            if (isInactive()) {
+                mediaPlayer.release();
+                return;
+            }
+            this.mediaPlayer = mediaPlayer;
+        }
+
+        private float getVolume() {
+            return volume;
+        }
+
+        private void notifyAudioStarted() {
+            if (isInactive() || audioStarted) {
+                return;
+            }
+            audioStarted = true;
+            listener.onFullscreenInterstitialAudioStarted(this);
+        }
+
+        private void completeAudio(MediaPlayer player) {
+            if (isInactive()) {
+                return;
+            }
+            completed = true;
+            if (mediaPlayer == player) {
+                mediaPlayer = null;
+            }
+            player.release();
+            listener.onFullscreenInterstitialAudioCompleted();
+            removeOverlay();
+            listener.onFullscreenInterstitialDismissed();
+        }
+
+        private void fail(Throwable error) {
+            if (isInactive()) {
+                return;
+            }
+            failed = true;
+            releasePlayer();
+            removeOverlay();
+            listener.onFullscreenInterstitialFailed(error);
+        }
+
+        private void releasePlayer() {
+            MediaPlayer player = mediaPlayer;
+            mediaPlayer = null;
+            if (player != null) {
+                player.release();
+            }
+        }
+
+        private void removeOverlay() {
+            if (overlayView == null) {
+                return;
+            }
+            ViewParent parent = overlayView.getParent();
+            if (parent instanceof ViewGroup) {
+                ((ViewGroup) parent).removeView(overlayView);
+            }
         }
     }
 }

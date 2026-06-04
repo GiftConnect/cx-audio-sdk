@@ -110,7 +110,9 @@ let handle = CxFullscreenInterstitial.show(
         showCloseButton: true,
         companionHeight: 250,
         companionMaxWidth: 300,
-        autoPlayVideo: true
+        autoPlayVideo: true,
+        volume: 0.2,
+        minDeviceVolume: 0.1
     ),
     listener: listener
 )
@@ -118,7 +120,7 @@ let handle = CxFullscreenInterstitial.show(
 handle.dismiss()
 ```
 
-The SDK selects an image or video `MediaFile` for the main area and adds a companion CTA area when a companion image is present.
+The SDK selects an image or video `MediaFile` for the main area and adds a companion CTA area when a companion image is present. For audio-only or image/slate interstitial responses, audio starts after the overlay is visible. Video creatives use the video player audio track. Dismissing the interstitial stops audio playback.
 
 ## Validation
 

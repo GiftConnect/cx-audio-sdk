@@ -106,6 +106,8 @@ namespace Cx.Audio.Unity
                 CallBuilder(builder, "companionHeightDp", options.CompanionHeightDp);
                 CallBuilder(builder, "companionMaxWidthDp", options.CompanionMaxWidthDp);
                 CallBuilder(builder, "autoPlayVideo", options.AutoPlayVideo);
+                CallBuilder(builder, "volume", options.Volume);
+                CallBuilder(builder, "minDeviceVolume", options.MinDeviceVolume);
                 return builder.Call<AndroidJavaObject>("build");
             }
             finally

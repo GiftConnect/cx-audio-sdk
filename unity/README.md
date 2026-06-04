@@ -124,7 +124,9 @@ public sealed class InterstitialAd : MonoBehaviour, IFullscreenInterstitialListe
                 ShowCloseButton = true,
                 CompanionHeightDp = 250,
                 CompanionMaxWidthDp = 300,
-                AutoPlayVideo = true
+                AutoPlayVideo = true,
+                Volume = 0.2f,
+                MinDeviceVolume = 0.1f
             },
             this);
     }
@@ -140,6 +142,8 @@ public sealed class InterstitialAd : MonoBehaviour, IFullscreenInterstitialListe
     }
 
     public void OnFullscreenInterstitialLoaded(FullscreenInterstitialHandle handle) {}
+    public void OnFullscreenInterstitialAudioStarted(FullscreenInterstitialHandle handle) {}
+    public void OnFullscreenInterstitialAudioCompleted() {}
     public void OnFullscreenInterstitialClicked(string clickThroughUrl) {}
     public void OnFullscreenInterstitialDismissed() {}
     public void OnFullscreenInterstitialFailed(CxAudioError error) {}

@@ -6,17 +6,23 @@ public struct FullscreenInterstitialOptions: Equatable {
     public let companionHeight: CGFloat
     public let companionMaxWidth: CGFloat
     public let autoPlayVideo: Bool
+    public let volume: Float
+    public let minDeviceVolume: Float
 
     public init(
         showCloseButton: Bool = true,
         companionHeight: CGFloat = 250,
         companionMaxWidth: CGFloat = 300,
-        autoPlayVideo: Bool = true
+        autoPlayVideo: Bool = true,
+        volume: Float = 0.2,
+        minDeviceVolume: Float = 0.1
     ) {
         self.showCloseButton = showCloseButton
         self.companionHeight = companionHeight
         self.companionMaxWidth = companionMaxWidth
         self.autoPlayVideo = autoPlayVideo
+        self.volume = volume
+        self.minDeviceVolume = minDeviceVolume
     }
 }
 
@@ -29,11 +35,21 @@ public protocol FullscreenInterstitialHandle: AnyObject {
 public protocol FullscreenInterstitialListener: AnyObject {
     func fullscreenInterstitialDidLoad(_ handle: FullscreenInterstitialHandle)
 
+    func fullscreenInterstitialDidStartAudio(_ handle: FullscreenInterstitialHandle)
+
+    func fullscreenInterstitialDidCompleteAudio()
+
     func fullscreenInterstitialWasClicked(_ clickThroughURL: URL?)
 
     func fullscreenInterstitialDidDismiss()
 
     func fullscreenInterstitialDidFail(_ error: Error)
+}
+
+public extension FullscreenInterstitialListener {
+    func fullscreenInterstitialDidStartAudio(_ handle: FullscreenInterstitialHandle) {}
+
+    func fullscreenInterstitialDidCompleteAudio() {}
 }
 
 public enum CxFullscreenInterstitial {
@@ -45,6 +61,35 @@ public enum CxFullscreenInterstitial {
         listener: FullscreenInterstitialListener
     ) -> FullscreenInterstitialHandle {
         let handle = FullscreenInterstitialHandleImpl(listener: listener)
+
+        guard !options.volume.isNaN && options.volume >= 0 && options.volume <= 1 else {
+            DispatchQueue.main.async {
+                listener.fullscreenInterstitialDidFail(
+                    CxAudioError.invalidOption("volume must be between 0.0 and 1.0")
+                )
+            }
+            return handle
+        }
+
+        guard !options.minDeviceVolume.isNaN
+            && options.minDeviceVolume >= 0
+            && options.minDeviceVolume <= 1 else {
+            DispatchQueue.main.async {
+                listener.fullscreenInterstitialDidFail(
+                    CxAudioError.invalidOption("minDeviceVolume must be between 0.0 and 1.0")
+                )
+            }
+            return handle
+        }
+
+        guard DeviceVolumeMonitor.isDeviceVolumeAllowed(
+            minDeviceVolume: options.minDeviceVolume
+        ) else {
+            DispatchQueue.main.async {
+                listener.fullscreenInterstitialDidFail(CxAudioError.volumeTooLow(options.minDeviceVolume))
+            }
+            return handle
+        }
 
         VastAdLoader.shared.loadInterstitial(request: request) { result in
             switch result {
@@ -121,6 +166,14 @@ public enum CxFullscreenInterstitial {
         ])
         handle.attach(overlay: overlay)
         listener.fullscreenInterstitialDidLoad(handle)
+        if let audioMediaFile = interstitialAd.audioMediaFile,
+           interstitialAd.mediaFile?.isVideo != true {
+            let player = AVPlayer(url: audioMediaFile.url)
+            player.volume = options.volume
+            handle.attach(player: player)
+            player.play()
+            listener.fullscreenInterstitialDidStartAudio(handle)
+        }
     }
 
     private static func loadImages(
@@ -183,32 +236,79 @@ public enum CxFullscreenInterstitial {
 private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHandle {
     private let listener: FullscreenInterstitialListener
     private weak var overlay: FullscreenInterstitialOverlayView?
+    private var player: AVPlayer?
+    private var completionObserver: NSObjectProtocol?
     private(set) var isDismissed = false
+    private var completed = false
+    private var failed = false
 
     init(listener: FullscreenInterstitialListener) {
         self.listener = listener
     }
 
     var isShowing: Bool {
-        overlay?.superview != nil && !isDismissed
+        overlay?.superview != nil && !isInactive
+    }
+
+    private var isInactive: Bool {
+        isDismissed || completed || failed
     }
 
     func dismiss() {
-        guard !isDismissed else {
+        guard !isInactive else {
             return
         }
 
         isDismissed = true
+        releasePlayer()
         overlay?.dismiss()
         listener.fullscreenInterstitialDidDismiss()
     }
 
     func attach(overlay: FullscreenInterstitialOverlayView) {
-        guard !isDismissed else {
+        guard !isInactive else {
             overlay.removeFromSuperview()
             return
         }
         self.overlay = overlay
+    }
+
+    func attach(player: AVPlayer) {
+        guard !isInactive else {
+            player.pause()
+            return
+        }
+
+        self.player = player
+        completionObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            self?.completeAudio()
+        }
+    }
+
+    private func completeAudio() {
+        guard !isInactive else {
+            return
+        }
+
+        completed = true
+        releasePlayer()
+        listener.fullscreenInterstitialDidCompleteAudio()
+        overlay?.dismiss()
+        listener.fullscreenInterstitialDidDismiss()
+    }
+
+    private func releasePlayer() {
+        player?.pause()
+        player = nil
+
+        if let completionObserver {
+            NotificationCenter.default.removeObserver(completionObserver)
+            self.completionObserver = nil
+        }
     }
 
 }

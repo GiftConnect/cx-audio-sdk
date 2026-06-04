@@ -55,6 +55,8 @@ public final class MainActivity extends Activity {
     private EditText interstitialCompanionHeightInput;
     private EditText interstitialCompanionMaxWidthInput;
     private Switch interstitialAutoplaySwitch;
+    private EditText interstitialVolumeInput;
+    private EditText interstitialMinimumDeviceVolumeInput;
     private TextView statusText;
     private BackgroundAudioHandle backgroundAudioHandle;
     private StickyPlayerHandle stickyPlayerHandle;
@@ -264,6 +266,8 @@ public final class MainActivity extends Activity {
         interstitialCompanionHeightInput = optionInput("250", InputType.TYPE_CLASS_NUMBER);
         interstitialCompanionMaxWidthInput = optionInput("300", InputType.TYPE_CLASS_NUMBER);
         interstitialAutoplaySwitch = optionSwitch(true);
+        interstitialVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        interstitialMinimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
         section.addView(optionSection("VAST request"));
         section.addView(textOption("Connect timeout ms", connectTimeoutInput));
@@ -287,6 +291,8 @@ public final class MainActivity extends Activity {
         section.addView(textOption("Companion height dp", interstitialCompanionHeightInput));
         section.addView(textOption("Companion max width dp", interstitialCompanionMaxWidthInput));
         section.addView(switchOption("Autoplay video", interstitialAutoplaySwitch));
+        section.addView(textOption("Audio volume 0.0-1.0", interstitialVolumeInput));
+        section.addView(textOption("Minimum device volume 0.0-1.0", interstitialMinimumDeviceVolumeInput));
 
         return section;
     }
@@ -554,6 +560,17 @@ public final class MainActivity extends Activity {
                         }
 
                         @Override
+                        public void onFullscreenInterstitialAudioStarted(
+                                FullscreenInterstitialHandle handle) {
+                            setStatus("Fullscreen interstitial audio started.");
+                        }
+
+                        @Override
+                        public void onFullscreenInterstitialAudioCompleted() {
+                            setStatus("Fullscreen interstitial audio completed.");
+                        }
+
+                        @Override
                         public void onFullscreenInterstitialClicked(String clickThroughUrl) {
                             setStatus("Fullscreen interstitial clicked: " + clickThroughUrl);
                         }
@@ -628,6 +645,8 @@ public final class MainActivity extends Activity {
                 .companionHeightDp(intValue(interstitialCompanionHeightInput, "Companion height", 48))
                 .companionMaxWidthDp(intValue(interstitialCompanionMaxWidthInput, "Companion max width", 48))
                 .autoPlayVideo(interstitialAutoplaySwitch.isChecked())
+                .volume(floatValue(interstitialVolumeInput, "Interstitial audio volume", 0.0f, 1.0f))
+                .minDeviceVolume(floatValue(interstitialMinimumDeviceVolumeInput, "Interstitial minimum device volume", 0.0f, 1.0f))
                 .build();
     }
 

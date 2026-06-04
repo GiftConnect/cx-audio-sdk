@@ -226,6 +226,17 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
                         }
 
                         @Override
+                        public void onFullscreenInterstitialAudioStarted(
+                                FullscreenInterstitialHandle handle) {
+                            sendEvent("started", FULLSCREEN_INTERSTITIAL, handleId, null, null);
+                        }
+
+                        @Override
+                        public void onFullscreenInterstitialAudioCompleted() {
+                            sendEvent("completed", FULLSCREEN_INTERSTITIAL, handleId, null, null);
+                        }
+
+                        @Override
                         public void onFullscreenInterstitialClicked(String clickThroughUrl) {
                             sendEvent(
                                     "clicked",
@@ -429,6 +440,12 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         }
         if (hasValue(optionsMap, "autoPlayVideo")) {
             builder.autoPlayVideo(optionsMap.getBoolean("autoPlayVideo"));
+        }
+        if (hasValue(optionsMap, "volume")) {
+            builder.volume((float) optionsMap.getDouble("volume"));
+        }
+        if (hasValue(optionsMap, "minDeviceVolume")) {
+            builder.minDeviceVolume((float) optionsMap.getDouble("minDeviceVolume"));
         }
         return builder.build();
     }

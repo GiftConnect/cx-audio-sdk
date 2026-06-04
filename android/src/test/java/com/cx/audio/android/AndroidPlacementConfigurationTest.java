@@ -109,12 +109,16 @@ public final class AndroidPlacementConfigurationTest {
                 .companionHeightDp(180)
                 .companionMaxWidthDp(320)
                 .autoPlayVideo(false)
+                .volume(0.45f)
+                .minDeviceVolume(0.25f)
                 .build();
 
         assertFalse(options.shouldShowCloseButton());
         assertEquals(180, options.getCompanionHeightDp());
         assertEquals(320, options.getCompanionMaxWidthDp());
         assertFalse(options.shouldAutoPlayVideo());
+        assertEquals(0.45f, options.getVolume(), 0.0f);
+        assertEquals(0.25f, options.getMinDeviceVolume(), 0.0f);
 
         FullscreenInterstitialOptions defaults = FullscreenInterstitialOptions.builder().build();
         assertTrue(defaults.shouldShowCloseButton());
@@ -128,5 +132,11 @@ public final class AndroidPlacementConfigurationTest {
         assertThrows(
                 IllegalArgumentException.class,
                 () -> FullscreenInterstitialOptions.builder().companionMaxWidthDp(47));
+        assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialOptions.builder().volume(-0.1f));
+        assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialOptions.builder().volume(1.1f));
+        assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialOptions.builder().volume(Float.NaN));
+        assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialOptions.builder().minDeviceVolume(-0.1f));
+        assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialOptions.builder().minDeviceVolume(1.1f));
+        assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialOptions.builder().minDeviceVolume(Float.NaN));
     }
 }

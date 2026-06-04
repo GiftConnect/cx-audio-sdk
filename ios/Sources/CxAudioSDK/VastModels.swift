@@ -28,11 +28,16 @@ internal struct VastDocument {
 
     func interstitialAd(baseURL: URL) -> VastInterstitialAd? {
         let mediaFile = bestInterstitialMediaFile(baseURL: baseURL)
+        let audioMediaFile = bestAudioMediaFile(baseURL: baseURL)
         let companion = bestCompanion(baseURL: baseURL)
-        guard mediaFile != nil || companion != nil else {
+        guard mediaFile != nil || audioMediaFile != nil || companion != nil else {
             return nil
         }
-        return VastInterstitialAd(mediaFile: mediaFile, companion: companion)
+        return VastInterstitialAd(
+            mediaFile: mediaFile,
+            audioMediaFile: audioMediaFile,
+            companion: companion
+        )
     }
 }
 
@@ -74,6 +79,7 @@ internal struct VastCompanion {
 
 internal struct VastInterstitialAd {
     let mediaFile: VastMediaFile?
+    let audioMediaFile: VastMediaFile?
     let companion: VastCompanion?
 }
 

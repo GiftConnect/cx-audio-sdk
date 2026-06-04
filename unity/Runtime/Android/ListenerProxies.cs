@@ -181,6 +181,28 @@ namespace Cx.Audio.Unity
             });
         }
 
+        public void onFullscreenInterstitialAudioStarted(AndroidJavaObject nativeHandle)
+        {
+            CxAudioRuntime.Dispatch(callbackContext, () =>
+            {
+                if (listener != null)
+                {
+                    listener.OnFullscreenInterstitialAudioStarted(getHandle());
+                }
+            });
+        }
+
+        public void onFullscreenInterstitialAudioCompleted()
+        {
+            CxAudioRuntime.Dispatch(callbackContext, () =>
+            {
+                if (listener != null)
+                {
+                    listener.OnFullscreenInterstitialAudioCompleted();
+                }
+            });
+        }
+
         public void onFullscreenInterstitialClicked(string clickThroughUrl)
         {
             CxAudioRuntime.Dispatch(callbackContext, () =>
