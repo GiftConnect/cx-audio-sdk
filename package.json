@@ -23,6 +23,7 @@
     "samples/android/build.gradle",
     "samples/android/src",
     "samples/ios/CxAudioSample.xcodeproj/project.pbxproj",
+    "samples/ios/CxAudioSample.xcodeproj/xcshareddata",
     "samples/ios/CxAudioSample"
   ],
   "scripts": {

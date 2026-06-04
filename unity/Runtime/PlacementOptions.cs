@@ -7,15 +7,25 @@ namespace Cx.Audio.Unity
         public BackgroundAudioOptions()
         {
             Volume = 0.2f;
+            MinDeviceVolume = 0.1f;
         }
 
         public float Volume { get; set; }
+
+        public float MinDeviceVolume { get; set; }
 
         internal void Validate()
         {
             if (float.IsNaN(Volume) || Volume < 0.0f || Volume > 1.0f)
             {
                 throw new ArgumentOutOfRangeException("Volume", "volume must be between 0.0 and 1.0");
+            }
+
+            if (float.IsNaN(MinDeviceVolume) || MinDeviceVolume < 0.0f || MinDeviceVolume > 1.0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    "MinDeviceVolume",
+                    "minDeviceVolume must be between 0.0 and 1.0");
             }
         }
     }

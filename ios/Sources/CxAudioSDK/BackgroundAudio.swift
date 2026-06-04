@@ -3,9 +3,11 @@ import Foundation
 
 public struct BackgroundAudioOptions: Equatable {
     public let volume: Float
+    public let minDeviceVolume: Float
 
-    public init(volume: Float = 0.2) {
+    public init(volume: Float = 0.2, minDeviceVolume: Float = 0.1) {
         self.volume = volume
+        self.minDeviceVolume = minDeviceVolume
     }
 }
 
@@ -41,6 +43,26 @@ public enum CxBackgroundAudio {
                 listener.backgroundAudioDidFail(
                     CxAudioError.invalidOption("volume must be between 0.0 and 1.0")
                 )
+            }
+            return handle
+        }
+
+        guard !options.minDeviceVolume.isNaN
+            && options.minDeviceVolume >= 0
+            && options.minDeviceVolume <= 1 else {
+            DispatchQueue.main.async {
+                listener.backgroundAudioDidFail(
+                    CxAudioError.invalidOption("minDeviceVolume must be between 0.0 and 1.0")
+                )
+            }
+            return handle
+        }
+
+        guard DeviceVolumeMonitor.isDeviceVolumeAllowed(
+            minDeviceVolume: options.minDeviceVolume
+        ) else {
+            DispatchQueue.main.async {
+                listener.backgroundAudioDidFail(CxAudioError.volumeTooLow(options.minDeviceVolume))
             }
             return handle
         }

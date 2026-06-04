@@ -88,7 +88,7 @@ public final class MainActivity extends Activity {
                 new String[]{
                         "VAST 4.x audio support",
                         "Streams audio with low-latency playback",
-                        "Volume control and lifecycle callbacks"
+                        "Volume gatekeeper and lifecycle callbacks"
                 },
                 "Play background audio",
                 this::playBackgroundAudio,
@@ -306,6 +306,7 @@ public final class MainActivity extends Activity {
             BackgroundAudioRequest request = BackgroundAudioRequest.builder(vastTagUrl()).build();
             BackgroundAudioOptions options = BackgroundAudioOptions.builder()
                     .volume(0.2f)
+                    .minDeviceVolume(0.1f)
                     .build();
             backgroundAudioHandle = AndroidBackgroundAudio.play(
                     this,

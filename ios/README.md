@@ -52,7 +52,7 @@ final class AudioAdListener: BackgroundAudioListener {
 let listener = AudioAdListener()
 let handle = CxBackgroundAudio.play(
     request: request,
-    options: BackgroundAudioOptions(volume: 0.2),
+    options: BackgroundAudioOptions(volume: 0.2, minDeviceVolume: 0.1),
     listener: listener
 )
 
@@ -60,7 +60,7 @@ handle.setVolume(0.1)
 handle.stop()
 ```
 
-The SDK selects an audio `MediaFile` and streams it through `AVPlayer`.
+The SDK selects an audio `MediaFile` and streams it through `AVPlayer`. `minDeviceVolume` defaults to `0.1`; set it to `0.0` to disable the pre-request device volume gate.
 
 ## Sticky Player
 
@@ -88,7 +88,7 @@ let handle = CxStickyPlayer.show(
 handle.dismiss()
 ```
 
-The SDK selects the image companion closest to 300x250, downloads it, and renders it in a top or bottom safe-area overlay. Companion clicks open through `UIApplication.shared.open`.
+The SDK selects the image companion closest to 300x250, downloads it, and renders it in a top or bottom safe-area overlay. The companion keeps its aspect ratio with a dimmed cropped background and centered foreground creative. Companion clicks open through `UIApplication.shared.open`.
 
 ## Full Screen Interstitial
 
@@ -123,13 +123,14 @@ The SDK selects an image or video `MediaFile` for the main area and adds a compa
 The platform-neutral VAST parser/model files can be typechecked from the repository root:
 
 ```sh
-swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
+swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/DeviceVolumeMonitor.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
 ```
 
-Full iOS validation requires Xcode because the package imports `UIKit` and `AVFoundation`:
+Full iOS validation requires full Xcode because the package imports Apple platform frameworks such as `UIKit`, `AVFoundation`, and `AVAudioSession`:
 
 ```sh
 xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' build
+xcodebuild -project samples/ios/CxAudioSample.xcodeproj -scheme CxAudioSample -destination 'platform=iOS Simulator,name=iPhone 15' build
 ```
 
 Then smoke-test all three placements in a host app with known-good VAST tags:

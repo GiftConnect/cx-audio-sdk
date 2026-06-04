@@ -79,12 +79,17 @@ public final class AndroidPlacementConfigurationTest {
     public void backgroundAudioOptionsValidateVolume() {
         BackgroundAudioOptions options = BackgroundAudioOptions.builder()
                 .volume(0.4f)
+                .minDeviceVolume(0.15f)
                 .build();
 
         assertEquals(0.4f, options.getVolume(), 0.0f);
+        assertEquals(0.15f, options.getMinDeviceVolume(), 0.0f);
         assertThrows(IllegalArgumentException.class, () -> BackgroundAudioOptions.builder().volume(-0.1f));
         assertThrows(IllegalArgumentException.class, () -> BackgroundAudioOptions.builder().volume(1.1f));
         assertThrows(IllegalArgumentException.class, () -> BackgroundAudioOptions.builder().volume(Float.NaN));
+        assertThrows(IllegalArgumentException.class, () -> BackgroundAudioOptions.builder().minDeviceVolume(-0.1f));
+        assertThrows(IllegalArgumentException.class, () -> BackgroundAudioOptions.builder().minDeviceVolume(1.1f));
+        assertThrows(IllegalArgumentException.class, () -> BackgroundAudioOptions.builder().minDeviceVolume(Float.NaN));
     }
 
     @Test

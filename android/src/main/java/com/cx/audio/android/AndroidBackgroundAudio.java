@@ -1,6 +1,7 @@
 package com.cx.audio.android;
 
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -40,6 +41,13 @@ public final class AndroidBackgroundAudio {
                 listener,
                 resolvedOptions.getVolume(),
                 mainHandler);
+
+        if (!isDeviceVolumeAllowed(appContext, resolvedOptions.getMinDeviceVolume())) {
+            mainHandler.post(() -> handle.fail(new IllegalStateException(
+                    "VOLUME_TOO_LOW: device media volume is below "
+                            + resolvedOptions.getMinDeviceVolume())));
+            return handle;
+        }
 
         EXECUTOR.execute(() -> {
             try {
@@ -109,6 +117,26 @@ public final class AndroidBackgroundAudio {
         if (Float.isNaN(volume) || volume < 0.0f || volume > 1.0f) {
             throw new IllegalArgumentException("volume must be between 0.0 and 1.0");
         }
+    }
+
+    private static boolean isDeviceVolumeAllowed(Context context, float minDeviceVolume) {
+        validateVolume(minDeviceVolume);
+        if (minDeviceVolume <= 0.0f) {
+            return true;
+        }
+
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager == null) {
+            return true;
+        }
+
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        if (maxVolume <= 0) {
+            return true;
+        }
+
+        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        return currentVolume / (float) maxVolume >= minDeviceVolume;
     }
 
     private static final class PendingBackgroundAudioHandle implements BackgroundAudioHandle {

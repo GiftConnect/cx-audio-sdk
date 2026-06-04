@@ -38,7 +38,8 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
             new VastRequest("https://ads.example.com/vast.xml"),
             new BackgroundAudioOptions
             {
-                Volume = 0.2f
+                Volume = 0.2f,
+                MinDeviceVolume = 0.1f
             },
             this);
     }

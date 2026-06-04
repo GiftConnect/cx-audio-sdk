@@ -54,6 +54,7 @@ public enum CxAudioError: Error, LocalizedError, Equatable {
     case httpStatus(Int, URL)
     case imageDecodeFailed(URL)
     case activityUnavailable
+    case volumeTooLow(Float)
     case playbackFailed(String)
 
     public var errorDescription: String? {
@@ -80,6 +81,8 @@ public enum CxAudioError: Error, LocalizedError, Equatable {
             return "Image could not be decoded: \(url.absoluteString)"
         case .activityUnavailable:
             return "A visible view controller is required for this placement"
+        case .volumeTooLow(let threshold):
+            return "Device output volume is below \(threshold)"
         case .playbackFailed(let message):
             return message
         }

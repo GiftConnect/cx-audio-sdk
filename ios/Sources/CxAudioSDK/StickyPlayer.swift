@@ -190,8 +190,23 @@ private final class StickyPlayerOverlayView: UIView {
         accessibilityLabel = "Advertisement"
         isAccessibilityElement = true
 
+        let backgroundImageView = UIImageView(image: image)
+        backgroundImageView.contentMode = .scaleAspectFill
+        backgroundImageView.alpha = 0.32
+        backgroundImageView.clipsToBounds = true
+        backgroundImageView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(backgroundImageView)
+
+        NSLayoutConstraint.activate([
+            backgroundImageView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            backgroundImageView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            backgroundImageView.topAnchor.constraint(equalTo: topAnchor),
+            backgroundImageView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
         imageView.isUserInteractionEnabled = true
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleClick)))
@@ -203,11 +218,12 @@ private final class StickyPlayerOverlayView: UIView {
         } else {
             aspectWidth = 86
         }
+        let imageWidth = min(max(86, aspectWidth), max(86, options.height * 1.35))
         NSLayoutConstraint.activate([
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
             imageView.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             imageView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
-            imageView.widthAnchor.constraint(greaterThanOrEqualToConstant: max(56, aspectWidth)),
+            imageView.widthAnchor.constraint(equalToConstant: max(56, imageWidth)),
             imageView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: options.horizontalPadding),
             imageView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -options.horizontalPadding)
         ])

@@ -79,6 +79,7 @@ The Android background audio placement:
 - Fetches a VAST tag URL over HTTP(S).
 - Resolves up to five VAST wrappers.
 - Parses the best audio `MediaFile`, preferring progressive delivery and common mobile audio MIME types.
+- Skips playback before fetching VAST when device media volume is below the configured threshold.
 - Streams the ad audio through Android `MediaPlayer`.
 - Defaults to low-volume playback suitable for gameplay or app usage.
 
@@ -90,6 +91,7 @@ BackgroundAudioRequest request = BackgroundAudioRequest
 
 BackgroundAudioOptions options = BackgroundAudioOptions.builder()
         .volume(0.2f)
+        .minDeviceVolume(0.1f)
         .build();
 
 BackgroundAudioHandle handle = AndroidBackgroundAudio.play(
@@ -119,7 +121,7 @@ BackgroundAudioHandle handle = AndroidBackgroundAudio.play(
         });
 ```
 
-Call `handle.stop()` from the host app when playback should end programmatically. Call `handle.setVolume(0.0f)` through `handle.setVolume(1.0f)` to adjust playback volume after starting.
+Call `handle.stop()` from the host app when playback should end programmatically. Call `handle.setVolume(0.0f)` through `handle.setVolume(1.0f)` to adjust playback volume after starting. Set `minDeviceVolume(0.0f)` to disable the pre-request device volume gate.
 
 ## Android Full Screen Interstitial
 The Android full screen interstitial placement:
@@ -181,6 +183,7 @@ The Android sticky player:
 - Parses the best image companion ad, preferring dimensions closest to 300x250.
 - Downloads the companion image.
 - Renders a clickable sticky overlay at the top or bottom of the host `Activity`.
+- Fits the companion without distortion by using a dimmed cropped background and a centered foreground creative.
 - Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
 
 ### Usage
@@ -267,7 +270,7 @@ let request = try VastRequest(vastTagURLString: "https://ads.example.com/vast.xm
 
 let handle = CxBackgroundAudio.play(
     request: request,
-    options: BackgroundAudioOptions(volume: 0.2),
+    options: BackgroundAudioOptions(volume: 0.2, minDeviceVolume: 0.1),
     listener: listener
 )
 
@@ -275,7 +278,7 @@ handle.setVolume(0.1)
 handle.stop()
 ```
 
-`BackgroundAudioOptions.volume` must be between `0.0` and `1.0`. The default is `0.2`.
+`BackgroundAudioOptions.volume` must be between `0.0` and `1.0`. The default is `0.2`. `minDeviceVolume` defaults to `0.1`; set it to `0.0` to disable the pre-request device volume gate.
 
 Implement `BackgroundAudioListener` to observe start, completion, stop, and failure events:
 
@@ -306,7 +309,7 @@ let handle = CxStickyPlayer.show(
 handle.dismiss()
 ```
 
-`StickyPlayerOptions.position` supports `.top` and `.bottom`. The SDK downloads the best image companion and displays it in a clickable safe-area overlay.
+`StickyPlayerOptions.position` supports `.top` and `.bottom`. The SDK downloads the best image companion and displays it in a clickable safe-area overlay with a dimmed cropped background and a centered foreground creative, preserving the companion aspect ratio.
 
 Implement `StickyPlayerListener` to observe load, click, dismissal, and failure events:
 
@@ -380,7 +383,7 @@ import { BackgroundAudio } from 'cx-audio-sdk';
 
 const handleId = await BackgroundAudio.play(
   { vastTagUrl: 'https://ads.example.com/vast.xml' },
-  { volume: 0.2 }
+  { volume: 0.2, minDeviceVolume: 0.1 }
 );
 
 await BackgroundAudio.setVolume(handleId, 0.1);
@@ -445,7 +448,8 @@ BackgroundAudioHandle handle = BackgroundAudio.Play(
     new VastRequest("https://ads.example.com/vast.xml"),
     new BackgroundAudioOptions
     {
-        Volume = 0.2f
+        Volume = 0.2f,
+        MinDeviceVolume = 0.1f
     },
     listener);
 
@@ -497,15 +501,15 @@ Run the repository checks from the root:
 ```sh
 npm run check:react-native
 node -e "JSON.parse(require('fs').readFileSync('unity/package.json', 'utf8'))"
-swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
+swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/DeviceVolumeMonitor.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
 npm --cache /tmp/cx-audio-sdk-npm-cache pack --dry-run
 ./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint :sample-android:assembleDebug
 ```
 
-These commands verify JavaScript syntax, Unity package metadata, iOS VAST parser/model typechecking, npm package contents, Android SDK unit tests/build/lint, React Native Android bridge build/lint, and Android sample app assembly. The Unity C# package must also be compiled in Unity because this environment does not include the Unity Editor or UnityEngine assemblies.
+These commands verify JavaScript syntax, Unity package metadata, iOS platform-neutral helper/parser/model typechecking, npm package contents, Android SDK unit tests/build/lint, React Native Android bridge build/lint, and Android sample app assembly. The Unity C# package must also be compiled in Unity because this environment does not include the Unity Editor or UnityEngine assemblies.
 
 ### iOS Validation
-The full iOS target depends on Apple platform frameworks and must be built with Xcode. To validate it, use a macOS machine with:
+The full iOS target depends on Apple platform frameworks and must be built with full Xcode, not Command Line Tools alone. To validate it, use a macOS machine with:
 
 - Xcode 15 or newer.
 - Swift 5.9 or newer through Xcode.
@@ -520,7 +524,7 @@ xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 1
 xcodebuild -project samples/ios/CxAudioSample.xcodeproj -scheme CxAudioSample -destination 'platform=iOS Simulator,name=iPhone 15' build
 ```
 
-Then run `samples/ios/CxAudioSample.xcodeproj` and smoke-test all three placements with known-good VAST tags:
+The sample app includes a shared `CxAudioSample` scheme for command-line builds. Then run `samples/ios/CxAudioSample.xcodeproj` and smoke-test all three placements with known-good VAST tags:
 
 - Background audio starts, stops, completes, and applies volume changes.
 - Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.

@@ -2,13 +2,19 @@ package com.cx.audio.android;
 
 public final class BackgroundAudioOptions {
     private final float volume;
+    private final float minDeviceVolume;
 
     private BackgroundAudioOptions(Builder builder) {
         this.volume = builder.volume;
+        this.minDeviceVolume = builder.minDeviceVolume;
     }
 
     public float getVolume() {
         return volume;
+    }
+
+    public float getMinDeviceVolume() {
+        return minDeviceVolume;
     }
 
     public static Builder builder() {
@@ -17,10 +23,17 @@ public final class BackgroundAudioOptions {
 
     public static final class Builder {
         private float volume = 0.2f;
+        private float minDeviceVolume = 0.1f;
 
         public Builder volume(float volume) {
             validateVolume(volume);
             this.volume = volume;
+            return this;
+        }
+
+        public Builder minDeviceVolume(float minDeviceVolume) {
+            validateVolume(minDeviceVolume);
+            this.minDeviceVolume = minDeviceVolume;
             return this;
         }
 

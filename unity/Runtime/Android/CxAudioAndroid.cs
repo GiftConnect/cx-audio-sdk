@@ -46,6 +46,7 @@ namespace Cx.Audio.Unity
                 }
 
                 CallBuilder(builder, "volume", options.Volume);
+                CallBuilder(builder, "minDeviceVolume", options.MinDeviceVolume);
                 return builder.Call<AndroidJavaObject>("build");
             }
             finally

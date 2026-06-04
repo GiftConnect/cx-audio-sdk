@@ -376,6 +376,9 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(optionsMap, "volume")) {
             builder.volume((float) optionsMap.getDouble("volume"));
         }
+        if (hasValue(optionsMap, "minDeviceVolume")) {
+            builder.minDeviceVolume((float) optionsMap.getDouble("minDeviceVolume"));
+        }
         return builder.build();
     }
 

@@ -34,6 +34,7 @@ export interface VastRequest {
 
 export interface BackgroundAudioOptions {
   volume?: number;
+  minDeviceVolume?: number;
 }
 
 export interface StickyPlayerOptions {

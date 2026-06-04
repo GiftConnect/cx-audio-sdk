@@ -100,7 +100,7 @@ final class SampleViewController: UIViewController {
             bullets: [
                 "VAST 4.x audio support",
                 "Streams audio with low-latency playback",
-                "Volume control and lifecycle callbacks"
+                "Volume gatekeeper and lifecycle callbacks"
             ],
             primaryTitle: "Play background audio",
             primaryAction: #selector(playBackgroundAudio),
@@ -276,7 +276,7 @@ final class SampleViewController: UIViewController {
             let request = try vastRequest()
             backgroundAudioHandle = CxBackgroundAudio.play(
                 request: request,
-                options: BackgroundAudioOptions(volume: 0.2),
+                options: BackgroundAudioOptions(volume: 0.2, minDeviceVolume: 0.1),
                 listener: self
             )
             updateStatus("Loading background audio...")

@@ -30,14 +30,25 @@ public final class StickyPlayerOverlayView extends FrameLayout {
         removeAllViews();
         setContentDescription("Advertisement");
 
+        ImageView backgroundImage = new ImageView(getContext());
+        backgroundImage.setImageBitmap(bitmap);
+        backgroundImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        backgroundImage.setAlpha(0.32f);
+        addView(backgroundImage, new LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT));
+
         ImageView companionImage = new ImageView(getContext());
         companionImage.setImageBitmap(bitmap);
         companionImage.setAdjustViewBounds(true);
         companionImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-        int imageWidthDp = companion.getWidth() > 0 && companion.getHeight() > 0
+        int aspectWidthDp = companion.getWidth() > 0 && companion.getHeight() > 0
                 ? Math.round(options.getHeightDp() * (companion.getWidth() / (float) companion.getHeight()))
                 : 86;
+        int imageWidthDp = Math.min(
+                Math.max(86, aspectWidthDp),
+                Math.max(86, Math.round(options.getHeightDp() * 1.35f)));
         LayoutParams imageParams = new LayoutParams(
                 Math.max(dp(56), dp(imageWidthDp)),
                 LayoutParams.MATCH_PARENT);
