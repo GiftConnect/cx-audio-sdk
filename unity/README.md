@@ -79,7 +79,9 @@ public sealed class StickyAd : MonoBehaviour, IStickyPlayerListener
             {
                 Position = StickyPlayerPosition.Bottom,
                 HeightDp = 72,
-                ShowCloseButton = true
+                ShowCloseButton = true,
+                Volume = 0.2f,
+                MinDeviceVolume = 0.1f
             },
             this);
     }
@@ -95,6 +97,8 @@ public sealed class StickyAd : MonoBehaviour, IStickyPlayerListener
     }
 
     public void OnStickyPlayerLoaded(StickyPlayerHandle handle) {}
+    public void OnStickyPlayerAudioStarted(StickyPlayerHandle handle) {}
+    public void OnStickyPlayerAudioCompleted() {}
     public void OnStickyPlayerClicked(string clickThroughUrl) {}
     public void OnStickyPlayerDismissed() {}
     public void OnStickyPlayerFailed(CxAudioError error) {}

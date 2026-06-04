@@ -77,6 +77,11 @@ internal struct VastInterstitialAd {
     let companion: VastCompanion?
 }
 
+internal struct VastStickyPlayerAd {
+    let mediaFile: VastMediaFile
+    let companion: VastCompanion
+}
+
 internal struct VastMediaFileCandidate {
     let urlString: String
     let type: String?

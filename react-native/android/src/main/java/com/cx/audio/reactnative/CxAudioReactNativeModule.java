@@ -155,6 +155,16 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
                         }
 
                         @Override
+                        public void onStickyPlayerAudioStarted(StickyPlayerHandle handle) {
+                            sendEvent("started", STICKY_PLAYER, handleId, null, null);
+                        }
+
+                        @Override
+                        public void onStickyPlayerAudioCompleted() {
+                            sendEvent("completed", STICKY_PLAYER, handleId, null, null);
+                        }
+
+                        @Override
                         public void onStickyPlayerClicked(String clickThroughUrl) {
                             sendEvent("clicked", STICKY_PLAYER, handleId, clickThroughUrl, null);
                         }
@@ -395,6 +405,12 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         }
         if (hasValue(optionsMap, "showCloseButton")) {
             builder.showCloseButton(optionsMap.getBoolean("showCloseButton"));
+        }
+        if (hasValue(optionsMap, "volume")) {
+            builder.volume((float) optionsMap.getDouble("volume"));
+        }
+        if (hasValue(optionsMap, "minDeviceVolume")) {
+            builder.minDeviceVolume((float) optionsMap.getDouble("minDeviceVolume"));
         }
         return builder.build();
     }

@@ -65,14 +65,24 @@ public final class AndroidPlacementConfigurationTest {
                 .heightDp(96)
                 .horizontalPaddingDp(16)
                 .showCloseButton(false)
+                .volume(0.35f)
+                .minDeviceVolume(0.2f)
                 .build();
 
         assertEquals(StickyPlayerPosition.TOP, options.getPosition());
         assertEquals(96, options.getHeightDp());
         assertEquals(16, options.getHorizontalPaddingDp());
         assertFalse(options.shouldShowCloseButton());
+        assertEquals(0.35f, options.getVolume(), 0.0f);
+        assertEquals(0.2f, options.getMinDeviceVolume(), 0.0f);
         assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().heightDp(47));
         assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().horizontalPaddingDp(-1));
+        assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().volume(-0.1f));
+        assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().volume(1.1f));
+        assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().volume(Float.NaN));
+        assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().minDeviceVolume(-0.1f));
+        assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().minDeviceVolume(1.1f));
+        assertThrows(IllegalArgumentException.class, () -> StickyPlayerOptions.builder().minDeviceVolume(Float.NaN));
     }
 
     @Test

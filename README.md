@@ -133,6 +133,16 @@ The Android full screen interstitial placement:
 - Supports image or video media in the main full-screen area.
 - Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
 
+### Lifecycle
+1. Build a `FullscreenInterstitialRequest` with the VAST tag URL, timeout values, and optional user agent.
+2. Call `AndroidFullscreenInterstitial.show(...)` at a natural break in app flow.
+3. Retain the returned `FullscreenInterstitialHandle`; the SDK loads the VAST response and media asynchronously.
+4. Treat `onFullscreenInterstitialLoaded` as the moment the overlay is visible.
+5. Treat `onFullscreenInterstitialClicked` as a companion click event and forward it to analytics or attribution code as needed.
+6. Treat `onFullscreenInterstitialDismissed` as terminal cleanup; clear your handle reference.
+7. Call `handle.dismiss()` if app navigation, pause, or your own frequency cap requires programmatic removal.
+8. Treat `onFullscreenInterstitialFailed` as terminal cleanup; no overlay should remain active.
+
 ### Usage
 ```java
 FullscreenInterstitialRequest request = FullscreenInterstitialRequest
@@ -180,11 +190,24 @@ The Android sticky player:
 
 - Fetches a VAST tag URL over HTTP(S).
 - Resolves up to five VAST wrappers.
+- Parses the best audio media file for playback.
 - Parses the best image companion ad, preferring dimensions closest to 300x250.
 - Downloads the companion image.
 - Renders a clickable sticky overlay at the top or bottom of the host `Activity`.
+- Starts audio playback after the sticky overlay is visible.
 - Fits the companion without distortion by using a dimmed cropped background and a centered foreground creative.
 - Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
+
+### Lifecycle
+1. Build a `StickyPlayerRequest` with the VAST tag URL, timeout values, and optional user agent.
+2. Call `AndroidStickyPlayer.show(...)` when the host screen can support a persistent top or bottom overlay.
+3. Retain the returned `StickyPlayerHandle`; the SDK loads the VAST response, companion image, and audio media asynchronously.
+4. Treat `onStickyPlayerLoaded` as the moment the overlay is visible.
+5. Treat `onStickyPlayerAudioStarted` as the moment the ad audio begins.
+6. Treat `onStickyPlayerClicked` as a companion click event and forward it to analytics or attribution code as needed.
+7. Keep the sticky player visible until audio completes, the user closes it, the placement lifecycle ends, or the host app calls `handle.dismiss()`.
+8. Treat `onStickyPlayerAudioCompleted` followed by `onStickyPlayerDismissed` as normal terminal cleanup.
+9. Treat `onStickyPlayerFailed` as terminal cleanup; no overlay or audio playback should remain active.
 
 ### Usage
 ```java
@@ -196,6 +219,8 @@ StickyPlayerOptions options = StickyPlayerOptions.builder()
         .position(StickyPlayerPosition.BOTTOM)
         .heightDp(72)
         .showCloseButton(true)
+        .volume(0.2f)
+        .minDeviceVolume(0.1f)
         .build();
 
 StickyPlayerHandle handle = AndroidStickyPlayer.show(
@@ -205,7 +230,17 @@ StickyPlayerHandle handle = AndroidStickyPlayer.show(
         new StickyPlayerListener() {
             @Override
             public void onStickyPlayerLoaded(StickyPlayerHandle handle) {
-                // The sticky player is visible.
+                // The sticky player is visible and audio is preparing.
+            }
+
+            @Override
+            public void onStickyPlayerAudioStarted(StickyPlayerHandle handle) {
+                // The sticky audio ad started.
+            }
+
+            @Override
+            public void onStickyPlayerAudioCompleted() {
+                // The sticky audio ad completed.
             }
 
             @Override
@@ -225,7 +260,7 @@ StickyPlayerHandle handle = AndroidStickyPlayer.show(
         });
 ```
 
-Call `handle.dismiss()` from the host app when the placement should be removed programmatically.
+Call `handle.dismiss()` from the host app when the placement should be removed programmatically. Dismissal stops sticky audio playback and removes the overlay.
 
 ## iOS
 The iOS target is implemented as a Swift Package in `Package.swift`, with source under `ios/Sources/CxAudioSDK`.
@@ -301,7 +336,9 @@ let handle = CxStickyPlayer.show(
     options: StickyPlayerOptions(
         position: .bottom,
         height: 72,
-        showCloseButton: true
+        showCloseButton: true,
+        volume: 0.2,
+        minDeviceVolume: 0.1
     ),
     listener: listener
 )
@@ -309,13 +346,27 @@ let handle = CxStickyPlayer.show(
 handle.dismiss()
 ```
 
-`StickyPlayerOptions.position` supports `.top` and `.bottom`. The SDK downloads the best image companion and displays it in a clickable safe-area overlay with a dimmed cropped background and a centered foreground creative, preserving the companion aspect ratio.
+`StickyPlayerOptions.position` supports `.top` and `.bottom`. The SDK loads the best audio media file and image companion, displays the companion in a clickable safe-area overlay, then starts audio playback. The companion uses a dimmed cropped background and a centered foreground creative, preserving the companion aspect ratio.
+
+Lifecycle guidance:
+
+1. Build a `VastRequest` with the VAST tag URL, timeout interval, and optional user agent.
+2. Call `CxStickyPlayer.show(...)` when the current view controller can support a persistent safe-area overlay.
+3. Retain the returned `StickyPlayerHandle`; VAST, image, and audio setup happen asynchronously.
+4. Treat `stickyPlayerDidLoad` as the moment the overlay is visible.
+5. Treat `stickyPlayerDidStartAudio` as the moment the ad audio begins.
+6. Treat `stickyPlayerWasClicked` as a companion click event and forward it to analytics or attribution code as needed.
+7. Keep the sticky player visible until audio completes, the user closes it, the placement lifecycle ends, or the host app calls `handle.dismiss()`.
+8. Treat `stickyPlayerDidCompleteAudio` followed by `stickyPlayerDidDismiss` as normal terminal cleanup.
+9. Treat `stickyPlayerDidFail` as terminal cleanup; no overlay or audio playback should remain active.
 
 Implement `StickyPlayerListener` to observe load, click, dismissal, and failure events:
 
 ```swift
 final class StickyAdListener: StickyPlayerListener {
     func stickyPlayerDidLoad(_ handle: StickyPlayerHandle) {}
+    func stickyPlayerDidStartAudio(_ handle: StickyPlayerHandle) {}
+    func stickyPlayerDidCompleteAudio() {}
     func stickyPlayerWasClicked(_ clickThroughURL: URL?) {}
     func stickyPlayerDidDismiss() {}
     func stickyPlayerDidFail(_ error: Error) {}
@@ -342,6 +393,17 @@ handle.dismiss()
 ```
 
 The full-screen placement displays the selected visual `MediaFile` as either an image or video, then adds a clickable companion area when a companion image is available.
+
+Lifecycle guidance:
+
+1. Build a `VastRequest` with the VAST tag URL, timeout interval, and optional user agent.
+2. Call `CxFullscreenInterstitial.show(...)` at a natural break in app flow.
+3. Retain the returned `FullscreenInterstitialHandle`; VAST, image, and video setup happen asynchronously.
+4. Treat `fullscreenInterstitialDidLoad` as the moment the overlay is visible.
+5. Treat `fullscreenInterstitialWasClicked` as a companion click event and forward it to analytics or attribution code as needed.
+6. Treat `fullscreenInterstitialDidDismiss` as terminal cleanup; clear your handle reference.
+7. Call `handle.dismiss()` if app navigation, pause, or your own frequency cap requires programmatic removal.
+8. Treat `fullscreenInterstitialDidFail` as terminal cleanup; no overlay should remain active.
 
 Implement `FullscreenInterstitialListener` to observe load, click, dismissal, and failure events:
 
@@ -400,6 +462,8 @@ const handleId = await StickyPlayer.show(
     position: StickyPlayerPosition.BOTTOM,
     heightDp: 72,
     showCloseButton: true,
+    volume: 0.2,
+    minDeviceVolume: 0.1,
   }
 );
 

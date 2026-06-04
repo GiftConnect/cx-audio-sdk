@@ -80,7 +80,9 @@ let handle = CxStickyPlayer.show(
         position: .bottom,
         height: 72,
         horizontalPadding: 12,
-        showCloseButton: true
+        showCloseButton: true,
+        volume: 0.2,
+        minDeviceVolume: 0.1
     ),
     listener: listener
 )
@@ -88,7 +90,7 @@ let handle = CxStickyPlayer.show(
 handle.dismiss()
 ```
 
-The SDK selects the image companion closest to 300x250, downloads it, and renders it in a top or bottom safe-area overlay. The companion keeps its aspect ratio with a dimmed cropped background and centered foreground creative. Companion clicks open through `UIApplication.shared.open`.
+The SDK selects the image companion closest to 300x250 and the best audio media file. It downloads the companion, renders it in a top or bottom safe-area overlay, then starts audio playback. The companion keeps its aspect ratio with a dimmed cropped background and centered foreground creative. Companion clicks open through `UIApplication.shared.open`, and dismissing the sticky player stops audio playback.
 
 ## Full Screen Interstitial
 

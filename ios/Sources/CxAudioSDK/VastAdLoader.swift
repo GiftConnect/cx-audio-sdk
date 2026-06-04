@@ -44,6 +44,28 @@ internal final class VastAdLoader {
         )
     }
 
+    func loadStickyPlayerAd(
+        request: VastRequest,
+        completion: @escaping (Result<VastStickyPlayerAd, Error>) -> Void
+    ) {
+        resolve(
+            url: request.vastTagURL,
+            request: request,
+            depth: 0,
+            select: { document, baseURL in
+                guard let mediaFile = document.bestAudioMediaFile(baseURL: baseURL),
+                      let companion = document.bestCompanion(baseURL: baseURL) else {
+                    return nil
+                }
+                return VastStickyPlayerAd(mediaFile: mediaFile, companion: companion)
+            },
+            missingError: CxAudioError.invalidOption(
+                "VAST response did not include both audio media and an image companion"
+            ),
+            completion: completion
+        )
+    }
+
     func loadInterstitial(
         request: VastRequest,
         completion: @escaping (Result<VastInterstitialAd, Error>) -> Void

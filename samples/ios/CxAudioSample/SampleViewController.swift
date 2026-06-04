@@ -10,6 +10,20 @@ final class SampleViewController: UIViewController {
 
     private let vastTagField = UITextView()
     private let statusLabel = UILabel()
+    private let timeoutField = UITextField()
+    private let userAgentField = UITextField()
+    private let backgroundVolumeField = UITextField()
+    private let minimumDeviceVolumeField = UITextField()
+    private let stickyPositionControl = UISegmentedControl(items: ["Bottom", "Top"])
+    private let stickyHeightField = UITextField()
+    private let stickyPaddingField = UITextField()
+    private let stickyCloseSwitch = UISwitch()
+    private let stickyVolumeField = UITextField()
+    private let stickyMinimumDeviceVolumeField = UITextField()
+    private let interstitialCloseSwitch = UISwitch()
+    private let interstitialCompanionHeightField = UITextField()
+    private let interstitialCompanionMaxWidthField = UITextField()
+    private let interstitialAutoplaySwitch = UISwitch()
 
     private var backgroundAudioHandle: BackgroundAudioHandle?
     private var stickyPlayerHandle: StickyPlayerHandle?
@@ -84,6 +98,8 @@ final class SampleViewController: UIViewController {
         vastTagField.textContainerInset = UIEdgeInsets(top: 10, left: 8, bottom: 10, right: 8)
         content.addArrangedSubview(vastTagField)
         vastTagField.heightAnchor.constraint(greaterThanOrEqualToConstant: 76).isActive = true
+
+        content.addArrangedSubview(developerControls())
 
         let placementTitle = UILabel()
         placementTitle.text = "3 PLACEMENT TYPES. MAXIMUM IMPACT."
@@ -184,6 +200,108 @@ final class SampleViewController: UIViewController {
         return header
     }
 
+    private func developerControls() -> UIView {
+        let container = UIStackView()
+        container.axis = .vertical
+        container.spacing = 10
+        container.backgroundColor = .white
+        container.layer.borderColor = UIColor(red: 210 / 255, green: 222 / 255, blue: 236 / 255, alpha: 1).cgColor
+        container.layer.borderWidth = 1
+        container.layer.cornerRadius = 12
+        container.layoutMargins = UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16)
+        container.isLayoutMarginsRelativeArrangement = true
+
+        let title = UILabel()
+        title.text = "Developer parameters"
+        title.font = .preferredFont(forTextStyle: .headline)
+        title.textColor = ink
+        container.addArrangedSubview(title)
+
+        timeoutField.text = "8"
+        userAgentField.text = "cx-audio-sdk-ios/0.1"
+        backgroundVolumeField.text = "0.2"
+        minimumDeviceVolumeField.text = "0.1"
+        stickyPositionControl.selectedSegmentIndex = 0
+        stickyHeightField.text = "96"
+        stickyPaddingField.text = "12"
+        stickyCloseSwitch.isOn = true
+        stickyVolumeField.text = "0.2"
+        stickyMinimumDeviceVolumeField.text = "0.1"
+        interstitialCloseSwitch.isOn = true
+        interstitialCompanionHeightField.text = "250"
+        interstitialCompanionMaxWidthField.text = "300"
+        interstitialAutoplaySwitch.isOn = true
+
+        container.addArrangedSubview(optionSection("VAST request"))
+        container.addArrangedSubview(textOption("Timeout seconds", field: timeoutField, keyboardType: .decimalPad))
+        container.addArrangedSubview(textOption("User agent", field: userAgentField, keyboardType: .default))
+
+        container.addArrangedSubview(optionSection("Background audio"))
+        container.addArrangedSubview(textOption("Ad volume 0.0-1.0", field: backgroundVolumeField, keyboardType: .decimalPad))
+        container.addArrangedSubview(textOption("Minimum device volume 0.0-1.0", field: minimumDeviceVolumeField, keyboardType: .decimalPad))
+
+        container.addArrangedSubview(optionSection("Sticky player"))
+        container.addArrangedSubview(controlOption("Position", control: stickyPositionControl))
+        container.addArrangedSubview(textOption("Height points", field: stickyHeightField, keyboardType: .numberPad))
+        container.addArrangedSubview(textOption("Horizontal padding", field: stickyPaddingField, keyboardType: .numberPad))
+        container.addArrangedSubview(switchOption("Show close button", control: stickyCloseSwitch))
+        container.addArrangedSubview(textOption("Audio volume 0.0-1.0", field: stickyVolumeField, keyboardType: .decimalPad))
+        container.addArrangedSubview(textOption("Minimum device volume 0.0-1.0", field: stickyMinimumDeviceVolumeField, keyboardType: .decimalPad))
+
+        container.addArrangedSubview(optionSection("Fullscreen interstitial"))
+        container.addArrangedSubview(switchOption("Show close button", control: interstitialCloseSwitch))
+        container.addArrangedSubview(textOption("Companion height", field: interstitialCompanionHeightField, keyboardType: .numberPad))
+        container.addArrangedSubview(textOption("Companion max width", field: interstitialCompanionMaxWidthField, keyboardType: .numberPad))
+        container.addArrangedSubview(switchOption("Autoplay video", control: interstitialAutoplaySwitch))
+
+        return container
+    }
+
+    private func optionSection(_ text: String) -> UILabel {
+        let label = UILabel()
+        label.text = text
+        label.font = .systemFont(ofSize: 14, weight: .bold)
+        label.textColor = UIColor(red: 58 / 255, green: 75 / 255, blue: 98 / 255, alpha: 1)
+        return label
+    }
+
+    private func textOption(_ labelText: String, field: UITextField, keyboardType: UIKeyboardType) -> UIView {
+        field.borderStyle = .roundedRect
+        field.keyboardType = keyboardType
+        field.autocapitalizationType = .none
+        field.autocorrectionType = .no
+        return controlOption(labelText, control: field)
+    }
+
+    private func switchOption(_ labelText: String, control: UISwitch) -> UIView {
+        control.onTintColor = blue
+        return controlOption(labelText, control: control)
+    }
+
+    private func controlOption(_ labelText: String, control: UIView) -> UIView {
+        let row = UIStackView()
+        row.axis = .horizontal
+        row.alignment = .center
+        row.spacing = 12
+
+        let label = UILabel()
+        label.text = labelText
+        label.font = .preferredFont(forTextStyle: .subheadline)
+        label.textColor = ink
+        label.numberOfLines = 0
+        row.addArrangedSubview(label)
+
+        let spacer = UIView()
+        row.addArrangedSubview(spacer)
+
+        control.setContentHuggingPriority(.required, for: .horizontal)
+        if control is UITextField {
+            control.widthAnchor.constraint(equalToConstant: 168).isActive = true
+        }
+        row.addArrangedSubview(control)
+        return row
+    }
+
     private func placementCard(
         title: String,
         subtitle: String,
@@ -276,7 +394,7 @@ final class SampleViewController: UIViewController {
             let request = try vastRequest()
             backgroundAudioHandle = CxBackgroundAudio.play(
                 request: request,
-                options: BackgroundAudioOptions(volume: 0.2, minDeviceVolume: 0.1),
+                options: try backgroundOptions(),
                 listener: self
             )
             updateStatus("Loading background audio...")
@@ -298,7 +416,7 @@ final class SampleViewController: UIViewController {
             stickyPlayerHandle = CxStickyPlayer.show(
                 in: self,
                 request: try vastRequest(),
-                options: StickyPlayerOptions(position: .bottom, height: 96, showCloseButton: true),
+                options: try stickyOptions(),
                 listener: self
             )
             updateStatus("Loading sticky player...")
@@ -320,12 +438,7 @@ final class SampleViewController: UIViewController {
             fullscreenInterstitialHandle = CxFullscreenInterstitial.show(
                 from: self,
                 request: try vastRequest(),
-                options: FullscreenInterstitialOptions(
-                    showCloseButton: true,
-                    companionHeight: 250,
-                    companionMaxWidth: 300,
-                    autoPlayVideo: true
-                ),
+                options: try interstitialOptions(),
                 listener: self
             )
             updateStatus("Loading fullscreen interstitial...")
@@ -343,7 +456,64 @@ final class SampleViewController: UIViewController {
     }
 
     private func vastRequest() throws -> VastRequest {
-        try VastRequest(vastTagURLString: vastTagField.text.trimmingCharacters(in: .whitespacesAndNewlines))
+        try VastRequest(
+            vastTagURLString: vastTagField.text.trimmingCharacters(in: .whitespacesAndNewlines),
+            timeoutInterval: doubleValue(timeoutField, name: "Timeout seconds", minimum: 0.1),
+            userAgent: userAgentField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        )
+    }
+
+    private func backgroundOptions() throws -> BackgroundAudioOptions {
+        try BackgroundAudioOptions(
+            volume: floatValue(backgroundVolumeField, name: "Ad volume", minimum: 0, maximum: 1),
+            minDeviceVolume: floatValue(minimumDeviceVolumeField, name: "Minimum device volume", minimum: 0, maximum: 1)
+        )
+    }
+
+    private func stickyOptions() throws -> StickyPlayerOptions {
+        StickyPlayerOptions(
+            position: stickyPositionControl.selectedSegmentIndex == 1 ? .top : .bottom,
+            height: try CGFloat(doubleValue(stickyHeightField, name: "Sticky height", minimum: 48)),
+            horizontalPadding: try CGFloat(doubleValue(stickyPaddingField, name: "Sticky horizontal padding", minimum: 0)),
+            showCloseButton: stickyCloseSwitch.isOn,
+            volume: try floatValue(stickyVolumeField, name: "Sticky audio volume", minimum: 0, maximum: 1),
+            minDeviceVolume: try floatValue(stickyMinimumDeviceVolumeField, name: "Sticky minimum device volume", minimum: 0, maximum: 1)
+        )
+    }
+
+    private func interstitialOptions() throws -> FullscreenInterstitialOptions {
+        FullscreenInterstitialOptions(
+            showCloseButton: interstitialCloseSwitch.isOn,
+            companionHeight: try CGFloat(doubleValue(interstitialCompanionHeightField, name: "Companion height", minimum: 48)),
+            companionMaxWidth: try CGFloat(doubleValue(interstitialCompanionMaxWidthField, name: "Companion max width", minimum: 48)),
+            autoPlayVideo: interstitialAutoplaySwitch.isOn
+        )
+    }
+
+    private func doubleValue(
+        _ field: UITextField,
+        name: String,
+        minimum: Double,
+        maximum: Double? = nil
+    ) throws -> Double {
+        let text = field.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        guard let value = Double(text), value >= minimum else {
+            throw CxAudioError.invalidOption("\(name) must be at least \(minimum)")
+        }
+        if let maximum, value > maximum {
+            throw CxAudioError.invalidOption("\(name) must be no more than \(maximum)")
+        }
+        return value
+    }
+
+    private func floatValue(
+        _ field: UITextField,
+        name: String,
+        minimum: Float,
+        maximum: Float
+    ) throws -> Float {
+        let value = try doubleValue(field, name: name, minimum: Double(minimum), maximum: Double(maximum))
+        return Float(value)
     }
 
     @objc private func clearVastTag() {
@@ -380,7 +550,15 @@ extension SampleViewController: BackgroundAudioListener {
 
 extension SampleViewController: StickyPlayerListener {
     func stickyPlayerDidLoad(_ handle: StickyPlayerHandle) {
-        updateStatus("Sticky player loaded.")
+        updateStatus("Sticky player loaded. Preparing audio...")
+    }
+
+    func stickyPlayerDidStartAudio(_ handle: StickyPlayerHandle) {
+        updateStatus("Sticky player audio started.")
+    }
+
+    func stickyPlayerDidCompleteAudio() {
+        updateStatus("Sticky player audio completed.")
     }
 
     func stickyPlayerWasClicked(_ clickThroughURL: URL?) {

@@ -1,3 +1,4 @@
+import AVFoundation
 import UIKit
 
 public enum StickyPlayerPosition: Equatable {
@@ -10,17 +11,23 @@ public struct StickyPlayerOptions: Equatable {
     public let height: CGFloat
     public let horizontalPadding: CGFloat
     public let showCloseButton: Bool
+    public let volume: Float
+    public let minDeviceVolume: Float
 
     public init(
         position: StickyPlayerPosition = .bottom,
         height: CGFloat = 72,
         horizontalPadding: CGFloat = 12,
-        showCloseButton: Bool = true
+        showCloseButton: Bool = true,
+        volume: Float = 0.2,
+        minDeviceVolume: Float = 0.1
     ) {
         self.position = position
         self.height = height
         self.horizontalPadding = horizontalPadding
         self.showCloseButton = showCloseButton
+        self.volume = volume
+        self.minDeviceVolume = minDeviceVolume
     }
 }
 
@@ -33,11 +40,21 @@ public protocol StickyPlayerHandle: AnyObject {
 public protocol StickyPlayerListener: AnyObject {
     func stickyPlayerDidLoad(_ handle: StickyPlayerHandle)
 
+    func stickyPlayerDidStartAudio(_ handle: StickyPlayerHandle)
+
+    func stickyPlayerDidCompleteAudio()
+
     func stickyPlayerWasClicked(_ clickThroughURL: URL?)
 
     func stickyPlayerDidDismiss()
 
     func stickyPlayerDidFail(_ error: Error)
+}
+
+public extension StickyPlayerListener {
+    func stickyPlayerDidStartAudio(_ handle: StickyPlayerHandle) {}
+
+    func stickyPlayerDidCompleteAudio() {}
 }
 
 public enum CxStickyPlayer {
@@ -50,11 +67,40 @@ public enum CxStickyPlayer {
     ) -> StickyPlayerHandle {
         let handle = StickyPlayerHandleImpl(listener: listener)
 
-        VastAdLoader.shared.loadCompanion(request: request) { result in
+        guard !options.volume.isNaN && options.volume >= 0 && options.volume <= 1 else {
+            DispatchQueue.main.async {
+                listener.stickyPlayerDidFail(
+                    CxAudioError.invalidOption("volume must be between 0.0 and 1.0")
+                )
+            }
+            return handle
+        }
+
+        guard !options.minDeviceVolume.isNaN
+            && options.minDeviceVolume >= 0
+            && options.minDeviceVolume <= 1 else {
+            DispatchQueue.main.async {
+                listener.stickyPlayerDidFail(
+                    CxAudioError.invalidOption("minDeviceVolume must be between 0.0 and 1.0")
+                )
+            }
+            return handle
+        }
+
+        guard DeviceVolumeMonitor.isDeviceVolumeAllowed(
+            minDeviceVolume: options.minDeviceVolume
+        ) else {
+            DispatchQueue.main.async {
+                listener.stickyPlayerDidFail(CxAudioError.volumeTooLow(options.minDeviceVolume))
+            }
+            return handle
+        }
+
+        VastAdLoader.shared.loadStickyPlayerAd(request: request) { result in
             switch result {
-            case .success(let companion):
+            case .success(let stickyAd):
                 VastAdLoader.shared.loadImage(
-                    url: companion.staticResourceURL,
+                    url: stickyAd.companion.staticResourceURL,
                     request: request
                 ) { imageResult in
                     DispatchQueue.main.async {
@@ -66,7 +112,7 @@ public enum CxStickyPlayer {
                         case .success(let image):
                             attachOverlay(
                                 in: viewController,
-                                companion: companion,
+                                stickyAd: stickyAd,
                                 image: image,
                                 options: options,
                                 listener: listener,
@@ -89,7 +135,7 @@ public enum CxStickyPlayer {
 
     private static func attachOverlay(
         in viewController: UIViewController,
-        companion: VastCompanion,
+        stickyAd: VastStickyPlayerAd,
         image: UIImage,
         options: StickyPlayerOptions,
         listener: StickyPlayerListener,
@@ -101,12 +147,12 @@ public enum CxStickyPlayer {
         }
 
         let overlay = StickyPlayerOverlayView(
-            companion: companion,
+            companion: stickyAd.companion,
             image: image,
             options: options,
             onClick: {
-                listener.stickyPlayerWasClicked(companion.clickThroughURL)
-                if let clickThroughURL = companion.clickThroughURL {
+                listener.stickyPlayerWasClicked(stickyAd.companion.clickThroughURL)
+                if let clickThroughURL = stickyAd.companion.clickThroughURL {
                     UIApplication.shared.open(clickThroughURL)
                 }
             },
@@ -132,40 +178,93 @@ public enum CxStickyPlayer {
         }
 
         NSLayoutConstraint.activate(constraints)
+        let player = AVPlayer(url: stickyAd.mediaFile.url)
+        player.volume = options.volume
         handle.attach(overlay: overlay)
+        handle.attach(player: player, volume: options.volume)
         listener.stickyPlayerDidLoad(handle)
+        player.play()
+        listener.stickyPlayerDidStartAudio(handle)
     }
 }
 
 private final class StickyPlayerHandleImpl: StickyPlayerHandle {
     private let listener: StickyPlayerListener
     private weak var overlay: UIView?
+    private var player: AVPlayer?
+    private var completionObserver: NSObjectProtocol?
     private(set) var isDismissed = false
+    private var completed = false
+    private var failed = false
 
     init(listener: StickyPlayerListener) {
         self.listener = listener
     }
 
     var isShowing: Bool {
-        overlay?.superview != nil && !isDismissed
+        overlay?.superview != nil && !isInactive
+    }
+
+    private var isInactive: Bool {
+        isDismissed || completed || failed
     }
 
     func dismiss() {
-        guard !isDismissed else {
+        guard !isInactive else {
             return
         }
 
         isDismissed = true
+        releasePlayer()
         overlay?.removeFromSuperview()
         listener.stickyPlayerDidDismiss()
     }
 
     func attach(overlay: UIView) {
-        guard !isDismissed else {
+        guard !isInactive else {
             overlay.removeFromSuperview()
             return
         }
         self.overlay = overlay
+    }
+
+    func attach(player: AVPlayer, volume: Float) {
+        guard !isInactive else {
+            player.pause()
+            return
+        }
+
+        self.player = player
+        player.volume = volume
+        completionObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            self?.completeAudio()
+        }
+    }
+
+    private func completeAudio() {
+        guard !isInactive else {
+            return
+        }
+
+        completed = true
+        releasePlayer()
+        listener.stickyPlayerDidCompleteAudio()
+        overlay?.removeFromSuperview()
+        listener.stickyPlayerDidDismiss()
+    }
+
+    private func releasePlayer() {
+        player?.pause()
+        player = nil
+
+        if let completionObserver {
+            NotificationCenter.default.removeObserver(completionObserver)
+            self.completionObserver = nil
+        }
     }
 
 }

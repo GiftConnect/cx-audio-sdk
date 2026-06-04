@@ -77,6 +77,8 @@ namespace Cx.Audio.Unity
                 CallBuilder(builder, "heightDp", options.HeightDp);
                 CallBuilder(builder, "horizontalPaddingDp", options.HorizontalPaddingDp);
                 CallBuilder(builder, "showCloseButton", options.ShowCloseButton);
+                CallBuilder(builder, "volume", options.Volume);
+                CallBuilder(builder, "minDeviceVolume", options.MinDeviceVolume);
                 return builder.Call<AndroidJavaObject>("build");
             }
             finally

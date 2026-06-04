@@ -44,6 +44,8 @@ namespace Cx.Audio.Unity
             HeightDp = 72;
             HorizontalPaddingDp = 12;
             ShowCloseButton = true;
+            Volume = 0.2f;
+            MinDeviceVolume = 0.1f;
         }
 
         public StickyPlayerPosition Position { get; set; }
@@ -53,6 +55,10 @@ namespace Cx.Audio.Unity
         public int HorizontalPaddingDp { get; set; }
 
         public bool ShowCloseButton { get; set; }
+
+        public float Volume { get; set; }
+
+        public float MinDeviceVolume { get; set; }
 
         internal void Validate()
         {
@@ -64,6 +70,18 @@ namespace Cx.Audio.Unity
             if (HorizontalPaddingDp < 0)
             {
                 throw new ArgumentOutOfRangeException("HorizontalPaddingDp", "horizontalPaddingDp must be >= 0");
+            }
+
+            if (float.IsNaN(Volume) || Volume < 0.0f || Volume > 1.0f)
+            {
+                throw new ArgumentOutOfRangeException("Volume", "volume must be between 0.0 and 1.0");
+            }
+
+            if (float.IsNaN(MinDeviceVolume) || MinDeviceVolume < 0.0f || MinDeviceVolume > 1.0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    "MinDeviceVolume",
+                    "minDeviceVolume must be between 0.0 and 1.0");
             }
         }
     }

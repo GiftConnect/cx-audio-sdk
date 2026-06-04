@@ -42,6 +42,8 @@ export interface StickyPlayerOptions {
   heightDp?: number;
   horizontalPaddingDp?: number;
   showCloseButton?: boolean;
+  volume?: number;
+  minDeviceVolume?: number;
 }
 
 export interface FullscreenInterstitialOptions {

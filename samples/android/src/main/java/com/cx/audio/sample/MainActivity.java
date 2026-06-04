@@ -12,6 +12,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Switch;
 import android.widget.TextView;
 
 import com.cx.audio.android.AndroidBackgroundAudio;
@@ -39,6 +40,21 @@ public final class MainActivity extends Activity {
     private static final int INK = Color.rgb(12, 28, 58);
 
     private EditText vastTagInput;
+    private EditText connectTimeoutInput;
+    private EditText readTimeoutInput;
+    private EditText userAgentInput;
+    private EditText backgroundVolumeInput;
+    private EditText minimumDeviceVolumeInput;
+    private Switch stickyTopSwitch;
+    private EditText stickyHeightInput;
+    private EditText stickyPaddingInput;
+    private Switch stickyCloseSwitch;
+    private EditText stickyVolumeInput;
+    private EditText stickyMinimumDeviceVolumeInput;
+    private Switch interstitialCloseSwitch;
+    private EditText interstitialCompanionHeightInput;
+    private EditText interstitialCompanionMaxWidthInput;
+    private Switch interstitialAutoplaySwitch;
     private TextView statusText;
     private BackgroundAudioHandle backgroundAudioHandle;
     private StickyPlayerHandle stickyPlayerHandle;
@@ -78,6 +94,7 @@ public final class MainActivity extends Activity {
 
         content.addView(header(), matchWidthWrapHeight());
         content.addView(tagInputSection(), matchWidthWrapHeight());
+        content.addView(developerControls(), matchWidthWrapHeight());
         content.addView(sectionTitle("3 placement types. Maximum impact."), matchWidthWrapHeight());
 
         content.addView(placementCard(
@@ -215,6 +232,120 @@ public final class MainActivity extends Activity {
         return section;
     }
 
+    private View developerControls() {
+        LinearLayout section = new LinearLayout(this);
+        section.setOrientation(LinearLayout.VERTICAL);
+        section.setPadding(dp(16), dp(16), dp(16), dp(16));
+        section.setBackground(cardBackground(Color.WHITE, Color.rgb(210, 222, 236), dp(1)));
+
+        LinearLayout.LayoutParams sectionParams = matchWidthWrapHeight();
+        sectionParams.topMargin = dp(12);
+        section.setLayoutParams(sectionParams);
+
+        TextView title = new TextView(this);
+        title.setText("Developer parameters");
+        title.setTextColor(INK);
+        title.setTextSize(18);
+        title.setTypeface(Typeface.DEFAULT_BOLD);
+        section.addView(title, matchWidthWrapHeight());
+
+        connectTimeoutInput = optionInput("5000", InputType.TYPE_CLASS_NUMBER);
+        readTimeoutInput = optionInput("8000", InputType.TYPE_CLASS_NUMBER);
+        userAgentInput = optionInput("cx-audio-sdk-android/0.1", InputType.TYPE_CLASS_TEXT);
+        backgroundVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        minimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        stickyTopSwitch = optionSwitch(false);
+        stickyHeightInput = optionInput("96", InputType.TYPE_CLASS_NUMBER);
+        stickyPaddingInput = optionInput("12", InputType.TYPE_CLASS_NUMBER);
+        stickyCloseSwitch = optionSwitch(true);
+        stickyVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        stickyMinimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
+        interstitialCloseSwitch = optionSwitch(true);
+        interstitialCompanionHeightInput = optionInput("250", InputType.TYPE_CLASS_NUMBER);
+        interstitialCompanionMaxWidthInput = optionInput("300", InputType.TYPE_CLASS_NUMBER);
+        interstitialAutoplaySwitch = optionSwitch(true);
+
+        section.addView(optionSection("VAST request"));
+        section.addView(textOption("Connect timeout ms", connectTimeoutInput));
+        section.addView(textOption("Read timeout ms", readTimeoutInput));
+        section.addView(textOption("User agent", userAgentInput));
+
+        section.addView(optionSection("Background audio"));
+        section.addView(textOption("Ad volume 0.0-1.0", backgroundVolumeInput));
+        section.addView(textOption("Minimum device volume 0.0-1.0", minimumDeviceVolumeInput));
+
+        section.addView(optionSection("Sticky player"));
+        section.addView(switchOption("Position top", stickyTopSwitch));
+        section.addView(textOption("Height dp", stickyHeightInput));
+        section.addView(textOption("Horizontal padding dp", stickyPaddingInput));
+        section.addView(switchOption("Show close button", stickyCloseSwitch));
+        section.addView(textOption("Audio volume 0.0-1.0", stickyVolumeInput));
+        section.addView(textOption("Minimum device volume 0.0-1.0", stickyMinimumDeviceVolumeInput));
+
+        section.addView(optionSection("Fullscreen interstitial"));
+        section.addView(switchOption("Show close button", interstitialCloseSwitch));
+        section.addView(textOption("Companion height dp", interstitialCompanionHeightInput));
+        section.addView(textOption("Companion max width dp", interstitialCompanionMaxWidthInput));
+        section.addView(switchOption("Autoplay video", interstitialAutoplaySwitch));
+
+        return section;
+    }
+
+    private TextView optionSection(String text) {
+        TextView label = new TextView(this);
+        label.setText(text);
+        label.setTextColor(Color.rgb(58, 75, 98));
+        label.setTextSize(14);
+        label.setTypeface(Typeface.DEFAULT_BOLD);
+        label.setPadding(0, dp(12), 0, dp(4));
+        return label;
+    }
+
+    private EditText optionInput(String value, int inputType) {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setText(value);
+        input.setTextSize(14);
+        input.setInputType(inputType);
+        input.setSelectAllOnFocus(true);
+        return input;
+    }
+
+    private Switch optionSwitch(boolean checked) {
+        Switch control = new Switch(this);
+        control.setChecked(checked);
+        return control;
+    }
+
+    private View textOption(String labelText, EditText input) {
+        return optionRow(labelText, input);
+    }
+
+    private View switchOption(String labelText, Switch control) {
+        return optionRow(labelText, control);
+    }
+
+    private View optionRow(String labelText, View control) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(0, dp(4), 0, dp(4));
+
+        TextView label = new TextView(this);
+        label.setText(labelText);
+        label.setTextColor(INK);
+        label.setTextSize(14);
+        row.addView(label, new LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1));
+
+        row.addView(control, new LinearLayout.LayoutParams(
+                dp(168),
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        return row;
+    }
+
     private TextView sectionTitle(String text) {
         TextView title = new TextView(this);
         title.setText(text.toUpperCase());
@@ -303,11 +434,8 @@ public final class MainActivity extends Activity {
 
     private void playBackgroundAudio(View ignored) {
         try {
-            BackgroundAudioRequest request = BackgroundAudioRequest.builder(vastTagUrl()).build();
-            BackgroundAudioOptions options = BackgroundAudioOptions.builder()
-                    .volume(0.2f)
-                    .minDeviceVolume(0.1f)
-                    .build();
+            BackgroundAudioRequest request = backgroundAudioRequest();
+            BackgroundAudioOptions options = backgroundOptions();
             backgroundAudioHandle = AndroidBackgroundAudio.play(
                     this,
                     request,
@@ -352,12 +480,8 @@ public final class MainActivity extends Activity {
 
     private void showStickyPlayer(View ignored) {
         try {
-            StickyPlayerRequest request = StickyPlayerRequest.builder(vastTagUrl()).build();
-            StickyPlayerOptions options = StickyPlayerOptions.builder()
-                    .position(StickyPlayerPosition.BOTTOM)
-                    .heightDp(96)
-                    .showCloseButton(true)
-                    .build();
+            StickyPlayerRequest request = stickyPlayerRequest();
+            StickyPlayerOptions options = stickyOptions();
             stickyPlayerHandle = AndroidStickyPlayer.show(
                     this,
                     request,
@@ -365,7 +489,17 @@ public final class MainActivity extends Activity {
                     new StickyPlayerListener() {
                         @Override
                         public void onStickyPlayerLoaded(StickyPlayerHandle handle) {
-                            setStatus("Sticky player loaded.");
+                            setStatus("Sticky player loaded. Preparing audio...");
+                        }
+
+                        @Override
+                        public void onStickyPlayerAudioStarted(StickyPlayerHandle handle) {
+                            setStatus("Sticky player audio started.");
+                        }
+
+                        @Override
+                        public void onStickyPlayerAudioCompleted() {
+                            setStatus("Sticky player audio completed.");
                         }
 
                         @Override
@@ -402,13 +536,12 @@ public final class MainActivity extends Activity {
     private void showFullscreenInterstitial(View ignored) {
         try {
             FullscreenInterstitialRequest request =
-                    FullscreenInterstitialRequest.builder(vastTagUrl()).build();
-            FullscreenInterstitialOptions options = FullscreenInterstitialOptions.builder()
-                    .showCloseButton(true)
-                    .companionHeightDp(250)
-                    .companionMaxWidthDp(300)
-                    .autoPlayVideo(true)
-                    .build();
+                    FullscreenInterstitialRequest.builder(vastTagUrl())
+                            .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
+                            .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
+                            .userAgent(requiredText(userAgentInput, "User agent"))
+                            .build();
+            FullscreenInterstitialOptions options = interstitialOptions();
             fullscreenInterstitialHandle = AndroidFullscreenInterstitial.show(
                     this,
                     request,
@@ -453,6 +586,82 @@ public final class MainActivity extends Activity {
 
     private String vastTagUrl() {
         return vastTagInput.getText().toString().trim();
+    }
+
+    private BackgroundAudioRequest backgroundAudioRequest() {
+        return BackgroundAudioRequest.builder(vastTagUrl())
+                .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
+                .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
+                .userAgent(requiredText(userAgentInput, "User agent"))
+                .build();
+    }
+
+    private StickyPlayerRequest stickyPlayerRequest() {
+        return StickyPlayerRequest.builder(vastTagUrl())
+                .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
+                .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
+                .userAgent(requiredText(userAgentInput, "User agent"))
+                .build();
+    }
+
+    private BackgroundAudioOptions backgroundOptions() {
+        return BackgroundAudioOptions.builder()
+                .volume(floatValue(backgroundVolumeInput, "Ad volume", 0.0f, 1.0f))
+                .minDeviceVolume(floatValue(minimumDeviceVolumeInput, "Minimum device volume", 0.0f, 1.0f))
+                .build();
+    }
+
+    private StickyPlayerOptions stickyOptions() {
+        return StickyPlayerOptions.builder()
+                .position(stickyTopSwitch.isChecked() ? StickyPlayerPosition.TOP : StickyPlayerPosition.BOTTOM)
+                .heightDp(intValue(stickyHeightInput, "Sticky height", 48))
+                .horizontalPaddingDp(intValue(stickyPaddingInput, "Sticky horizontal padding", 0))
+                .showCloseButton(stickyCloseSwitch.isChecked())
+                .volume(floatValue(stickyVolumeInput, "Sticky audio volume", 0.0f, 1.0f))
+                .minDeviceVolume(floatValue(stickyMinimumDeviceVolumeInput, "Sticky minimum device volume", 0.0f, 1.0f))
+                .build();
+    }
+
+    private FullscreenInterstitialOptions interstitialOptions() {
+        return FullscreenInterstitialOptions.builder()
+                .showCloseButton(interstitialCloseSwitch.isChecked())
+                .companionHeightDp(intValue(interstitialCompanionHeightInput, "Companion height", 48))
+                .companionMaxWidthDp(intValue(interstitialCompanionMaxWidthInput, "Companion max width", 48))
+                .autoPlayVideo(interstitialAutoplaySwitch.isChecked())
+                .build();
+    }
+
+    private String requiredText(EditText input, String name) {
+        String value = input.getText().toString().trim();
+        if (value.isEmpty()) {
+            throw new IllegalArgumentException(name + " must not be blank");
+        }
+        return value;
+    }
+
+    private int intValue(EditText input, String name, int minimum) {
+        try {
+            int value = Integer.parseInt(input.getText().toString().trim());
+            if (value < minimum) {
+                throw new IllegalArgumentException(name + " must be at least " + minimum);
+            }
+            return value;
+        } catch (NumberFormatException error) {
+            throw new IllegalArgumentException(name + " must be a whole number");
+        }
+    }
+
+    private float floatValue(EditText input, String name, float minimum, float maximum) {
+        try {
+            float value = Float.parseFloat(input.getText().toString().trim());
+            if (Float.isNaN(value) || value < minimum || value > maximum) {
+                throw new IllegalArgumentException(
+                        name + " must be between " + minimum + " and " + maximum);
+            }
+            return value;
+        } catch (NumberFormatException error) {
+            throw new IllegalArgumentException(name + " must be a decimal number");
+        }
     }
 
     private void clearVastTag(View ignored) {

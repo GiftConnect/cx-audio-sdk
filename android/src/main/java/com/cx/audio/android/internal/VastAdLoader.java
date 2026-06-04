@@ -30,6 +30,10 @@ public final class VastAdLoader {
         return loadCompanion(RequestConfig.from(request));
     }
 
+    public static VastStickyPlayerAd loadStickyPlayerAd(StickyPlayerRequest request) throws Exception {
+        return loadStickyPlayerAd(RequestConfig.from(request));
+    }
+
     public static VastMediaFile loadAudioMediaFile(BackgroundAudioRequest request) throws Exception {
         return loadAudioMediaFile(RequestConfig.from(request));
     }
@@ -93,6 +97,26 @@ public final class VastAdLoader {
         throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
     }
 
+    private static VastStickyPlayerAd loadStickyPlayerAd(RequestConfig request) throws Exception {
+        URL currentUrl = request.vastTagUrl;
+        for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
+            String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            VastMediaFile mediaFile = parseOptionalAudioMediaFile(vastXml, currentUrl);
+            VastCompanion companion = parseOptionalCompanion(vastXml, currentUrl);
+            if (mediaFile != null && companion != null) {
+                return new VastStickyPlayerAd(mediaFile, companion);
+            }
+
+            String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
+            if (wrapperUrl == null) {
+                throw new IllegalArgumentException(
+                        "VAST response did not include both audio media and an image companion");
+            }
+            currentUrl = new URL(currentUrl, wrapperUrl);
+        }
+        throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
     private static VastMediaFile loadAudioMediaFile(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
@@ -129,6 +153,16 @@ public final class VastAdLoader {
             currentUrl = new URL(currentUrl, wrapperUrl);
         }
         throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
+    private static VastMediaFile parseOptionalAudioMediaFile(String vastXml, URL baseUrl)
+            throws Exception {
+        try {
+            VastMediaFile mediaFile = VAST_PARSER.parseBestAudioMediaFile(vastXml);
+            return mediaFile.withUrl(new URL(baseUrl, mediaFile.getUrl()).toString());
+        } catch (IllegalArgumentException noMediaFile) {
+            return null;
+        }
     }
 
     private static VastMediaFile parseOptionalInterstitialMediaFile(String vastXml, URL baseUrl)
