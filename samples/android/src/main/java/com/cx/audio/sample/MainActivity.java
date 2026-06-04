@@ -174,12 +174,31 @@ public final class MainActivity extends Activity {
         section.setOrientation(LinearLayout.VERTICAL);
         section.setPadding(0, dp(16), 0, 0);
 
+        LinearLayout labelRow = new LinearLayout(this);
+        labelRow.setOrientation(LinearLayout.HORIZONTAL);
+        labelRow.setGravity(Gravity.CENTER_VERTICAL);
+
         TextView label = new TextView(this);
         label.setText("Test VAST tag URL");
         label.setTextColor(INK);
         label.setTextSize(15);
         label.setTypeface(Typeface.DEFAULT_BOLD);
-        section.addView(label, matchWidthWrapHeight());
+        labelRow.addView(label, new LinearLayout.LayoutParams(
+                0,
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                1));
+
+        Button clearButton = new Button(this);
+        clearButton.setText("Clear");
+        clearButton.setAllCaps(false);
+        clearButton.setTextSize(13);
+        clearButton.setTextColor(Color.WHITE);
+        clearButton.setBackground(pillBackground(Color.rgb(89, 104, 123)));
+        clearButton.setOnClickListener(this::clearVastTag);
+        labelRow.addView(clearButton, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        section.addView(labelRow, matchWidthWrapHeight());
 
         vastTagInput = new EditText(this);
         vastTagInput.setSingleLine(false);
@@ -433,6 +452,12 @@ public final class MainActivity extends Activity {
 
     private String vastTagUrl() {
         return vastTagInput.getText().toString().trim();
+    }
+
+    private void clearVastTag(View ignored) {
+        vastTagInput.setText("");
+        vastTagInput.requestFocus();
+        setStatus("VAST tag URL cleared.");
     }
 
     private void setStatus(String status) {

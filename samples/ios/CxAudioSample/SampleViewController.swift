@@ -49,11 +49,28 @@ final class SampleViewController: UIViewController {
 
         content.addArrangedSubview(headerView())
 
+        let fieldRow = UIStackView()
+        fieldRow.axis = .horizontal
+        fieldRow.alignment = .center
+        fieldRow.spacing = 12
+
         let fieldLabel = UILabel()
         fieldLabel.text = "Test VAST tag URL"
         fieldLabel.font = .preferredFont(forTextStyle: .subheadline)
         fieldLabel.textColor = ink
-        content.addArrangedSubview(fieldLabel)
+        fieldRow.addArrangedSubview(fieldLabel)
+
+        let rowSpacer = UIView()
+        fieldRow.addArrangedSubview(rowSpacer)
+
+        let clearButton = button(
+            "Clear",
+            color: UIColor(red: 89 / 255, green: 104 / 255, blue: 123 / 255, alpha: 1),
+            action: #selector(clearVastTag)
+        )
+        clearButton.widthAnchor.constraint(greaterThanOrEqualToConstant: 76).isActive = true
+        fieldRow.addArrangedSubview(clearButton)
+        content.addArrangedSubview(fieldRow)
 
         vastTagField.text = defaultVastTagURL
         vastTagField.font = .preferredFont(forTextStyle: .body)
@@ -327,6 +344,12 @@ final class SampleViewController: UIViewController {
 
     private func vastRequest() throws -> VastRequest {
         try VastRequest(vastTagURLString: vastTagField.text.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+
+    @objc private func clearVastTag() {
+        vastTagField.text = ""
+        vastTagField.becomeFirstResponder()
+        updateStatus("VAST tag URL cleared.")
     }
 
     private func updateStatus(_ status: String) {
