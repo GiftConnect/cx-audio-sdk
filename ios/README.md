@@ -32,6 +32,31 @@ All placements fetch a VAST tag URL, resolve up to five wrappers, and select the
 ```swift
 import CxAudioSDK
 
+let consumableRequest = try ConsumableAdRequest(
+    placementHash: "b0816e0aa072e446e7737dd92dd34d10",
+    appStoreURL: "https://apps.apple.com/app/id123",
+    appName: "Example Game",
+    appBundle: "com.example.game",
+    limitAdTracking: false,
+    gdpr: false,
+    position: "preroll",
+    delivery: 2,
+    maxDurationSeconds: 30,
+    mediaMimes: ["audio/mpeg", "audio/mp4"],
+    companionSizes: ["300x250", "320x50"],
+    protocols: ["2", "3", "5", "6", "7", "8"]
+)
+
+let request = try VastRequest(
+    consumableAdRequest: consumableRequest,
+    timeoutInterval: 8,
+    userAgent: "my-ios-app/1.0"
+)
+```
+
+Use the raw VAST URL initializer for QA tags or non-Consumable ad servers:
+
+```swift
 let request = try VastRequest(
     vastTagURLString: "https://ads.example.com/vast.xml",
     timeoutInterval: 8,

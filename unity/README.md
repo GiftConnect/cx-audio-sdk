@@ -34,8 +34,21 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
 
     public void PlayBackgroundAudio()
     {
+        ConsumableAdRequest consumableRequest = new ConsumableAdRequest("b0816e0aa072e446e7737dd92dd34d10")
+            .AppName("Example Game")
+            .AppBundle("com.example.game")
+            .AppStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
+            .LimitAdTracking(false)
+            .Gdpr(false)
+            .Position("preroll")
+            .Delivery(2)
+            .MaxDurationSeconds(30)
+            .MediaMimes("audio/mpeg", "audio/mp4")
+            .CompanionSizes("300x250", "320x50")
+            .Protocols("2", "3", "5", "6", "7", "8");
+
         backgroundAudio = BackgroundAudio.Play(
-            new VastRequest("https://ads.example.com/vast.xml"),
+            new VastRequest(consumableRequest),
             new BackgroundAudioOptions
             {
                 Volume = 0.2f,
@@ -60,6 +73,8 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
     public void OnBackgroundAudioFailed(CxAudioError error) {}
 }
 ```
+
+Use `new VastRequest("https://...")` for QA tags or non-Consumable ad servers. Use `new VastRequest(new ConsumableAdRequest(...))` when the SDK should generate the Consumable API URL.
 
 ## Sticky Player
 

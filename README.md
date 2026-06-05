@@ -85,8 +85,22 @@ The Android background audio placement:
 
 ### Usage
 ```java
+ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("b0816e0aa072e446e7737dd92dd34d10")
+        .appName("Example Game")
+        .appBundle("com.example.game")
+        .appStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
+        .limitAdTracking(false)
+        .gdpr(false)
+        .position("preroll")
+        .delivery(2)
+        .maxDurationSeconds(30)
+        .mediaMimes("audio/mpeg", "audio/mp4")
+        .companionSizes("300x250", "320x50")
+        .protocols("2", "3", "5", "6", "7", "8")
+        .build();
+
 BackgroundAudioRequest request = BackgroundAudioRequest
-        .builder("https://ads.example.com/vast.xml")
+        .builder(consumableRequest)
         .build();
 
 BackgroundAudioOptions options = BackgroundAudioOptions.builder()
@@ -122,6 +136,8 @@ BackgroundAudioHandle handle = AndroidBackgroundAudio.play(
 ```
 
 Call `handle.stop()` from the host app when playback should end programmatically. Call `handle.setVolume(0.0f)` through `handle.setVolume(1.0f)` to adjust playback volume after starting. Set `minDeviceVolume(0.0f)` to disable the pre-request device volume gate.
+
+Use `BackgroundAudioRequest.builder("https://...")` when you already have a fully formed VAST tag URL. Use `ConsumableAdRequest` when the SDK should build the Consumable API URL from structured app, privacy, media, companion, and targeting parameters.
 
 ## Android Full Screen Interstitial
 The Android full screen interstitial placement:
@@ -462,16 +478,33 @@ subscription.remove();
 
 ### Background Audio
 ```js
-import { BackgroundAudio } from 'cx-audio-sdk';
+import { BackgroundAudio, createConsumableVastRequest } from 'cx-audio-sdk';
+
+const request = createConsumableVastRequest({
+  placementHash: 'b0816e0aa072e446e7737dd92dd34d10',
+  appName: 'Example Game',
+  appBundle: 'com.example.game',
+  appStoreUrl: 'https://play.google.com/store/apps/details?id=com.example.game',
+  limitAdTracking: false,
+  gdpr: false,
+  position: 'preroll',
+  delivery: 2,
+  maxDurationSeconds: 30,
+  mediaMimes: ['audio/mpeg', 'audio/mp4'],
+  companionSizes: ['300x250', '320x50'],
+  protocols: ['2', '3', '5', '6', '7', '8'],
+});
 
 const handleId = await BackgroundAudio.play(
-  { vastTagUrl: 'https://ads.example.com/vast.xml' },
+  request,
   { volume: 0.2, minDeviceVolume: 0.1 }
 );
 
 await BackgroundAudio.setVolume(handleId, 0.1);
 await BackgroundAudio.stop(handleId);
 ```
+
+Pass `{ vastTagUrl: 'https://...' }` directly for QA tags or non-Consumable ad servers.
 
 ### Sticky Player
 ```js

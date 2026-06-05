@@ -59,6 +59,43 @@ public final class AndroidPlacementConfigurationTest {
     }
 
     @Test
+    public void consumableAdRequestBuildsEncodedVastUrl() {
+        ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("abc123")
+                .cacheBuster("fixed")
+                .appName("Test App")
+                .appBundle("com.example.app")
+                .appStoreUrl("https://apps.apple.com/app/id123")
+                .limitAdTracking(false)
+                .gdpr(true)
+                .gdprConsent("consent string")
+                .position("preroll")
+                .mediaMimes("audio/mpeg", "audio/mp4")
+                .companionSizes("300x250", "320x50")
+                .customParameter("x_custom", "hello world")
+                .build();
+
+        String url = consumableRequest.toURLString();
+        assertTrue(url.startsWith("https://2.e.serverbid.com/mpb/get?"));
+        assertTrue(url.contains("s=abc123"));
+        assertTrue(url.contains("rt=vast"));
+        assertTrue(url.contains("secure=1"));
+        assertTrue(url.contains("cb=fixed"));
+        assertTrue(url.contains("appname=Test%20App"));
+        assertTrue(url.contains("appbundle=com.example.app"));
+        assertTrue(url.contains("appstoreurl=https%3A%2F%2Fapps.apple.com%2Fapp%2Fid123"));
+        assertTrue(url.contains("lmt=0"));
+        assertTrue(url.contains("gdpr=1"));
+        assertTrue(url.contains("gdpr_consent=consent%20string"));
+        assertTrue(url.contains("v_position=preroll"));
+        assertTrue(url.contains("v_mimes=audio%2Fmpeg%2Caudio%2Fmp4"));
+        assertTrue(url.contains("v_cmp_sizes=300x250%2C320x50"));
+        assertTrue(url.contains("x_custom=hello%20world"));
+
+        StickyPlayerRequest request = StickyPlayerRequest.builder(consumableRequest).build();
+        assertEquals(url, request.getVastTagUrl().toString());
+    }
+
+    @Test
     public void stickyPlayerOptionsValidatePlacementControls() {
         StickyPlayerOptions options = StickyPlayerOptions.builder()
                 .position(StickyPlayerPosition.TOP)

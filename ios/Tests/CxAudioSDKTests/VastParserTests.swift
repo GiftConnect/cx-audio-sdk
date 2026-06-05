@@ -5,6 +5,49 @@ final class VastParserTests: XCTestCase {
     private let parser = VastParser()
     private let baseURL = URL(string: "https://ads.example.com/vast/root.xml")!
 
+    func testConsumableAdRequestBuildsEncodedVastURL() throws {
+        let consumableRequest = try ConsumableAdRequest(
+            placementHash: "abc123",
+            cacheBuster: "fixed",
+            appStoreURL: "https://apps.apple.com/app/id123",
+            appName: "Test App",
+            appBundle: "com.example.app",
+            limitAdTracking: false,
+            gdpr: true,
+            gdprConsent: "consent string",
+            position: "preroll",
+            mediaMimes: ["audio/mpeg", "audio/mp4"],
+            companionSizes: ["300x250", "320x50"],
+            customParameters: ["x_custom": "hello world"]
+        )
+
+        let url = try consumableRequest.url()
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        let queryItems = Dictionary(
+            uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") }
+        )
+
+        XCTAssertEqual(url.scheme, "https")
+        XCTAssertEqual(url.host, "2.e.serverbid.com")
+        XCTAssertEqual(queryItems["s"], "abc123")
+        XCTAssertEqual(queryItems["rt"], "vast")
+        XCTAssertEqual(queryItems["secure"], "1")
+        XCTAssertEqual(queryItems["cb"], "fixed")
+        XCTAssertEqual(queryItems["appname"], "Test App")
+        XCTAssertEqual(queryItems["appbundle"], "com.example.app")
+        XCTAssertEqual(queryItems["appstoreurl"], "https://apps.apple.com/app/id123")
+        XCTAssertEqual(queryItems["lmt"], "0")
+        XCTAssertEqual(queryItems["gdpr"], "1")
+        XCTAssertEqual(queryItems["gdpr_consent"], "consent string")
+        XCTAssertEqual(queryItems["v_position"], "preroll")
+        XCTAssertEqual(queryItems["v_mimes"], "audio/mpeg,audio/mp4")
+        XCTAssertEqual(queryItems["v_cmp_sizes"], "300x250,320x50")
+        XCTAssertEqual(queryItems["x_custom"], "hello world")
+
+        let vastRequest = try VastRequest(consumableAdRequest: consumableRequest)
+        XCTAssertEqual(vastRequest.vastTagURL, url)
+    }
+
     func testCompanionParserPrefersClosestThreeHundredByTwoFiftyImage() throws {
         let document = try parser.parse(data: vastWithCompanions(
             companion("/small.png", creativeType: "image/png", width: 120, height: 90),

@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -22,6 +23,7 @@ import com.cx.audio.android.BackgroundAudioHandle;
 import com.cx.audio.android.BackgroundAudioListener;
 import com.cx.audio.android.BackgroundAudioOptions;
 import com.cx.audio.android.BackgroundAudioRequest;
+import com.cx.audio.android.ConsumableAdRequest;
 import com.cx.audio.android.FullscreenInterstitialHandle;
 import com.cx.audio.android.FullscreenInterstitialListener;
 import com.cx.audio.android.FullscreenInterstitialOptions;
@@ -33,7 +35,9 @@ import com.cx.audio.android.StickyPlayerPosition;
 import com.cx.audio.android.StickyPlayerRequest;
 
 public final class MainActivity extends Activity {
-    private static final String DEFAULT_VAST_TAG_URL = "https://ads.example.com/vast.xml";
+    private static final String DEFAULT_VAST_TAG_URL =
+            "https://2.e.serverbid.com/mpb/get?s=b0816e0aa072e446e7737dd92dd34d10";
+    private static final String DEFAULT_PLACEMENT_HASH = "b0816e0aa072e446e7737dd92dd34d10";
     private static final int BLUE = Color.rgb(25, 111, 215);
     private static final int GREEN = Color.rgb(36, 172, 54);
     private static final int PURPLE = Color.rgb(111, 78, 198);
@@ -43,6 +47,21 @@ public final class MainActivity extends Activity {
     private EditText connectTimeoutInput;
     private EditText readTimeoutInput;
     private EditText userAgentInput;
+    private Switch consumableRequestSwitch;
+    private EditText placementHashInput;
+    private EditText appNameInput;
+    private EditText appBundleInput;
+    private EditText appStoreUrlInput;
+    private Switch limitAdTrackingSwitch;
+    private Switch gdprSwitch;
+    private EditText gdprConsentInput;
+    private EditText usPrivacyInput;
+    private EditText audioPositionInput;
+    private EditText audioDeliveryInput;
+    private EditText maxDurationInput;
+    private EditText mediaMimesInput;
+    private EditText companionSizesInput;
+    private EditText vastProtocolsInput;
     private EditText backgroundVolumeInput;
     private EditText minimumDeviceVolumeInput;
     private Switch stickyTopSwitch;
@@ -57,6 +76,9 @@ public final class MainActivity extends Activity {
     private Switch interstitialAutoplaySwitch;
     private EditText interstitialVolumeInput;
     private EditText interstitialMinimumDeviceVolumeInput;
+    private LinearLayout configurationTabContent;
+    private Button existingConfigTabButton;
+    private Button consumableConfigTabButton;
     private TextView statusText;
     private BackgroundAudioHandle backgroundAudioHandle;
     private StickyPlayerHandle stickyPlayerHandle;
@@ -254,6 +276,23 @@ public final class MainActivity extends Activity {
         connectTimeoutInput = optionInput("5000", InputType.TYPE_CLASS_NUMBER);
         readTimeoutInput = optionInput("8000", InputType.TYPE_CLASS_NUMBER);
         userAgentInput = optionInput("cx-audio-sdk-android/0.1", InputType.TYPE_CLASS_TEXT);
+        consumableRequestSwitch = optionSwitch(true);
+        placementHashInput = optionInput(DEFAULT_PLACEMENT_HASH, InputType.TYPE_CLASS_TEXT);
+        appNameInput = optionInput("CX Audio Sample", InputType.TYPE_CLASS_TEXT);
+        appBundleInput = optionInput(getPackageName(), InputType.TYPE_CLASS_TEXT);
+        appStoreUrlInput = optionInput(
+                "https://play.google.com/store/apps/details?id=" + getPackageName(),
+                InputType.TYPE_TEXT_VARIATION_URI);
+        limitAdTrackingSwitch = optionSwitch(false);
+        gdprSwitch = optionSwitch(false);
+        gdprConsentInput = optionInput("", InputType.TYPE_CLASS_TEXT);
+        usPrivacyInput = optionInput("", InputType.TYPE_CLASS_TEXT);
+        audioPositionInput = optionInput("preroll", InputType.TYPE_CLASS_TEXT);
+        audioDeliveryInput = optionInput("2", InputType.TYPE_CLASS_NUMBER);
+        maxDurationInput = optionInput("30", InputType.TYPE_CLASS_NUMBER);
+        mediaMimesInput = optionInput("audio/mpeg,audio/mp4", InputType.TYPE_CLASS_TEXT);
+        companionSizesInput = optionInput("300x250,320x50", InputType.TYPE_CLASS_TEXT);
+        vastProtocolsInput = optionInput("2,3,5,6,7,8", InputType.TYPE_CLASS_TEXT);
         backgroundVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         minimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         stickyTopSwitch = optionSwitch(false);
@@ -269,32 +308,102 @@ public final class MainActivity extends Activity {
         interstitialVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         interstitialMinimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
 
-        section.addView(optionSection("VAST request"));
-        section.addView(textOption("Connect timeout ms", connectTimeoutInput));
-        section.addView(textOption("Read timeout ms", readTimeoutInput));
-        section.addView(textOption("User agent", userAgentInput));
+        section.addView(configurationTabs(), matchWidthWrapHeight());
 
-        section.addView(optionSection("Background audio"));
-        section.addView(textOption("Ad volume 0.0-1.0", backgroundVolumeInput));
-        section.addView(textOption("Minimum device volume 0.0-1.0", minimumDeviceVolumeInput));
-
-        section.addView(optionSection("Sticky player"));
-        section.addView(switchOption("Position top", stickyTopSwitch));
-        section.addView(textOption("Height dp", stickyHeightInput));
-        section.addView(textOption("Horizontal padding dp", stickyPaddingInput));
-        section.addView(switchOption("Show close button", stickyCloseSwitch));
-        section.addView(textOption("Audio volume 0.0-1.0", stickyVolumeInput));
-        section.addView(textOption("Minimum device volume 0.0-1.0", stickyMinimumDeviceVolumeInput));
-
-        section.addView(optionSection("Fullscreen interstitial"));
-        section.addView(switchOption("Show close button", interstitialCloseSwitch));
-        section.addView(textOption("Companion height dp", interstitialCompanionHeightInput));
-        section.addView(textOption("Companion max width dp", interstitialCompanionMaxWidthInput));
-        section.addView(switchOption("Autoplay video", interstitialAutoplaySwitch));
-        section.addView(textOption("Audio volume 0.0-1.0", interstitialVolumeInput));
-        section.addView(textOption("Minimum device volume 0.0-1.0", interstitialMinimumDeviceVolumeInput));
+        configurationTabContent = new LinearLayout(this);
+        configurationTabContent.setOrientation(LinearLayout.VERTICAL);
+        section.addView(configurationTabContent, matchWidthWrapHeight());
+        showExistingConfiguration();
 
         return section;
+    }
+
+    private View configurationTabs() {
+        LinearLayout tabs = new LinearLayout(this);
+        tabs.setOrientation(LinearLayout.HORIZONTAL);
+        tabs.setPadding(0, dp(12), 0, dp(6));
+
+        existingConfigTabButton = tabButton("Existing", this::showExistingConfiguration);
+        consumableConfigTabButton = tabButton("Consumable", this::showConsumableConfiguration);
+        tabs.addView(existingConfigTabButton, weightedButtonParams());
+        tabs.addView(consumableConfigTabButton, weightedButtonParams());
+        return tabs;
+    }
+
+    private Button tabButton(String title, View.OnClickListener listener) {
+        Button button = new Button(this);
+        button.setText(title);
+        button.setAllCaps(false);
+        button.setTextSize(14);
+        button.setOnClickListener(listener);
+        return button;
+    }
+
+    private void showExistingConfiguration(View ignored) {
+        showExistingConfiguration();
+    }
+
+    private void showConsumableConfiguration(View ignored) {
+        showConsumableConfiguration();
+    }
+
+    private void showExistingConfiguration() {
+        configurationTabContent.removeAllViews();
+        updateTabButtons(true);
+
+        configurationTabContent.addView(optionSection("VAST request"));
+        configurationTabContent.addView(textOption("Connect timeout ms", connectTimeoutInput));
+        configurationTabContent.addView(textOption("Read timeout ms", readTimeoutInput));
+        configurationTabContent.addView(textOption("User agent", userAgentInput));
+
+        configurationTabContent.addView(optionSection("Background audio"));
+        configurationTabContent.addView(textOption("Ad volume 0.0-1.0", backgroundVolumeInput));
+        configurationTabContent.addView(textOption("Minimum device volume 0.0-1.0", minimumDeviceVolumeInput));
+
+        configurationTabContent.addView(optionSection("Sticky player"));
+        configurationTabContent.addView(switchOption("Position top", stickyTopSwitch));
+        configurationTabContent.addView(textOption("Height dp", stickyHeightInput));
+        configurationTabContent.addView(textOption("Horizontal padding dp", stickyPaddingInput));
+        configurationTabContent.addView(switchOption("Show close button", stickyCloseSwitch));
+        configurationTabContent.addView(textOption("Audio volume 0.0-1.0", stickyVolumeInput));
+        configurationTabContent.addView(textOption("Minimum device volume 0.0-1.0", stickyMinimumDeviceVolumeInput));
+
+        configurationTabContent.addView(optionSection("Fullscreen interstitial"));
+        configurationTabContent.addView(switchOption("Show close button", interstitialCloseSwitch));
+        configurationTabContent.addView(textOption("Companion height dp", interstitialCompanionHeightInput));
+        configurationTabContent.addView(textOption("Companion max width dp", interstitialCompanionMaxWidthInput));
+        configurationTabContent.addView(switchOption("Autoplay video", interstitialAutoplaySwitch));
+        configurationTabContent.addView(textOption("Audio volume 0.0-1.0", interstitialVolumeInput));
+        configurationTabContent.addView(textOption("Minimum device volume 0.0-1.0", interstitialMinimumDeviceVolumeInput));
+    }
+
+    private void showConsumableConfiguration() {
+        configurationTabContent.removeAllViews();
+        updateTabButtons(false);
+
+        configurationTabContent.addView(optionSection("Consumable API"));
+        configurationTabContent.addView(switchOption("Build URL from params", consumableRequestSwitch));
+        configurationTabContent.addView(textOption("Placement hash (s)", placementHashInput));
+        configurationTabContent.addView(textOption("App name", appNameInput));
+        configurationTabContent.addView(textOption("App bundle", appBundleInput));
+        configurationTabContent.addView(textOption("App store URL", appStoreUrlInput));
+        configurationTabContent.addView(switchOption("Limit ad tracking (lmt)", limitAdTrackingSwitch));
+        configurationTabContent.addView(switchOption("GDPR applies", gdprSwitch));
+        configurationTabContent.addView(textOption("GDPR consent", gdprConsentInput));
+        configurationTabContent.addView(textOption("US privacy", usPrivacyInput));
+        configurationTabContent.addView(textOption("Audio position", audioPositionInput));
+        configurationTabContent.addView(textOption("Delivery code", audioDeliveryInput));
+        configurationTabContent.addView(textOption("Max duration seconds", maxDurationInput));
+        configurationTabContent.addView(textOption("Media MIME types", mediaMimesInput));
+        configurationTabContent.addView(textOption("Companion sizes", companionSizesInput));
+        configurationTabContent.addView(textOption("VAST protocols", vastProtocolsInput));
+    }
+
+    private void updateTabButtons(boolean existingSelected) {
+        existingConfigTabButton.setTextColor(existingSelected ? Color.WHITE : INK);
+        consumableConfigTabButton.setTextColor(existingSelected ? INK : Color.WHITE);
+        existingConfigTabButton.setBackground(pillBackground(existingSelected ? BLUE : Color.rgb(229, 236, 245)));
+        consumableConfigTabButton.setBackground(pillBackground(existingSelected ? Color.rgb(229, 236, 245) : BLUE));
     }
 
     private TextView optionSection(String text) {
@@ -332,6 +441,10 @@ public final class MainActivity extends Activity {
     }
 
     private View optionRow(String labelText, View control) {
+        if (control.getParent() instanceof ViewGroup) {
+            ((ViewGroup) control.getParent()).removeView(control);
+        }
+
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
         row.setGravity(Gravity.CENTER_VERTICAL);
@@ -542,11 +655,7 @@ public final class MainActivity extends Activity {
     private void showFullscreenInterstitial(View ignored) {
         try {
             FullscreenInterstitialRequest request =
-                    FullscreenInterstitialRequest.builder(vastTagUrl())
-                            .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
-                            .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
-                            .userAgent(requiredText(userAgentInput, "User agent"))
-                            .build();
+                    fullscreenInterstitialRequest();
             FullscreenInterstitialOptions options = interstitialOptions();
             fullscreenInterstitialHandle = AndroidFullscreenInterstitial.show(
                     this,
@@ -606,7 +715,7 @@ public final class MainActivity extends Activity {
     }
 
     private BackgroundAudioRequest backgroundAudioRequest() {
-        return BackgroundAudioRequest.builder(vastTagUrl())
+        return BackgroundAudioRequest.builder(resolvedVastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
                 .userAgent(requiredText(userAgentInput, "User agent"))
@@ -614,11 +723,44 @@ public final class MainActivity extends Activity {
     }
 
     private StickyPlayerRequest stickyPlayerRequest() {
-        return StickyPlayerRequest.builder(vastTagUrl())
+        return StickyPlayerRequest.builder(resolvedVastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
                 .userAgent(requiredText(userAgentInput, "User agent"))
                 .build();
+    }
+
+    private FullscreenInterstitialRequest fullscreenInterstitialRequest() {
+        return FullscreenInterstitialRequest.builder(resolvedVastTagUrl())
+                .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
+                .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
+                .userAgent(requiredText(userAgentInput, "User agent"))
+                .build();
+    }
+
+    private String resolvedVastTagUrl() {
+        if (!consumableRequestSwitch.isChecked()) {
+            return vastTagUrl();
+        }
+
+        ConsumableAdRequest request = ConsumableAdRequest.builder(requiredText(placementHashInput, "Placement hash"))
+                .appName(requiredText(appNameInput, "App name"))
+                .appBundle(requiredText(appBundleInput, "App bundle"))
+                .appStoreUrl(requiredText(appStoreUrlInput, "App store URL"))
+                .limitAdTracking(limitAdTrackingSwitch.isChecked())
+                .gdpr(gdprSwitch.isChecked())
+                .gdprConsent(optionalText(gdprConsentInput))
+                .usPrivacy(optionalText(usPrivacyInput))
+                .position(requiredText(audioPositionInput, "Audio position"))
+                .delivery(intValue(audioDeliveryInput, "Delivery code", 1))
+                .maxDurationSeconds(intValue(maxDurationInput, "Max duration seconds", 1))
+                .mediaMimes(splitCsv(mediaMimesInput))
+                .companionSizes(splitCsv(companionSizesInput))
+                .protocols(splitCsv(vastProtocolsInput))
+                .build();
+        String url = request.toURLString();
+        vastTagInput.setText(url);
+        return url;
     }
 
     private BackgroundAudioOptions backgroundOptions() {
@@ -656,6 +798,19 @@ public final class MainActivity extends Activity {
             throw new IllegalArgumentException(name + " must not be blank");
         }
         return value;
+    }
+
+    private String optionalText(EditText input) {
+        String value = input.getText().toString().trim();
+        return value.isEmpty() ? null : value;
+    }
+
+    private String[] splitCsv(EditText input) {
+        String value = input.getText().toString().trim();
+        if (value.isEmpty()) {
+            return new String[0];
+        }
+        return value.split("\\s*,\\s*");
     }
 
     private int intValue(EditText input, String name, int minimum) {

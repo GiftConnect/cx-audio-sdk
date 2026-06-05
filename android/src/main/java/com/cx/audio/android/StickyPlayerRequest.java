@@ -36,6 +36,13 @@ public final class StickyPlayerRequest {
         return new Builder(vastTagUrl);
     }
 
+    public static Builder builder(ConsumableAdRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("request must not be null");
+        }
+        return new Builder(request.toURLString());
+    }
+
     public static final class Builder {
         private final URL vastTagUrl;
         private int connectTimeoutMs = 5000;

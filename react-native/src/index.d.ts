@@ -32,6 +32,63 @@ export interface VastRequest {
   userAgent?: string;
 }
 
+export interface ConsumableAdRequest {
+  placementHash: string;
+  endpointUrl?: string;
+  responseType?: 'vast' | 'html' | 'js' | string;
+  secure?: boolean;
+  cacheBuster?: string;
+  userAgentParameter?: string;
+  ipAddress?: string;
+  locale?: string;
+  contentCategories?: string[];
+  blockedCategories?: string[];
+  blockedAdvertisers?: string[];
+  limitAdTracking?: boolean;
+  doNotTrack?: boolean;
+  supplyChain?: string;
+  appStoreUrl?: string;
+  appName?: string;
+  appVersion?: string;
+  appBundle?: string;
+  idfa?: string;
+  aid?: string;
+  gadid?: string;
+  ifa?: string;
+  keywords?: string[];
+  longitude?: number;
+  latitude?: number;
+  coppa?: boolean;
+  gdpr?: boolean;
+  gdprConsent?: string;
+  usPrivacy?: string;
+  gpp?: string;
+  gppSectionIds?: string[];
+  playerWidth?: number;
+  playerHeight?: number;
+  videoPlacement?: number;
+  delivery?: number;
+  startDelaySeconds?: number;
+  position?: 'preroll' | 'midroll' | 'postroll' | string;
+  maxDurationSeconds?: number;
+  mediaMimes?: string[];
+  skippable?: boolean;
+  playbackMethod?: number;
+  maxBitrateKbps?: number;
+  minBitrateKbps?: number;
+  companionTypes?: string[];
+  companionMimes?: string[];
+  companionSizes?: string[];
+  protocols?: string[];
+  contentId?: string;
+  contentGenre?: string[];
+  contentTitle?: string;
+  contentDurationSeconds?: number;
+  contentUrl?: string;
+  contentAudioFeedType?: number;
+  customParameters?: Record<string, string | number | boolean>;
+}
+
 export interface BackgroundAudioOptions {
   volume?: number;
   minDeviceVolume?: number;
@@ -63,6 +120,11 @@ export declare const StickyPlayerPosition: Readonly<{
 export declare function addCxAudioListener(
   listener: (event: CxAudioEvent) => void
 ): CxAudioSubscription;
+
+export declare function createConsumableVastRequest(
+  request: ConsumableAdRequest,
+  networkOptions?: Omit<VastRequest, 'vastTagUrl'>
+): VastRequest;
 
 export declare const BackgroundAudio: Readonly<{
   play(request: VastRequest, options?: BackgroundAudioOptions): Promise<string>;
