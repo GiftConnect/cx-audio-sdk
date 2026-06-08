@@ -135,7 +135,7 @@ public final class VastParser {
     private static Document parseDocument(String vastXml) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setExpandEntityReferences(false);
-        factory.setXIncludeAware(false);
+        trySetXIncludeAware(factory, false);
         trySetFeature(factory, "http://apache.org/xml/features/disallow-doctype-decl", true);
         trySetFeature(factory, "http://xml.org/sax/features/external-general-entities", false);
         trySetFeature(factory, "http://xml.org/sax/features/external-parameter-entities", false);
@@ -152,6 +152,14 @@ public final class VastParser {
             factory.setFeature(feature, enabled);
         } catch (Exception ignored) {
             // Some Android XML parsers do not expose every hardening feature.
+        }
+    }
+
+    private static void trySetXIncludeAware(DocumentBuilderFactory factory, boolean aware) {
+        try {
+            factory.setXIncludeAware(aware);
+        } catch (Exception ignored) {
+            // Some Android XML parsers report unsupported XInclude configuration.
         }
     }
 
