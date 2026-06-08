@@ -12,7 +12,7 @@ final class SampleViewController: UIViewController {
 
     private let vastTagField = UITextView()
     private let statusLabel = UILabel()
-    private let configurationTabs = UISegmentedControl(items: ["Existing", "Consumable"])
+    private let configurationTabs = UISegmentedControl(items: ["General", "Consumable"])
     private let configurationTabContent = UIStackView()
     private let timeoutField = UITextField()
     private let userAgentField = UITextField()

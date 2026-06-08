@@ -323,7 +323,7 @@ public final class MainActivity extends Activity {
         tabs.setOrientation(LinearLayout.HORIZONTAL);
         tabs.setPadding(0, dp(12), 0, dp(6));
 
-        existingConfigTabButton = tabButton("Existing", this::showExistingConfiguration);
+        existingConfigTabButton = tabButton("General", this::showExistingConfiguration);
         consumableConfigTabButton = tabButton("Consumable", this::showConsumableConfiguration);
         tabs.addView(existingConfigTabButton, weightedButtonParams());
         tabs.addView(consumableConfigTabButton, weightedButtonParams());
