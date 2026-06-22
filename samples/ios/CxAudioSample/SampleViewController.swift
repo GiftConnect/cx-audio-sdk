@@ -18,19 +18,11 @@ final class SampleViewController: UIViewController {
     private let userAgentField = UITextField()
     private let consumableRequestSwitch = UISwitch()
     private let placementHashField = UITextField()
-    private let appNameField = UITextField()
-    private let appBundleField = UITextField()
     private let appStoreURLField = UITextField()
     private let limitAdTrackingSwitch = UISwitch()
     private let gdprSwitch = UISwitch()
     private let gdprConsentField = UITextField()
     private let usPrivacyField = UITextField()
-    private let audioPositionField = UITextField()
-    private let audioDeliveryField = UITextField()
-    private let maxDurationField = UITextField()
-    private let mediaMimesField = UITextField()
-    private let companionSizesField = UITextField()
-    private let vastProtocolsField = UITextField()
     private let backgroundVolumeField = UITextField()
     private let minimumDeviceVolumeField = UITextField()
     private let stickyPositionControl = UISegmentedControl(items: ["Bottom", "Top"])
@@ -242,19 +234,11 @@ final class SampleViewController: UIViewController {
         userAgentField.text = "cx-audio-sdk-ios/0.1"
         consumableRequestSwitch.isOn = true
         placementHashField.text = defaultPlacementHash
-        appNameField.text = "CX Audio Sample"
-        appBundleField.text = Bundle.main.bundleIdentifier ?? "com.cx.audio.sample"
         appStoreURLField.text = "https://apps.apple.com/app/id123"
         limitAdTrackingSwitch.isOn = false
         gdprSwitch.isOn = false
         gdprConsentField.text = ""
         usPrivacyField.text = ""
-        audioPositionField.text = "preroll"
-        audioDeliveryField.text = "2"
-        maxDurationField.text = "30"
-        mediaMimesField.text = "audio/mpeg,audio/mp4"
-        companionSizesField.text = "300x250,320x50"
-        vastProtocolsField.text = "2,3,5,6,7,8"
         backgroundVolumeField.text = "0.2"
         minimumDeviceVolumeField.text = "0.1"
         stickyPositionControl.selectedSegmentIndex = 0
@@ -329,19 +313,11 @@ final class SampleViewController: UIViewController {
         container.addArrangedSubview(optionSection("Consumable API"))
         container.addArrangedSubview(switchOption("Build URL from params", control: consumableRequestSwitch))
         container.addArrangedSubview(textOption("Placement hash (s)", field: placementHashField, keyboardType: .default))
-        container.addArrangedSubview(textOption("App name", field: appNameField, keyboardType: .default))
-        container.addArrangedSubview(textOption("App bundle", field: appBundleField, keyboardType: .default))
         container.addArrangedSubview(textOption("App store URL", field: appStoreURLField, keyboardType: .URL))
         container.addArrangedSubview(switchOption("Limit ad tracking (lmt)", control: limitAdTrackingSwitch))
         container.addArrangedSubview(switchOption("GDPR applies", control: gdprSwitch))
         container.addArrangedSubview(textOption("GDPR consent", field: gdprConsentField, keyboardType: .default))
         container.addArrangedSubview(textOption("US privacy", field: usPrivacyField, keyboardType: .default))
-        container.addArrangedSubview(textOption("Audio position", field: audioPositionField, keyboardType: .default))
-        container.addArrangedSubview(textOption("Delivery code", field: audioDeliveryField, keyboardType: .numberPad))
-        container.addArrangedSubview(textOption("Max duration seconds", field: maxDurationField, keyboardType: .numberPad))
-        container.addArrangedSubview(textOption("Media MIME types", field: mediaMimesField, keyboardType: .default))
-        container.addArrangedSubview(textOption("Companion sizes", field: companionSizesField, keyboardType: .default))
-        container.addArrangedSubview(textOption("VAST protocols", field: vastProtocolsField, keyboardType: .default))
     }
 
     private func optionSection(_ text: String) -> UILabel {
@@ -502,7 +478,7 @@ final class SampleViewController: UIViewController {
         do {
             stickyPlayerHandle = CxStickyPlayer.show(
                 in: self,
-                request: try vastRequest(),
+                request: try vastRequest(placement: .stickyPlayer),
                 options: try stickyOptions(),
                 listener: self
             )
@@ -524,7 +500,7 @@ final class SampleViewController: UIViewController {
         do {
             fullscreenInterstitialHandle = CxFullscreenInterstitial.show(
                 from: self,
-                request: try vastRequest(),
+                request: try vastRequest(placement: .fullscreenInterstitial),
                 options: try interstitialOptions(),
                 listener: self
             )
@@ -542,7 +518,7 @@ final class SampleViewController: UIViewController {
         fullscreenInterstitialHandle.dismiss()
     }
 
-    private func vastRequest() throws -> VastRequest {
+    private func vastRequest(placement: ConsumablePlacement = .backgroundAudio) throws -> VastRequest {
         let timeout = try doubleValue(timeoutField, name: "Timeout seconds", minimum: 0.1)
         let userAgent = userAgentField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
@@ -558,22 +534,15 @@ final class SampleViewController: UIViewController {
             placementHash: requiredText(placementHashField, name: "Placement hash"),
             limitAdTracking: limitAdTrackingSwitch.isOn,
             appStoreURL: requiredText(appStoreURLField, name: "App store URL"),
-            appName: requiredText(appNameField, name: "App name"),
-            appBundle: requiredText(appBundleField, name: "App bundle"),
             gdpr: gdprSwitch.isOn,
             gdprConsent: optionalText(gdprConsentField),
-            usPrivacy: optionalText(usPrivacyField),
-            delivery: try Int(doubleValue(audioDeliveryField, name: "Delivery code", minimum: 1)),
-            position: requiredText(audioPositionField, name: "Audio position"),
-            maxDurationSeconds: try Int(doubleValue(maxDurationField, name: "Max duration seconds", minimum: 1)),
-            mediaMimes: splitCSV(mediaMimesField),
-            companionSizes: splitCSV(companionSizesField),
-            protocols: splitCSV(vastProtocolsField)
+            usPrivacy: optionalText(usPrivacyField)
         )
-        let generatedURL = try consumableRequest.url()
+        let generatedURL = try consumableRequest.url(placement: placement)
         vastTagField.text = generatedURL.absoluteString
         return try VastRequest(
             consumableAdRequest: consumableRequest,
+            placement: placement,
             timeoutInterval: timeout,
             userAgent: userAgent
         )
@@ -645,17 +614,6 @@ final class SampleViewController: UIViewController {
     private func optionalText(_ field: UITextField) -> String? {
         let value = field.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         return value.isEmpty ? nil : value
-    }
-
-    private func splitCSV(_ field: UITextField) -> [String] {
-        let value = field.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !value.isEmpty else {
-            return []
-        }
-        return value
-            .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
     }
 
     @objc private func clearVastTag() {

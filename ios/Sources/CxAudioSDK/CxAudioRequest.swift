@@ -134,9 +134,9 @@ public struct ConsumableAdRequest: Equatable {
         self.parameters = params
     }
 
-    public func url() throws -> URL {
+    public func url(placement: ConsumablePlacement? = nil) throws -> URL {
         var components = URLComponents(url: endpointURL, resolvingAgainstBaseURL: false)
-        components?.queryItems = parameters
+        components?.queryItems = parametersWithAutomaticValues(placement: placement)
             .filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .sorted { $0.key < $1.key }
             .map { URLQueryItem(name: $0.key, value: $0.value) }
@@ -145,6 +145,52 @@ public struct ConsumableAdRequest: Equatable {
         }
         return url
     }
+
+    private func parametersWithAutomaticValues(placement: ConsumablePlacement?) -> [String: String] {
+        var params = parameters
+        putAutomatic(&params, "locale", Locale.current.identifier.replacingOccurrences(of: "_", with: "-"))
+        putAutomatic(&params, "appbundle", Bundle.main.bundleIdentifier)
+        putAutomatic(&params, "appname", Bundle.main.displayName)
+        putAutomatic(&params, "v_delivery", "2")
+        putAutomatic(&params, "v_delay", "-1")
+        putAutomatic(&params, "v_pm", "1")
+        putAutomatic(&params, "v_max_dur", "90")
+        putAutomatic(
+            &params,
+            "v_mimes",
+            "audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/x-wav,"
+                + "video/mp4,image/jpeg,image/png,image/gif,image/webp"
+        )
+        putAutomatic(&params, "v_cmp_types", "1")
+        putAutomatic(&params, "v_cmp_mimes", "image/jpeg,image/png,image/gif,image/webp")
+        putAutomatic(&params, "v_cmp_sizes", "300x250")
+        putAutomatic(&params, "v_protocols", "2,3,5,6,7,8")
+        putAutomatic(&params, "c_audio_feed_type", "6")
+
+        switch placement {
+        case .backgroundAudio, .stickyPlayer:
+            putAutomatic(&params, "v_plcmt", "2")
+            putAutomatic(&params, "v_linearity", "2")
+            putAutomatic(&params, "v_min_bitrate", "64")
+            putAutomatic(&params, "v_max_bitrate", "320")
+        case .fullscreenInterstitial:
+            putAutomatic(&params, "v_plcmt", "3")
+            putAutomatic(&params, "v_linearity", "1")
+            putAutomatic(&params, "v_min_bitrate", "64")
+            putAutomatic(&params, "v_max_bitrate", "2500")
+        case nil:
+            putAutomatic(&params, "v_min_bitrate", "64")
+            putAutomatic(&params, "v_max_bitrate", "320")
+            break
+        }
+        return params
+    }
+}
+
+public enum ConsumablePlacement: Equatable {
+    case backgroundAudio
+    case stickyPlayer
+    case fullscreenInterstitial
 }
 
 public struct VastRequest: Equatable {
@@ -190,11 +236,12 @@ public struct VastRequest: Equatable {
 
     public init(
         consumableAdRequest: ConsumableAdRequest,
+        placement: ConsumablePlacement? = nil,
         timeoutInterval: TimeInterval = 8,
         userAgent: String = "cx-audio-sdk-ios/0.1"
     ) throws {
         try self.init(
-            vastTagURL: consumableAdRequest.url(),
+            vastTagURL: consumableAdRequest.url(placement: placement),
             timeoutInterval: timeoutInterval,
             userAgent: userAgent
         )
@@ -253,6 +300,19 @@ private func put(_ parameters: inout [String: String], _ name: String, _ value: 
         return
     }
     parameters[name] = value
+}
+
+private func putAutomatic(_ parameters: inout [String: String], _ name: String, _ value: String?) {
+    if let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, parameters[name] == nil {
+        parameters[name] = value
+    }
+}
+
+private extension Bundle {
+    var displayName: String? {
+        object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? object(forInfoDictionaryKey: "CFBundleName") as? String
+    }
 }
 
 private func joined(_ values: [String]) -> String? {

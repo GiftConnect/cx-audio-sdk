@@ -1,5 +1,8 @@
 package com.cx.audio.android;
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -34,10 +37,21 @@ public final class ConsumableAdRequest {
     }
 
     public String toURLString() {
+        return toURLString(null);
+    }
+
+    String toURLString(PlacementType placementType) {
+        return toURLString(placementType, null);
+    }
+
+    String toURLString(PlacementType placementType, Context context) {
+        LinkedHashMap<String, String> params = new LinkedHashMap<>(parameters);
+        applyAutomaticParameters(params, placementType, context);
+
         StringBuilder builder = new StringBuilder(endpointUrl);
         builder.append(endpointUrl.contains("?") ? "&" : "?");
         boolean first = true;
-        for (Map.Entry<String, String> entry : parameters.entrySet()) {
+        for (Map.Entry<String, String> entry : params.entrySet()) {
             if (entry.getValue() == null || entry.getValue().trim().isEmpty()) {
                 continue;
             }
@@ -52,6 +66,56 @@ public final class ConsumableAdRequest {
         return builder.toString();
     }
 
+    private static void applyAutomaticParameters(
+            LinkedHashMap<String, String> parameters,
+            PlacementType placementType,
+            Context context) {
+        putAutomatic(parameters, "locale", Locale.getDefault().toLanguageTag());
+        if (context != null) {
+            putAutomatic(parameters, "appbundle", context.getPackageName());
+            putAutomatic(parameters, "appname", applicationName(context));
+        }
+        putAutomatic(parameters, "v_delivery", "2");
+        putAutomatic(parameters, "v_delay", "-1");
+        putAutomatic(parameters, "v_pm", "1");
+        putAutomatic(parameters, "v_max_dur", "90");
+        putAutomatic(parameters, "v_mimes",
+                "audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/x-wav,"
+                        + "video/mp4,image/jpeg,image/png,image/gif,image/webp");
+        putAutomatic(parameters, "v_cmp_types", "1");
+        putAutomatic(parameters, "v_cmp_mimes", "image/jpeg,image/png,image/gif,image/webp");
+        putAutomatic(parameters, "v_cmp_sizes", "300x250");
+        putAutomatic(parameters, "v_protocols", "2,3,5,6,7,8");
+        putAutomatic(parameters, "c_audio_feed_type", "6");
+
+        if (placementType == PlacementType.FULLSCREEN_INTERSTITIAL) {
+            putAutomatic(parameters, "v_plcmt", "3");
+            putAutomatic(parameters, "v_linearity", "1");
+            putAutomatic(parameters, "v_min_bitrate", "64");
+            putAutomatic(parameters, "v_max_bitrate", "2500");
+        } else if (placementType != null) {
+            putAutomatic(parameters, "v_plcmt", "2");
+            putAutomatic(parameters, "v_linearity", "2");
+            putAutomatic(parameters, "v_min_bitrate", "64");
+            putAutomatic(parameters, "v_max_bitrate", "320");
+        } else {
+            putAutomatic(parameters, "v_min_bitrate", "64");
+            putAutomatic(parameters, "v_max_bitrate", "320");
+        }
+    }
+
+    private static void putAutomatic(LinkedHashMap<String, String> parameters, String name, String value) {
+        if (!parameters.containsKey(name) && value != null && !value.trim().isEmpty()) {
+            parameters.put(name, value);
+        }
+    }
+
+    private static String applicationName(Context context) {
+        ApplicationInfo applicationInfo = context.getApplicationInfo();
+        CharSequence label = context.getPackageManager().getApplicationLabel(applicationInfo);
+        return label == null ? null : label.toString();
+    }
+
     private static String encode(String value) {
         try {
             return URLEncoder.encode(value, "UTF-8").replace("+", "%20");
@@ -62,6 +126,12 @@ public final class ConsumableAdRequest {
 
     public static Builder builder(String placementHash) {
         return new Builder(placementHash);
+    }
+
+    enum PlacementType {
+        BACKGROUND_AUDIO,
+        STICKY_PLAYER,
+        FULLSCREEN_INTERSTITIAL
     }
 
     public static final class Builder {

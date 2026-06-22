@@ -1,5 +1,7 @@
 package com.cx.audio.android;
 
+import android.content.Context;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -40,7 +42,19 @@ public final class StickyPlayerRequest {
         if (request == null) {
             throw new IllegalArgumentException("request must not be null");
         }
-        return new Builder(request.toURLString());
+        return new Builder(request.toURLString(ConsumableAdRequest.PlacementType.STICKY_PLAYER));
+    }
+
+    public static Builder builder(Context context, ConsumableAdRequest request) {
+        if (context == null) {
+            throw new IllegalArgumentException("context must not be null");
+        }
+        if (request == null) {
+            throw new IllegalArgumentException("request must not be null");
+        }
+        return new Builder(request.toURLString(
+                ConsumableAdRequest.PlacementType.STICKY_PLAYER,
+                context.getApplicationContext()));
     }
 
     public static final class Builder {

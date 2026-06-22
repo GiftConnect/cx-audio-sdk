@@ -34,6 +34,7 @@ export interface VastRequest {
 
 export interface ConsumableAdRequest {
   placementHash: string;
+  placement?: CxAudioPlacement;
   endpointUrl?: string;
   responseType?: 'vast' | 'html' | 'js' | string;
   secure?: boolean;

@@ -49,19 +49,11 @@ public final class MainActivity extends Activity {
     private EditText userAgentInput;
     private Switch consumableRequestSwitch;
     private EditText placementHashInput;
-    private EditText appNameInput;
-    private EditText appBundleInput;
     private EditText appStoreUrlInput;
     private Switch limitAdTrackingSwitch;
     private Switch gdprSwitch;
     private EditText gdprConsentInput;
     private EditText usPrivacyInput;
-    private EditText audioPositionInput;
-    private EditText audioDeliveryInput;
-    private EditText maxDurationInput;
-    private EditText mediaMimesInput;
-    private EditText companionSizesInput;
-    private EditText vastProtocolsInput;
     private EditText backgroundVolumeInput;
     private EditText minimumDeviceVolumeInput;
     private Switch stickyTopSwitch;
@@ -278,8 +270,6 @@ public final class MainActivity extends Activity {
         userAgentInput = optionInput("cx-audio-sdk-android/0.1", InputType.TYPE_CLASS_TEXT);
         consumableRequestSwitch = optionSwitch(true);
         placementHashInput = optionInput(DEFAULT_PLACEMENT_HASH, InputType.TYPE_CLASS_TEXT);
-        appNameInput = optionInput("CX Audio Sample", InputType.TYPE_CLASS_TEXT);
-        appBundleInput = optionInput(getPackageName(), InputType.TYPE_CLASS_TEXT);
         appStoreUrlInput = optionInput(
                 "https://play.google.com/store/apps/details?id=" + getPackageName(),
                 InputType.TYPE_TEXT_VARIATION_URI);
@@ -287,12 +277,6 @@ public final class MainActivity extends Activity {
         gdprSwitch = optionSwitch(false);
         gdprConsentInput = optionInput("", InputType.TYPE_CLASS_TEXT);
         usPrivacyInput = optionInput("", InputType.TYPE_CLASS_TEXT);
-        audioPositionInput = optionInput("preroll", InputType.TYPE_CLASS_TEXT);
-        audioDeliveryInput = optionInput("2", InputType.TYPE_CLASS_NUMBER);
-        maxDurationInput = optionInput("30", InputType.TYPE_CLASS_NUMBER);
-        mediaMimesInput = optionInput("audio/mpeg,audio/mp4", InputType.TYPE_CLASS_TEXT);
-        companionSizesInput = optionInput("300x250,320x50", InputType.TYPE_CLASS_TEXT);
-        vastProtocolsInput = optionInput("2,3,5,6,7,8", InputType.TYPE_CLASS_TEXT);
         backgroundVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         minimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         stickyTopSwitch = optionSwitch(false);
@@ -384,19 +368,11 @@ public final class MainActivity extends Activity {
         configurationTabContent.addView(optionSection("Consumable API"));
         configurationTabContent.addView(switchOption("Build URL from params", consumableRequestSwitch));
         configurationTabContent.addView(textOption("Placement hash (s)", placementHashInput));
-        configurationTabContent.addView(textOption("App name", appNameInput));
-        configurationTabContent.addView(textOption("App bundle", appBundleInput));
         configurationTabContent.addView(textOption("App store URL", appStoreUrlInput));
         configurationTabContent.addView(switchOption("Limit ad tracking (lmt)", limitAdTrackingSwitch));
         configurationTabContent.addView(switchOption("GDPR applies", gdprSwitch));
         configurationTabContent.addView(textOption("GDPR consent", gdprConsentInput));
         configurationTabContent.addView(textOption("US privacy", usPrivacyInput));
-        configurationTabContent.addView(textOption("Audio position", audioPositionInput));
-        configurationTabContent.addView(textOption("Delivery code", audioDeliveryInput));
-        configurationTabContent.addView(textOption("Max duration seconds", maxDurationInput));
-        configurationTabContent.addView(textOption("Media MIME types", mediaMimesInput));
-        configurationTabContent.addView(textOption("Companion sizes", companionSizesInput));
-        configurationTabContent.addView(textOption("VAST protocols", vastProtocolsInput));
     }
 
     private void updateTabButtons(boolean existingSelected) {
@@ -715,6 +691,15 @@ public final class MainActivity extends Activity {
     }
 
     private BackgroundAudioRequest backgroundAudioRequest() {
+        if (consumableRequestSwitch.isChecked()) {
+            BackgroundAudioRequest request = BackgroundAudioRequest.builder(this, consumableAdRequest())
+                    .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
+                    .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
+                    .userAgent(requiredText(userAgentInput, "User agent"))
+                    .build();
+            vastTagInput.setText(request.getVastTagUrl().toString());
+            return request;
+        }
         return BackgroundAudioRequest.builder(resolvedVastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
@@ -723,6 +708,15 @@ public final class MainActivity extends Activity {
     }
 
     private StickyPlayerRequest stickyPlayerRequest() {
+        if (consumableRequestSwitch.isChecked()) {
+            StickyPlayerRequest request = StickyPlayerRequest.builder(this, consumableAdRequest())
+                    .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
+                    .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
+                    .userAgent(requiredText(userAgentInput, "User agent"))
+                    .build();
+            vastTagInput.setText(request.getVastTagUrl().toString());
+            return request;
+        }
         return StickyPlayerRequest.builder(resolvedVastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
@@ -731,6 +725,16 @@ public final class MainActivity extends Activity {
     }
 
     private FullscreenInterstitialRequest fullscreenInterstitialRequest() {
+        if (consumableRequestSwitch.isChecked()) {
+            FullscreenInterstitialRequest request =
+                    FullscreenInterstitialRequest.builder(this, consumableAdRequest())
+                            .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
+                            .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
+                            .userAgent(requiredText(userAgentInput, "User agent"))
+                            .build();
+            vastTagInput.setText(request.getVastTagUrl().toString());
+            return request;
+        }
         return FullscreenInterstitialRequest.builder(resolvedVastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
@@ -743,24 +747,19 @@ public final class MainActivity extends Activity {
             return vastTagUrl();
         }
 
-        ConsumableAdRequest request = ConsumableAdRequest.builder(requiredText(placementHashInput, "Placement hash"))
-                .appName(requiredText(appNameInput, "App name"))
-                .appBundle(requiredText(appBundleInput, "App bundle"))
+        String url = consumableAdRequest().toURLString();
+        vastTagInput.setText(url);
+        return url;
+    }
+
+    private ConsumableAdRequest consumableAdRequest() {
+        return ConsumableAdRequest.builder(requiredText(placementHashInput, "Placement hash"))
                 .appStoreUrl(requiredText(appStoreUrlInput, "App store URL"))
                 .limitAdTracking(limitAdTrackingSwitch.isChecked())
                 .gdpr(gdprSwitch.isChecked())
                 .gdprConsent(optionalText(gdprConsentInput))
                 .usPrivacy(optionalText(usPrivacyInput))
-                .position(requiredText(audioPositionInput, "Audio position"))
-                .delivery(intValue(audioDeliveryInput, "Delivery code", 1))
-                .maxDurationSeconds(intValue(maxDurationInput, "Max duration seconds", 1))
-                .mediaMimes(splitCsv(mediaMimesInput))
-                .companionSizes(splitCsv(companionSizesInput))
-                .protocols(splitCsv(vastProtocolsInput))
                 .build();
-        String url = request.toURLString();
-        vastTagInput.setText(url);
-        return url;
     }
 
     private BackgroundAudioOptions backgroundOptions() {
@@ -803,14 +802,6 @@ public final class MainActivity extends Activity {
     private String optionalText(EditText input) {
         String value = input.getText().toString().trim();
         return value.isEmpty() ? null : value;
-    }
-
-    private String[] splitCsv(EditText input) {
-        String value = input.getText().toString().trim();
-        if (value.isEmpty()) {
-            return new String[0];
-        }
-        return value.split("\\s*,\\s*");
     }
 
     private int intValue(EditText input, String name, int minimum) {

@@ -2,9 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using UnityEngine;
 
 namespace Cx.Audio.Unity
 {
+    public enum ConsumablePlacement
+    {
+        BackgroundAudio,
+        StickyPlayer,
+        FullscreenInterstitial
+    }
+
     public sealed class ConsumableAdRequest
     {
         private const string DefaultEndpointUrl = "https://2.e.serverbid.com/mpb/get";
@@ -80,6 +88,11 @@ namespace Cx.Audio.Unity
 
         public string ToVastTagUrl()
         {
+            return ToVastTagUrl(null);
+        }
+
+        public string ToVastTagUrl(ConsumablePlacement? placement)
+        {
             if (string.IsNullOrEmpty(EndpointUrl) || EndpointUrl.Trim().Length == 0)
             {
                 throw new ArgumentException("EndpointUrl must not be blank", "EndpointUrl");
@@ -92,10 +105,11 @@ namespace Cx.Audio.Unity
                 throw new ArgumentException("EndpointUrl must be an absolute HTTP or HTTPS URL", "EndpointUrl");
             }
 
+            Dictionary<string, string> requestParameters = AutomaticParameters(placement);
             StringBuilder builder = new StringBuilder(EndpointUrl);
             builder.Append(EndpointUrl.IndexOf("?", StringComparison.Ordinal) >= 0 ? "&" : "?");
             bool first = true;
-            foreach (KeyValuePair<string, string> pair in parameters)
+            foreach (KeyValuePair<string, string> pair in requestParameters)
             {
                 if (string.IsNullOrEmpty(pair.Value) || pair.Value.Trim().Length == 0)
                 {
@@ -111,6 +125,57 @@ namespace Cx.Audio.Unity
                 first = false;
             }
             return builder.ToString();
+        }
+
+        private Dictionary<string, string> AutomaticParameters(ConsumablePlacement? placement)
+        {
+            Dictionary<string, string> requestParameters = new Dictionary<string, string>(parameters);
+            SetAutomatic(requestParameters, "locale", CultureInfo.CurrentCulture.Name);
+            SetAutomatic(requestParameters, "appname", Application.productName);
+            SetAutomatic(requestParameters, "appbundle", Application.identifier);
+            SetAutomatic(requestParameters, "v_delivery", "2");
+            SetAutomatic(requestParameters, "v_delay", "-1");
+            SetAutomatic(requestParameters, "v_pm", "1");
+            SetAutomatic(requestParameters, "v_max_dur", "90");
+            SetAutomatic(
+                requestParameters,
+                "v_mimes",
+                "audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/x-wav,video/mp4,image/jpeg,image/png,image/gif,image/webp");
+            SetAutomatic(requestParameters, "v_cmp_types", "1");
+            SetAutomatic(requestParameters, "v_cmp_mimes", "image/jpeg,image/png,image/gif,image/webp");
+            SetAutomatic(requestParameters, "v_cmp_sizes", "300x250");
+            SetAutomatic(requestParameters, "v_protocols", "2,3,5,6,7,8");
+            SetAutomatic(requestParameters, "c_audio_feed_type", "6");
+
+            if (placement == ConsumablePlacement.FullscreenInterstitial)
+            {
+                SetAutomatic(requestParameters, "v_plcmt", "3");
+                SetAutomatic(requestParameters, "v_linearity", "1");
+                SetAutomatic(requestParameters, "v_min_bitrate", "64");
+                SetAutomatic(requestParameters, "v_max_bitrate", "2500");
+            }
+            else if (placement == ConsumablePlacement.BackgroundAudio ||
+                     placement == ConsumablePlacement.StickyPlayer)
+            {
+                SetAutomatic(requestParameters, "v_plcmt", "2");
+                SetAutomatic(requestParameters, "v_linearity", "2");
+                SetAutomatic(requestParameters, "v_min_bitrate", "64");
+                SetAutomatic(requestParameters, "v_max_bitrate", "320");
+            }
+            else
+            {
+                SetAutomatic(requestParameters, "v_min_bitrate", "64");
+                SetAutomatic(requestParameters, "v_max_bitrate", "320");
+            }
+            return requestParameters;
+        }
+
+        private static void SetAutomatic(Dictionary<string, string> requestParameters, string name, string value)
+        {
+            if (!requestParameters.ContainsKey(name) && !string.IsNullOrEmpty(value) && value.Trim().Length > 0)
+            {
+                requestParameters[name] = value;
+            }
         }
 
         private ConsumableAdRequest Set(string name, bool value)
@@ -166,12 +231,17 @@ namespace Cx.Audio.Unity
         }
 
         public VastRequest(ConsumableAdRequest request)
+            : this(request, null)
+        {
+        }
+
+        public VastRequest(ConsumableAdRequest request, ConsumablePlacement? placement)
         {
             if (request == null)
             {
                 throw new ArgumentNullException("request");
             }
-            VastTagUrl = request.ToVastTagUrl();
+            VastTagUrl = request.ToVastTagUrl(placement);
         }
 
         public string VastTagUrl { get; set; }

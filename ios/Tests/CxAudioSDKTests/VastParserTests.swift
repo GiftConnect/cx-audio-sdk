@@ -9,10 +9,10 @@ final class VastParserTests: XCTestCase {
         let consumableRequest = try ConsumableAdRequest(
             placementHash: "abc123",
             cacheBuster: "fixed",
+            limitAdTracking: false,
             appStoreURL: "https://apps.apple.com/app/id123",
             appName: "Test App",
             appBundle: "com.example.app",
-            limitAdTracking: false,
             gdpr: true,
             gdprConsent: "consent string",
             position: "preroll",
@@ -23,8 +23,8 @@ final class VastParserTests: XCTestCase {
 
         let url = try consumableRequest.url()
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
-        let queryItems = Dictionary(
-            uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") }
+        let queryItems = Dictionary<String, String>(
+            uniqueKeysWithValues: (components.queryItems ?? [URLQueryItem]()).map { ($0.name, $0.value ?? "") }
         )
 
         XCTAssertEqual(url.scheme, "https")
@@ -40,12 +40,51 @@ final class VastParserTests: XCTestCase {
         XCTAssertEqual(queryItems["gdpr"], "1")
         XCTAssertEqual(queryItems["gdpr_consent"], "consent string")
         XCTAssertEqual(queryItems["v_position"], "preroll")
+        XCTAssertEqual(queryItems["v_delay"], "-1")
+        XCTAssertEqual(queryItems["v_delivery"], "2")
         XCTAssertEqual(queryItems["v_mimes"], "audio/mpeg,audio/mp4")
         XCTAssertEqual(queryItems["v_cmp_sizes"], "300x250,320x50")
+        XCTAssertEqual(queryItems["v_pm"], "1")
+        XCTAssertEqual(queryItems["c_audio_feed_type"], "6")
         XCTAssertEqual(queryItems["x_custom"], "hello world")
 
         let vastRequest = try VastRequest(consumableAdRequest: consumableRequest)
         XCTAssertEqual(vastRequest.vastTagURL, url)
+    }
+
+    func testConsumableAdRequestAppliesPlacementAutomaticParameters() throws {
+        let consumableRequest = try ConsumableAdRequest(
+            placementHash: "abc123",
+            cacheBuster: "fixed"
+        )
+
+        let stickyURL = try VastRequest(
+            consumableAdRequest: consumableRequest,
+            placement: .stickyPlayer
+        ).vastTagURL
+        let stickyItems = queryItems(from: stickyURL)
+        XCTAssertEqual(stickyItems["v_plcmt"], "2")
+        XCTAssertEqual(stickyItems["v_linearity"], "2")
+        XCTAssertEqual(stickyItems["v_delivery"], "2")
+        XCTAssertEqual(stickyItems["v_delay"], "-1")
+        XCTAssertEqual(stickyItems["v_pm"], "1")
+        XCTAssertEqual(stickyItems["v_max_dur"], "90")
+        XCTAssertEqual(stickyItems["v_min_bitrate"], "64")
+        XCTAssertEqual(stickyItems["v_max_bitrate"], "320")
+        XCTAssertEqual(stickyItems["v_cmp_types"], "1")
+        XCTAssertEqual(stickyItems["v_cmp_sizes"], "300x250")
+        XCTAssertEqual(stickyItems["v_protocols"], "2,3,5,6,7,8")
+        XCTAssertEqual(stickyItems["c_audio_feed_type"], "6")
+
+        let interstitialURL = try VastRequest(
+            consumableAdRequest: consumableRequest,
+            placement: .fullscreenInterstitial
+        ).vastTagURL
+        let interstitialItems = queryItems(from: interstitialURL)
+        XCTAssertEqual(interstitialItems["v_plcmt"], "3")
+        XCTAssertEqual(interstitialItems["v_linearity"], "1")
+        XCTAssertEqual(interstitialItems["v_min_bitrate"], "64")
+        XCTAssertEqual(interstitialItems["v_max_bitrate"], "2500")
     }
 
     func testCompanionParserPrefersClosestThreeHundredByTwoFiftyImage() throws {
@@ -108,6 +147,13 @@ final class VastParserTests: XCTestCase {
         \(companions.joined())
         </CompanionAds></Creative></Creatives></InLine></Ad></VAST>
         """.utf8)
+    }
+
+    private func queryItems(from url: URL) -> [String: String] {
+        let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+        return Dictionary<String, String>(
+            uniqueKeysWithValues: (components?.queryItems ?? [URLQueryItem]()).map { ($0.name, $0.value ?? "") }
+        )
     }
 
     private func vastWithMediaFiles(_ mediaFiles: String...) -> Data {

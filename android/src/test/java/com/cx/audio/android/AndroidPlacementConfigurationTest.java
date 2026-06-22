@@ -87,12 +87,44 @@ public final class AndroidPlacementConfigurationTest {
         assertTrue(url.contains("gdpr=1"));
         assertTrue(url.contains("gdpr_consent=consent%20string"));
         assertTrue(url.contains("v_position=preroll"));
+        assertTrue(url.contains("v_delay=-1"));
+        assertTrue(url.contains("v_delivery=2"));
         assertTrue(url.contains("v_mimes=audio%2Fmpeg%2Caudio%2Fmp4"));
         assertTrue(url.contains("v_cmp_sizes=300x250%2C320x50"));
+        assertTrue(url.contains("v_pm=1"));
+        assertTrue(url.contains("c_audio_feed_type=6"));
         assertTrue(url.contains("x_custom=hello%20world"));
 
         StickyPlayerRequest request = StickyPlayerRequest.builder(consumableRequest).build();
-        assertEquals(url, request.getVastTagUrl().toString());
+        String stickyUrl = request.getVastTagUrl().toString();
+        assertEquals(consumableRequest.toURLString(ConsumableAdRequest.PlacementType.STICKY_PLAYER), stickyUrl);
+        assertTrue(stickyUrl.contains("v_plcmt=2"));
+        assertTrue(stickyUrl.contains("v_linearity=2"));
+        assertTrue(stickyUrl.contains("v_min_bitrate=64"));
+        assertTrue(stickyUrl.contains("v_max_bitrate=320"));
+    }
+
+    @Test
+    public void consumableAdRequestAppliesInterstitialAutomaticParameters() {
+        ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("abc123")
+                .cacheBuster("fixed")
+                .build();
+
+        FullscreenInterstitialRequest request = FullscreenInterstitialRequest.builder(consumableRequest).build();
+        String url = request.getVastTagUrl().toString();
+
+        assertTrue(url.contains("v_plcmt=3"));
+        assertTrue(url.contains("v_linearity=1"));
+        assertTrue(url.contains("v_delivery=2"));
+        assertTrue(url.contains("v_delay=-1"));
+        assertTrue(url.contains("v_pm=1"));
+        assertTrue(url.contains("v_max_dur=90"));
+        assertTrue(url.contains("v_min_bitrate=64"));
+        assertTrue(url.contains("v_max_bitrate=2500"));
+        assertTrue(url.contains("v_cmp_types=1"));
+        assertTrue(url.contains("v_cmp_sizes=300x250"));
+        assertTrue(url.contains("v_protocols=2%2C3%2C5%2C6%2C7%2C8"));
+        assertTrue(url.contains("c_audio_feed_type=6"));
     }
 
     @Test

@@ -95,11 +95,61 @@ function createConsumableVastRequest(request, networkOptions) {
   put(params, 'c_audio_feed_type', request.contentAudioFeedType);
 
   Object.keys(request.customParameters || {}).forEach((key) => put(params, key, request.customParameters[key]));
+  applyAutomaticParameters(params, request.placement);
 
   return {
     ...(networkOptions || {}),
     vastTagUrl: buildUrl(request.endpointUrl || CONSUMABLE_ENDPOINT, params),
   };
+}
+
+function applyAutomaticParameters(params, placement) {
+  putAutomatic(params, 'locale', getLocale());
+  putAutomatic(params, 'v_delivery', '2');
+  putAutomatic(params, 'v_delay', '-1');
+  putAutomatic(params, 'v_pm', '1');
+  putAutomatic(params, 'v_max_dur', '90');
+  putAutomatic(
+    params,
+    'v_mimes',
+    'audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/x-wav,video/mp4,image/jpeg,image/png,image/gif,image/webp'
+  );
+  putAutomatic(params, 'v_cmp_types', '1');
+  putAutomatic(params, 'v_cmp_mimes', 'image/jpeg,image/png,image/gif,image/webp');
+  putAutomatic(params, 'v_cmp_sizes', '300x250');
+  putAutomatic(params, 'v_protocols', '2,3,5,6,7,8');
+  putAutomatic(params, 'c_audio_feed_type', '6');
+
+  if (placement === 'fullscreenInterstitial') {
+    putAutomatic(params, 'v_plcmt', '3');
+    putAutomatic(params, 'v_linearity', '1');
+    putAutomatic(params, 'v_min_bitrate', '64');
+    putAutomatic(params, 'v_max_bitrate', '2500');
+  } else if (placement === 'backgroundAudio' || placement === 'stickyPlayer') {
+    putAutomatic(params, 'v_plcmt', '2');
+    putAutomatic(params, 'v_linearity', '2');
+    putAutomatic(params, 'v_min_bitrate', '64');
+    putAutomatic(params, 'v_max_bitrate', '320');
+  } else {
+    putAutomatic(params, 'v_min_bitrate', '64');
+    putAutomatic(params, 'v_max_bitrate', '320');
+  }
+}
+
+function putAutomatic(params, key, value) {
+  if (params[key] == null && value != null && String(value).trim() !== '') {
+    params[key] = value;
+  }
+}
+
+function getLocale() {
+  if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
+    if (locale) {
+      return locale;
+    }
+  }
+  return null;
 }
 
 function put(params, key, value) {
