@@ -52,6 +52,16 @@ final class VastParserTests: XCTestCase {
         XCTAssertEqual(vastRequest.vastTagURL, url)
     }
 
+    func testConsumableAdRequestDefaultsCacheBusterToMillisecondTimestamp() throws {
+        let consumableRequest = try ConsumableAdRequest(placementHash: "abc123")
+
+        let url = try consumableRequest.url()
+        let items = queryItems(from: url)
+        let cacheBuster = try XCTUnwrap(items["cb"])
+
+        XCTAssertNotNil(cacheBuster.range(of: #"^\d+$"#, options: .regularExpression))
+    }
+
     func testConsumableAdRequestAppliesPlacementAutomaticParameters() throws {
         let consumableRequest = try ConsumableAdRequest(
             placementHash: "abc123",

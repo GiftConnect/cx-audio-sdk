@@ -73,6 +73,17 @@ Build the Android library:
 
 If the default `java` on the machine is newer than Gradle supports, set `JAVA_HOME` to a supported JDK before running the wrapper.
 
+## Advertising Identifiers
+The SDK request builders expose `idfa`, `gadid`, `ifa`, and `limitAdTracking` fields, but the SDK does not automatically collect advertising identifiers. Host apps are responsible for platform consent, store declarations, privacy notices, and identifier retrieval before passing values into `ConsumableAdRequest`.
+
+Use the platform advertising identifier only when it is available and permitted:
+
+- iOS: request App Tracking Transparency permission in the host app before reading IDFA. If ATT is denied, restricted, not determined, or the returned IDFA is all zeros, omit `idfa` and `ifa` and send `limitAdTracking(true)`.
+- Android: if the host app retrieves the Google advertising ID, apps targeting Android 13/API 33 or newer must declare `com.google.android.gms.permission.AD_ID`. If the ID is deleted, limited, unavailable, or all zeros, omit `gadid` and `ifa` and send `limitAdTracking(true)`.
+- React Native and Unity Android hosts can pass `gadid`, `ifa`, and `limitAdTracking` through their `ConsumableAdRequest` wrappers after the host app retrieves the ID.
+
+Do not fall back to fingerprinting or persistent device identifiers for advertising when IDFA, GAID, or IFA is unavailable.
+
 ## Android Background Audio
 The Android background audio placement:
 
@@ -85,11 +96,16 @@ The Android background audio placement:
 
 ### Usage
 ```java
+String advertisingId = null; // Host app retrieves GAID/AAID when available and permitted.
+boolean limitAdTracking = advertisingId == null;
+
 ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("b0816e0aa072e446e7737dd92dd34d10")
         .appName("Example Game")
         .appBundle("com.example.game")
         .appStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
-        .limitAdTracking(false)
+        .gadid(advertisingId)
+        .ifa(advertisingId)
+        .limitAdTracking(limitAdTracking)
         .gdpr(false)
         .position("preroll")
         .delivery(2)
@@ -323,12 +339,29 @@ Call placement APIs from the main thread when passing view controllers or updati
 ```swift
 import CxAudioSDK
 
+let idfa: String? = nil // Host app supplies this only after ATT authorization.
+let limitAdTracking = idfa == nil
+
+let consumableRequest = try ConsumableAdRequest(
+    placementHash: "b0816e0aa072e446e7737dd92dd34d10",
+    appStoreURL: "https://apps.apple.com/app/id123",
+    appName: "Example Game",
+    appBundle: "com.example.game",
+    idfa: idfa,
+    ifa: idfa,
+    limitAdTracking: limitAdTracking,
+    gdpr: false,
+    position: "preroll"
+)
+
 let request = try VastRequest(
-    vastTagURLString: "https://ads.example.com/vast.xml",
+    consumableAdRequest: consumableRequest,
     timeoutInterval: 8,
     userAgent: "my-ios-app/1.0"
 )
 ```
+
+Use `VastRequest(vastTagURLString:)` for QA tags or non-Consumable ad servers.
 
 ### Background Audio
 ```swift
@@ -480,12 +513,17 @@ subscription.remove();
 ```js
 import { BackgroundAudio, createConsumableVastRequest } from 'cx-audio-sdk';
 
+const advertisingId = undefined; // Host app retrieves GAID/AAID when available and permitted.
+const limitAdTracking = !advertisingId;
+
 const request = createConsumableVastRequest({
   placementHash: 'b0816e0aa072e446e7737dd92dd34d10',
   appName: 'Example Game',
   appBundle: 'com.example.game',
   appStoreUrl: 'https://play.google.com/store/apps/details?id=com.example.game',
-  limitAdTracking: false,
+  gadid: advertisingId,
+  ifa: advertisingId,
+  limitAdTracking,
   gdpr: false,
   position: 'preroll',
   delivery: 2,
@@ -562,8 +600,19 @@ Then add `android/build/outputs/aar/android-release.aar` to the Unity project as
 ```csharp
 using Cx.Audio.Unity;
 
+string advertisingId = null; // Host app retrieves GAID/AAID when available and permitted.
+bool limitAdTracking = string.IsNullOrEmpty(advertisingId);
+
+ConsumableAdRequest consumableRequest = new ConsumableAdRequest("b0816e0aa072e446e7737dd92dd34d10")
+    .AppName("Example Game")
+    .AppBundle("com.example.game")
+    .AppStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
+    .Gadid(advertisingId)
+    .Ifa(advertisingId)
+    .LimitAdTracking(limitAdTracking);
+
 BackgroundAudioHandle handle = BackgroundAudio.Play(
-    new VastRequest("https://ads.example.com/vast.xml"),
+    new VastRequest(consumableRequest),
     new BackgroundAudioOptions
     {
         Volume = 0.2f,

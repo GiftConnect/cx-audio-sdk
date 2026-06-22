@@ -16,6 +16,8 @@ namespace Cx.Audio.Unity
     public sealed class ConsumableAdRequest
     {
         private const string DefaultEndpointUrl = "https://2.e.serverbid.com/mpb/get";
+        private static readonly DateTime UnixEpoch =
+            new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private readonly Dictionary<string, string> parameters = new Dictionary<string, string>();
 
         public ConsumableAdRequest(string placementHash)
@@ -29,7 +31,7 @@ namespace Cx.Audio.Unity
             Set("s", placementHash);
             Set("rt", "vast");
             Set("secure", true);
-            Set("cb", Guid.NewGuid().ToString("N"));
+            Set("cb", DefaultCacheBuster());
         }
 
         public string EndpointUrl { get; set; }
@@ -176,6 +178,11 @@ namespace Cx.Audio.Unity
             {
                 requestParameters[name] = value;
             }
+        }
+
+        private static string DefaultCacheBuster()
+        {
+            return ((long)(DateTime.UtcNow - UnixEpoch).TotalMilliseconds).ToString(CultureInfo.InvariantCulture);
         }
 
         private ConsumableAdRequest Set(string name, bool value)

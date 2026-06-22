@@ -105,6 +105,16 @@ public final class AndroidPlacementConfigurationTest {
     }
 
     @Test
+    public void consumableAdRequestDefaultsCacheBusterToMillisecondTimestamp() {
+        ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("abc123")
+                .build();
+
+        String url = consumableRequest.toURLString();
+
+        assertTrue(url.matches(".*(?:\\?|&)cb=\\d+(?:&.*)?"));
+    }
+
+    @Test
     public void consumableAdRequestAppliesInterstitialAutomaticParameters() {
         ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("abc123")
                 .cacheBuster("fixed")

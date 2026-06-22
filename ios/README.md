@@ -32,12 +32,17 @@ All placements fetch a VAST tag URL, resolve up to five wrappers, and select the
 ```swift
 import CxAudioSDK
 
+let idfa: String? = nil // Host app supplies this only after ATT authorization.
+let limitAdTracking = idfa == nil
+
 let consumableRequest = try ConsumableAdRequest(
     placementHash: "b0816e0aa072e446e7737dd92dd34d10",
     appStoreURL: "https://apps.apple.com/app/id123",
     appName: "Example Game",
     appBundle: "com.example.game",
-    limitAdTracking: false,
+    idfa: idfa,
+    ifa: idfa,
+    limitAdTracking: limitAdTracking,
     gdpr: false,
     position: "preroll",
     delivery: 2,
@@ -63,6 +68,25 @@ let request = try VastRequest(
     userAgent: "my-ios-app/1.0"
 )
 ```
+
+## Advertising Identifiers
+
+The iOS SDK does not automatically request App Tracking Transparency permission or read IDFA. The host app must handle ATT, privacy disclosures, and App Store Connect privacy details before passing identifiers into `ConsumableAdRequest`.
+
+When ATT is authorized and `ASIdentifierManager.shared().advertisingIdentifier` is not all zeros, pass the value as both `idfa` and `ifa` if the ad endpoint expects OpenRTB-style IFA:
+
+```swift
+let consumableRequest = try ConsumableAdRequest(
+    placementHash: "b0816e0aa072e446e7737dd92dd34d10",
+    idfa: idfa,
+    ifa: idfa,
+    limitAdTracking: false
+)
+```
+
+When ATT is denied, restricted, not determined, or IDFA is all zeros, omit `idfa` and `ifa` and set `limitAdTracking: true`. Do not fall back to fingerprinting or another persistent identifier for advertising.
+
+If the host app requests ATT, it must include `NSUserTrackingUsageDescription` in its `Info.plist`.
 
 ## Background Audio
 

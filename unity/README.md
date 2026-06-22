@@ -22,6 +22,12 @@ Build the Android SDK AAR from the repository root:
 
 Then include `android/build/outputs/aar/android-release.aar` as an Android plugin in the Unity project, for example under `Assets/Plugins/Android/`.
 
+## Advertising Identifiers
+
+The Unity package does not automatically collect advertising identifiers. For Android player builds, the host game is responsible for retrieving the Google advertising ID when available and permitted, declaring `com.google.android.gms.permission.AD_ID` for Android 13/API 33 or newer targets, and applying any required consent or privacy controls.
+
+Pass the advertising ID as both `Gadid(...)` and `Ifa(...)` when the ad endpoint expects OpenRTB-style IFA. If the ID is deleted, limited, unavailable, or all zeros, omit `Gadid(...)` and `Ifa(...)` and call `LimitAdTracking(true)`. Do not fall back to fingerprinting or another persistent device identifier for advertising.
+
 ## Background Audio
 
 ```csharp
@@ -34,11 +40,16 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
 
     public void PlayBackgroundAudio()
     {
+        string advertisingId = null; // Host game supplies GAID/AAID when available and permitted.
+        bool limitAdTracking = string.IsNullOrEmpty(advertisingId);
+
         ConsumableAdRequest consumableRequest = new ConsumableAdRequest("b0816e0aa072e446e7737dd92dd34d10")
             .AppName("Example Game")
             .AppBundle("com.example.game")
             .AppStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
-            .LimitAdTracking(false)
+            .Gadid(advertisingId)
+            .Ifa(advertisingId)
+            .LimitAdTracking(limitAdTracking)
             .Gdpr(false)
             .Position("preroll")
             .Delivery(2)

@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.UUID;
 
 public final class ConsumableAdRequest {
     private static final String DEFAULT_ENDPOINT = "https://2.e.serverbid.com/mpb/get";
@@ -24,7 +23,7 @@ public final class ConsumableAdRequest {
         this.endpointUrl = builder.endpointUrl;
         this.parameters = new LinkedHashMap<>(builder.parameters);
         if (!parameters.containsKey("cb")) {
-            parameters.put("cb", UUID.randomUUID().toString());
+            parameters.put("cb", defaultCacheBuster());
         }
     }
 
@@ -122,6 +121,10 @@ public final class ConsumableAdRequest {
         } catch (UnsupportedEncodingException e) {
             throw new IllegalStateException("UTF-8 is unavailable", e);
         }
+    }
+
+    private static String defaultCacheBuster() {
+        return String.valueOf(System.currentTimeMillis());
     }
 
     public static Builder builder(String placementHash) {

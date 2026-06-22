@@ -11,7 +11,7 @@ public struct ConsumableAdRequest: Equatable {
         endpointURL: URL = ConsumableAdRequest.defaultEndpointURL,
         responseType: String = "vast",
         secure: Bool = true,
-        cacheBuster: String = UUID().uuidString,
+        cacheBuster: String = String(Int64(Date().timeIntervalSince1970 * 1000)),
         userAgentParameter: String? = nil,
         ipAddress: String? = nil,
         locale: String? = nil,

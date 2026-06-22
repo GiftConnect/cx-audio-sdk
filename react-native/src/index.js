@@ -39,7 +39,7 @@ function createConsumableVastRequest(request, networkOptions) {
     s: request.placementHash,
     rt: request.responseType || 'vast',
     secure: request.secure === false ? '0' : '1',
-    cb: request.cacheBuster || randomCacheBuster(),
+    cb: request.cacheBuster || defaultCacheBuster(),
   };
 
   put(params, 'u', request.userAgentParameter);
@@ -183,8 +183,8 @@ function buildUrl(endpoint, params) {
   return `${endpoint}${endpoint.includes('?') ? '&' : '?'}${query}`;
 }
 
-function randomCacheBuster() {
-  return `${Date.now()}-${Math.floor(Math.random() * 1000000)}`;
+function defaultCacheBuster() {
+  return `${Date.now()}`;
 }
 
 const BackgroundAudio = Object.freeze({
