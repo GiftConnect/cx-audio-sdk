@@ -95,6 +95,11 @@ namespace Cx.Audio.Unity
 
         public string ToVastTagUrl(ConsumablePlacement? placement)
         {
+            return ToVastTagUrl(placement, null);
+        }
+
+        public string ToVastTagUrl(ConsumablePlacement? placement, string userAgentParameter)
+        {
             if (string.IsNullOrEmpty(EndpointUrl) || EndpointUrl.Trim().Length == 0)
             {
                 throw new ArgumentException("EndpointUrl must not be blank", "EndpointUrl");
@@ -107,7 +112,7 @@ namespace Cx.Audio.Unity
                 throw new ArgumentException("EndpointUrl must be an absolute HTTP or HTTPS URL", "EndpointUrl");
             }
 
-            Dictionary<string, string> requestParameters = AutomaticParameters(placement);
+            Dictionary<string, string> requestParameters = AutomaticParameters(placement, userAgentParameter);
             StringBuilder builder = new StringBuilder(EndpointUrl);
             builder.Append(EndpointUrl.IndexOf("?", StringComparison.Ordinal) >= 0 ? "&" : "?");
             bool first = true;
@@ -129,9 +134,12 @@ namespace Cx.Audio.Unity
             return builder.ToString();
         }
 
-        private Dictionary<string, string> AutomaticParameters(ConsumablePlacement? placement)
+        private Dictionary<string, string> AutomaticParameters(
+            ConsumablePlacement? placement,
+            string userAgentParameter)
         {
             Dictionary<string, string> requestParameters = new Dictionary<string, string>(parameters);
+            SetAutomatic(requestParameters, "u", userAgentParameter);
             SetAutomatic(requestParameters, "locale", CultureInfo.CurrentCulture.Name);
             SetAutomatic(requestParameters, "appname", Application.productName);
             SetAutomatic(requestParameters, "appbundle", Application.identifier);
@@ -232,9 +240,12 @@ namespace Cx.Audio.Unity
 
     public sealed class VastRequest
     {
+        public const string DefaultUserAgent = "cx-audio-sdk-unity/0.1";
+
         public VastRequest(string vastTagUrl)
         {
             VastTagUrl = vastTagUrl;
+            UserAgent = DefaultUserAgent;
         }
 
         public VastRequest(ConsumableAdRequest request)
@@ -248,7 +259,8 @@ namespace Cx.Audio.Unity
             {
                 throw new ArgumentNullException("request");
             }
-            VastTagUrl = request.ToVastTagUrl(placement);
+            UserAgent = DefaultUserAgent;
+            VastTagUrl = request.ToVastTagUrl(placement, UserAgent);
         }
 
         public string VastTagUrl { get; set; }

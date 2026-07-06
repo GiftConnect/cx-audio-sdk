@@ -49,7 +49,8 @@ final class VastParserTests: XCTestCase {
         XCTAssertEqual(queryItems["x_custom"], "hello world")
 
         let vastRequest = try VastRequest(consumableAdRequest: consumableRequest)
-        XCTAssertEqual(vastRequest.vastTagURL, url)
+        let vastItems = queryItems(from: vastRequest.vastTagURL)
+        XCTAssertEqual(vastItems["u"], "cx-audio-sdk-ios/0.1")
     }
 
     func testConsumableAdRequestDefaultsCacheBusterToMillisecondTimestamp() throws {

@@ -44,8 +44,15 @@ public final class ConsumableAdRequest {
     }
 
     String toURLString(PlacementType placementType, Context context) {
+        return toURLString(placementType, context, null);
+    }
+
+    String toURLString(
+            PlacementType placementType,
+            Context context,
+            String userAgentParameter) {
         LinkedHashMap<String, String> params = new LinkedHashMap<>(parameters);
-        applyAutomaticParameters(params, placementType, context);
+        applyAutomaticParameters(params, placementType, context, userAgentParameter);
 
         StringBuilder builder = new StringBuilder(endpointUrl);
         builder.append(endpointUrl.contains("?") ? "&" : "?");
@@ -68,7 +75,9 @@ public final class ConsumableAdRequest {
     private static void applyAutomaticParameters(
             LinkedHashMap<String, String> parameters,
             PlacementType placementType,
-            Context context) {
+            Context context,
+            String userAgentParameter) {
+        putAutomatic(parameters, "u", userAgentParameter);
         putAutomatic(parameters, "locale", Locale.getDefault().toLanguageTag());
         if (context != null) {
             putAutomatic(parameters, "appbundle", context.getPackageName());

@@ -73,20 +73,69 @@ let request = try VastRequest(
 
 The iOS SDK does not automatically request App Tracking Transparency permission or read IDFA. The host app must handle ATT, privacy disclosures, and App Store Connect privacy details before passing identifiers into `ConsumableAdRequest`.
 
-When ATT is authorized and `ASIdentifierManager.shared().advertisingIdentifier` is not all zeros, pass the value as both `idfa` and `ifa` if the ad endpoint expects OpenRTB-style IFA:
+On iOS there is not a separate IFA API. For ad requests, acquire IDFA through Apple's `AdSupport` framework after ATT authorization, then pass that same value as both `idfa` and `ifa` if the ad endpoint expects OpenRTB-style IFA.
 
 ```swift
+import AdSupport
+import AppTrackingTransparency
+
+struct AdvertisingIds {
+    let idfa: String?
+    let ifa: String?
+    let limitAdTracking: Bool
+}
+
+@MainActor
+func loadAdvertisingIds() async -> AdvertisingIds {
+    let status = ATTrackingManager.trackingAuthorizationStatus
+    let finalStatus: ATTrackingManager.AuthorizationStatus
+
+    if status == .notDetermined {
+        finalStatus = await withCheckedContinuation { continuation in
+            ATTrackingManager.requestTrackingAuthorization { status in
+                continuation.resume(returning: status)
+            }
+        }
+    } else {
+        finalStatus = status
+    }
+
+    guard finalStatus == .authorized else {
+        return AdvertisingIds(idfa: nil, ifa: nil, limitAdTracking: true)
+    }
+
+    let uuid = ASIdentifierManager.shared().advertisingIdentifier
+    guard uuid.uuidString != "00000000-0000-0000-0000-000000000000" else {
+        return AdvertisingIds(idfa: nil, ifa: nil, limitAdTracking: true)
+    }
+
+    let value = uuid.uuidString
+    return AdvertisingIds(idfa: value, ifa: value, limitAdTracking: false)
+}
+```
+
+Pass the returned values into the SDK request:
+
+```swift
+let advertisingIds = await loadAdvertisingIds()
+
 let consumableRequest = try ConsumableAdRequest(
     placementHash: "b0816e0aa072e446e7737dd92dd34d10",
-    idfa: idfa,
-    ifa: idfa,
-    limitAdTracking: false
+    idfa: advertisingIds.idfa,
+    ifa: advertisingIds.ifa,
+    limitAdTracking: advertisingIds.limitAdTracking
 )
 ```
 
 When ATT is denied, restricted, not determined, or IDFA is all zeros, omit `idfa` and `ifa` and set `limitAdTracking: true`. Do not fall back to fingerprinting or another persistent identifier for advertising.
 
 If the host app requests ATT, it must include `NSUserTrackingUsageDescription` in its `Info.plist`.
+
+## User Agent and IP Parameters
+
+When a `ConsumableAdRequest` is converted into a `VastRequest`, the SDK automatically uses the `VastRequest.userAgent` value as the `u` query parameter unless `userAgentParameter` was explicitly provided on `ConsumableAdRequest`.
+
+The SDK does not compute the `i` query parameter on device. iOS can expose local network interface addresses, but it cannot reliably know the public/NAT IP seen by an ad server without an external lookup. Prefer server-side inference from the request source address at the Consumable endpoint or proxy. Pass `ipAddress` only when the host app has a trusted server-provided value.
 
 ## Background Audio
 

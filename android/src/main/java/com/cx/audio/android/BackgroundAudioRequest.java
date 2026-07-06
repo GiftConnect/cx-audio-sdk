@@ -1,11 +1,14 @@
 package com.cx.audio.android;
 
 import android.content.Context;
+import android.webkit.WebSettings;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public final class BackgroundAudioRequest {
+    private static final String DEFAULT_USER_AGENT = "cx-audio-sdk-android/0.1";
+
     private final URL vastTagUrl;
     private final int connectTimeoutMs;
     private final int readTimeoutMs;
@@ -42,7 +45,10 @@ public final class BackgroundAudioRequest {
         if (request == null) {
             throw new IllegalArgumentException("request must not be null");
         }
-        return new Builder(request.toURLString(ConsumableAdRequest.PlacementType.BACKGROUND_AUDIO));
+        return new Builder(request.toURLString(
+                ConsumableAdRequest.PlacementType.BACKGROUND_AUDIO,
+                null,
+                DEFAULT_USER_AGENT));
     }
 
     public static Builder builder(Context context, ConsumableAdRequest request) {
@@ -52,16 +58,28 @@ public final class BackgroundAudioRequest {
         if (request == null) {
             throw new IllegalArgumentException("request must not be null");
         }
+        Context applicationContext = context.getApplicationContext();
+        String userAgent = defaultUserAgent(applicationContext);
         return new Builder(request.toURLString(
                 ConsumableAdRequest.PlacementType.BACKGROUND_AUDIO,
-                context.getApplicationContext()));
+                applicationContext,
+                userAgent)).userAgent(userAgent);
+    }
+
+    private static String defaultUserAgent(Context context) {
+        try {
+            String userAgent = WebSettings.getDefaultUserAgent(context);
+            return userAgent == null || userAgent.trim().isEmpty() ? DEFAULT_USER_AGENT : userAgent;
+        } catch (RuntimeException error) {
+            return DEFAULT_USER_AGENT;
+        }
     }
 
     public static final class Builder {
         private final URL vastTagUrl;
         private int connectTimeoutMs = 5000;
         private int readTimeoutMs = 8000;
-        private String userAgent = "cx-audio-sdk-android/0.1";
+        private String userAgent = DEFAULT_USER_AGENT;
 
         private Builder(String vastTagUrl) {
             if (vastTagUrl == null || vastTagUrl.trim().isEmpty()) {

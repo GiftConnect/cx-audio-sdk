@@ -78,11 +78,21 @@ The SDK request builders expose `idfa`, `gadid`, `ifa`, and `limitAdTracking` fi
 
 Use the platform advertising identifier only when it is available and permitted:
 
-- iOS: request App Tracking Transparency permission in the host app before reading IDFA. If ATT is denied, restricted, not determined, or the returned IDFA is all zeros, omit `idfa` and `ifa` and send `limitAdTracking(true)`.
+- iOS: request App Tracking Transparency permission in the host app before reading IDFA with `ASIdentifierManager.shared().advertisingIdentifier`. There is not a separate iOS IFA API; for ad requests, use the authorized IDFA value for both `idfa` and `ifa`. If ATT is denied, restricted, not determined, or the returned IDFA is all zeros, omit `idfa` and `ifa` and send `limitAdTracking(true)`.
 - Android: if the host app retrieves the Google advertising ID, apps targeting Android 13/API 33 or newer must declare `com.google.android.gms.permission.AD_ID`. If the ID is deleted, limited, unavailable, or all zeros, omit `gadid` and `ifa` and send `limitAdTracking(true)`.
-- React Native and Unity Android hosts can pass `gadid`, `ifa`, and `limitAdTracking` through their `ConsumableAdRequest` wrappers after the host app retrieves the ID.
+- React Native and Unity Android hosts can pass `gadid`, `ifa`, and `limitAdTracking` through their `ConsumableAdRequest` wrappers after the host app retrieves the ID through native code, a consent/identity SDK, or the app framework.
 
 Do not fall back to fingerprinting or persistent device identifiers for advertising when IDFA, GAID, or IFA is unavailable.
+
+## User Agent and IP Parameters
+Consumable requests support two environment-related query parameters:
+
+- `u`: user agent.
+- `i`: IP address.
+
+The SDK automatically fills `u` when it converts a `ConsumableAdRequest` into a placement `VastRequest`, unless the host app explicitly provided `userAgentParameter`. Android context-aware builders use the platform WebView default user agent when available; other builders use the SDK request user agent.
+
+The SDK does not compute `i` on device. Mobile runtime APIs can expose local interface addresses, but they cannot reliably know the public/NAT IP seen by an ad server without calling an external IP lookup service. The preferred automatic source for `i` is the server-side request source address at the Consumable endpoint or proxy. Host apps may still pass `ipAddress` explicitly when they have a trusted server-provided value.
 
 ## Android Background Audio
 The Android background audio placement:

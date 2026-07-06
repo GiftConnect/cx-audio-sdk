@@ -134,9 +134,15 @@ public struct ConsumableAdRequest: Equatable {
         self.parameters = params
     }
 
-    public func url(placement: ConsumablePlacement? = nil) throws -> URL {
+    public func url(
+        placement: ConsumablePlacement? = nil,
+        userAgentParameter: String? = nil
+    ) throws -> URL {
         var components = URLComponents(url: endpointURL, resolvingAgainstBaseURL: false)
-        components?.queryItems = parametersWithAutomaticValues(placement: placement)
+        components?.queryItems = parametersWithAutomaticValues(
+            placement: placement,
+            userAgentParameter: userAgentParameter
+        )
             .filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .sorted { $0.key < $1.key }
             .map { URLQueryItem(name: $0.key, value: $0.value) }
@@ -146,8 +152,12 @@ public struct ConsumableAdRequest: Equatable {
         return url
     }
 
-    private func parametersWithAutomaticValues(placement: ConsumablePlacement?) -> [String: String] {
+    private func parametersWithAutomaticValues(
+        placement: ConsumablePlacement?,
+        userAgentParameter: String?
+    ) -> [String: String] {
         var params = parameters
+        putAutomatic(&params, "u", userAgentParameter)
         putAutomatic(&params, "locale", Locale.current.identifier.replacingOccurrences(of: "_", with: "-"))
         putAutomatic(&params, "appbundle", Bundle.main.bundleIdentifier)
         putAutomatic(&params, "appname", Bundle.main.displayName)
@@ -241,7 +251,10 @@ public struct VastRequest: Equatable {
         userAgent: String = "cx-audio-sdk-ios/0.1"
     ) throws {
         try self.init(
-            vastTagURL: consumableAdRequest.url(placement: placement),
+            vastTagURL: consumableAdRequest.url(
+                placement: placement,
+                userAgentParameter: userAgent
+            ),
             timeoutInterval: timeoutInterval,
             userAgent: userAgent
         )

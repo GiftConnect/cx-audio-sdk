@@ -97,7 +97,13 @@ public final class AndroidPlacementConfigurationTest {
 
         StickyPlayerRequest request = StickyPlayerRequest.builder(consumableRequest).build();
         String stickyUrl = request.getVastTagUrl().toString();
-        assertEquals(consumableRequest.toURLString(ConsumableAdRequest.PlacementType.STICKY_PLAYER), stickyUrl);
+        assertEquals(
+                consumableRequest.toURLString(
+                        ConsumableAdRequest.PlacementType.STICKY_PLAYER,
+                        null,
+                        "cx-audio-sdk-android/0.1"),
+                stickyUrl);
+        assertTrue(stickyUrl.contains("u=cx-audio-sdk-android%2F0.1"));
         assertTrue(stickyUrl.contains("v_plcmt=2"));
         assertTrue(stickyUrl.contains("v_linearity=2"));
         assertTrue(stickyUrl.contains("v_min_bitrate=64"));
@@ -123,6 +129,7 @@ public final class AndroidPlacementConfigurationTest {
         FullscreenInterstitialRequest request = FullscreenInterstitialRequest.builder(consumableRequest).build();
         String url = request.getVastTagUrl().toString();
 
+        assertTrue(url.contains("u=cx-audio-sdk-android%2F0.1"));
         assertTrue(url.contains("v_plcmt=3"));
         assertTrue(url.contains("v_linearity=1"));
         assertTrue(url.contains("v_delivery=2"));

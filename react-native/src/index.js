@@ -5,6 +5,7 @@ const { NativeEventEmitter, NativeModules, Platform } = require('react-native');
 const EVENT_NAME = 'CxAudioEvent';
 const NATIVE_MODULE_NAME = 'CxAudioReactNative';
 const NativeCxAudio = NativeModules[NATIVE_MODULE_NAME];
+const DEFAULT_ANDROID_USER_AGENT = 'cx-audio-sdk-android/0.1';
 
 const StickyPlayerPosition = Object.freeze({
   TOP: 'top',
@@ -95,7 +96,11 @@ function createConsumableVastRequest(request, networkOptions) {
   put(params, 'c_audio_feed_type', request.contentAudioFeedType);
 
   Object.keys(request.customParameters || {}).forEach((key) => put(params, key, request.customParameters[key]));
-  applyAutomaticParameters(params, request.placement);
+  applyAutomaticParameters(
+    params,
+    request.placement,
+    networkOptions && networkOptions.userAgent ? networkOptions.userAgent : DEFAULT_ANDROID_USER_AGENT
+  );
 
   return {
     ...(networkOptions || {}),
@@ -103,7 +108,8 @@ function createConsumableVastRequest(request, networkOptions) {
   };
 }
 
-function applyAutomaticParameters(params, placement) {
+function applyAutomaticParameters(params, placement, userAgentParameter) {
+  putAutomatic(params, 'u', userAgentParameter);
   putAutomatic(params, 'locale', getLocale());
   putAutomatic(params, 'v_delivery', '2');
   putAutomatic(params, 'v_delay', '-1');
