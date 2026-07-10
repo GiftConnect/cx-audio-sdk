@@ -23,30 +23,30 @@ final class VastParserTests: XCTestCase {
 
         let url = try consumableRequest.url()
         let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
-        let queryItems = Dictionary<String, String>(
+        let items = Dictionary<String, String>(
             uniqueKeysWithValues: (components.queryItems ?? [URLQueryItem]()).map { ($0.name, $0.value ?? "") }
         )
 
         XCTAssertEqual(url.scheme, "https")
         XCTAssertEqual(url.host, "2.e.serverbid.com")
-        XCTAssertEqual(queryItems["s"], "abc123")
-        XCTAssertEqual(queryItems["rt"], "vast")
-        XCTAssertEqual(queryItems["secure"], "1")
-        XCTAssertEqual(queryItems["cb"], "fixed")
-        XCTAssertEqual(queryItems["appname"], "Test App")
-        XCTAssertEqual(queryItems["appbundle"], "com.example.app")
-        XCTAssertEqual(queryItems["appstoreurl"], "https://apps.apple.com/app/id123")
-        XCTAssertEqual(queryItems["lmt"], "0")
-        XCTAssertEqual(queryItems["gdpr"], "1")
-        XCTAssertEqual(queryItems["gdpr_consent"], "consent string")
-        XCTAssertEqual(queryItems["v_position"], "preroll")
-        XCTAssertEqual(queryItems["v_delay"], "-1")
-        XCTAssertEqual(queryItems["v_delivery"], "2")
-        XCTAssertEqual(queryItems["v_mimes"], "audio/mpeg,audio/mp4")
-        XCTAssertEqual(queryItems["v_cmp_sizes"], "300x250,320x50")
-        XCTAssertEqual(queryItems["v_pm"], "1")
-        XCTAssertEqual(queryItems["c_audio_feed_type"], "6")
-        XCTAssertEqual(queryItems["x_custom"], "hello world")
+        XCTAssertEqual(items["s"], "abc123")
+        XCTAssertEqual(items["rt"], "vast")
+        XCTAssertEqual(items["secure"], "1")
+        XCTAssertEqual(items["cb"], "fixed")
+        XCTAssertEqual(items["appname"], "Test App")
+        XCTAssertEqual(items["appbundle"], "com.example.app")
+        XCTAssertEqual(items["appstoreurl"], "https://apps.apple.com/app/id123")
+        XCTAssertEqual(items["lmt"], "0")
+        XCTAssertEqual(items["gdpr"], "1")
+        XCTAssertEqual(items["gdpr_consent"], "consent string")
+        XCTAssertEqual(items["v_position"], "preroll")
+        XCTAssertEqual(items["v_delay"], "-1")
+        XCTAssertEqual(items["v_delivery"], "2")
+        XCTAssertEqual(items["v_mimes"], "audio/mpeg,audio/mp4")
+        XCTAssertEqual(items["v_cmp_sizes"], "300x250,320x50")
+        XCTAssertEqual(items["v_pm"], "1")
+        XCTAssertEqual(items["c_audio_feed_type"], "6")
+        XCTAssertEqual(items["x_custom"], "hello world")
 
         let vastRequest = try VastRequest(consumableAdRequest: consumableRequest)
         let vastItems = queryItems(from: vastRequest.vastTagURL)
@@ -150,6 +150,44 @@ final class VastParserTests: XCTestCase {
         """.utf8))
 
         XCTAssertEqual(document.wrapperURLString, "https://ads.example.com/next.xml")
+    }
+
+    func testTrackingParserExtractsMultipleImpressionsEventsAndClickTracking() throws {
+        let document = try parser.parse(data: Data("""
+        <VAST><Ad id="ad-42"><InLine>
+        <Impression>https://track.example.com/imp1</Impression>
+        <Impression><![CDATA[https://track.example.com/imp2?a=1&b=2]]></Impression>
+        <Creatives><Creative><Linear>
+        <TrackingEvents>
+        <Tracking event="start">https://track.example.com/start</Tracking>
+        <Tracking event="firstQuartile">https://track.example.com/q1</Tracking>
+        <Tracking event="firstQuartile">https://track.example.com/q1b</Tracking>
+        <Tracking event="midpoint">https://track.example.com/q2</Tracking>
+        <Tracking event="thirdQuartile">https://track.example.com/q3</Tracking>
+        <Tracking event="complete">https://track.example.com/q4</Tracking>
+        </TrackingEvents>
+        <VideoClicks>
+        <ClickThrough>https://click.example.com/open</ClickThrough>
+        <ClickTracking>https://track.example.com/click1</ClickTracking>
+        <ClickTracking>https://track.example.com/click2</ClickTracking>
+        </VideoClicks>
+        </Linear></Creative></Creatives>
+        </InLine></Ad></VAST>
+        """.utf8))
+
+        XCTAssertEqual(document.tracking.adIdentifier, "ad-42")
+        XCTAssertEqual(document.tracking.impressionURLStrings, [
+            "https://track.example.com/imp1",
+            "https://track.example.com/imp2?a=1&b=2"
+        ])
+        XCTAssertEqual(document.tracking.urls(for: .firstQuartile), [
+            "https://track.example.com/q1",
+            "https://track.example.com/q1b"
+        ])
+        XCTAssertEqual(document.tracking.clickTrackingURLStrings, [
+            "https://track.example.com/click1",
+            "https://track.example.com/click2"
+        ])
     }
 
     private func vastWithCompanions(_ companions: String...) -> Data {

@@ -140,16 +140,27 @@ public enum CxFullscreenInterstitial {
             return
         }
 
+        handle.attach(trackingState: PerAdTrackingState(tracking: interstitialAd.tracking))
         let overlay = FullscreenInterstitialOverlayView(
             interstitialAd: interstitialAd,
             mediaImage: mediaImage,
             companionImage: companionImage,
             options: options,
             onCompanionClick: {
+                handle.fireClickTracking()
                 listener.fullscreenInterstitialWasClicked(interstitialAd.companion?.clickThroughURL)
                 if let clickThroughURL = interstitialAd.companion?.clickThroughURL {
                     UIApplication.shared.open(clickThroughURL)
                 }
+            },
+            onVideoStarted: {
+                handle.notifyAdRendered()
+            },
+            onVideoProgress: { currentPosition, duration in
+                handle.trackProgress(currentPosition: currentPosition, duration: duration)
+            },
+            onVideoCompleted: {
+                handle.completeVideo()
             },
             onDismiss: {
                 handle.dismiss()
@@ -166,6 +177,7 @@ public enum CxFullscreenInterstitial {
         ])
         handle.attach(overlay: overlay)
         listener.fullscreenInterstitialDidLoad(handle)
+        handle.notifyAdRendered()
         if let audioMediaFile = interstitialAd.audioMediaFile,
            interstitialAd.mediaFile?.isVideo != true {
             let player = AVPlayer(url: audioMediaFile.url)
@@ -238,9 +250,12 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
     private weak var overlay: FullscreenInterstitialOverlayView?
     private var player: AVPlayer?
     private var completionObserver: NSObjectProtocol?
+    private var progressObserver: Any?
+    private var trackingState: PerAdTrackingState?
     private(set) var isDismissed = false
     private var completed = false
     private var failed = false
+    private var rendered = false
 
     init(listener: FullscreenInterstitialListener) {
         self.listener = listener
@@ -273,6 +288,10 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         self.overlay = overlay
     }
 
+    func attach(trackingState: PerAdTrackingState) {
+        self.trackingState = trackingState
+    }
+
     func attach(player: AVPlayer) {
         guard !isInactive else {
             player.pause()
@@ -287,6 +306,37 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         ) { [weak self] _ in
             self?.completeAudio()
         }
+        progressObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self] time in
+            self?.trackAudioProgress(time)
+        }
+    }
+
+    func notifyAdRendered() {
+        guard !isInactive, !rendered else {
+            return
+        }
+
+        rendered = true
+        trackingState?.fireImpression()
+        trackingState?.fireStart()
+    }
+
+    func fireClickTracking() {
+        trackingState?.fireClick()
+    }
+
+    func trackProgress(currentPosition: TimeInterval, duration: TimeInterval) {
+        trackingState?.fireProgress(currentPosition: currentPosition, duration: duration)
+    }
+
+    func completeVideo() {
+        guard !isInactive else {
+            return
+        }
+        trackingState?.fireComplete()
     }
 
     private func completeAudio() {
@@ -295,13 +345,30 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         }
 
         completed = true
+        trackingState?.fireComplete()
         releasePlayer()
         listener.fullscreenInterstitialDidCompleteAudio()
         overlay?.dismiss()
         listener.fullscreenInterstitialDidDismiss()
     }
 
+    private func trackAudioProgress(_ time: CMTime) {
+        guard !isInactive,
+              let duration = player?.currentItem?.duration.seconds,
+              duration.isFinite,
+              duration > 0,
+              time.seconds.isFinite else {
+            return
+        }
+        trackingState?.fireProgress(currentPosition: time.seconds, duration: duration)
+    }
+
     private func releasePlayer() {
+        if let progressObserver, let player {
+            player.removeTimeObserver(progressObserver)
+            self.progressObserver = nil
+        }
+
         player?.pause()
         player = nil
 
@@ -315,8 +382,13 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
 
 private final class FullscreenInterstitialOverlayView: UIView {
     private let onCompanionClick: () -> Void
+    private let onVideoStarted: () -> Void
+    private let onVideoProgress: (TimeInterval, TimeInterval) -> Void
+    private let onVideoCompleted: () -> Void
     private let onDismiss: () -> Void
     private var player: AVPlayer?
+    private var progressObserver: Any?
+    private var completionObserver: NSObjectProtocol?
 
     init(
         interstitialAd: VastInterstitialAd,
@@ -324,9 +396,15 @@ private final class FullscreenInterstitialOverlayView: UIView {
         companionImage: UIImage?,
         options: FullscreenInterstitialOptions,
         onCompanionClick: @escaping () -> Void,
+        onVideoStarted: @escaping () -> Void,
+        onVideoProgress: @escaping (TimeInterval, TimeInterval) -> Void,
+        onVideoCompleted: @escaping () -> Void,
         onDismiss: @escaping () -> Void
     ) {
         self.onCompanionClick = onCompanionClick
+        self.onVideoStarted = onVideoStarted
+        self.onVideoProgress = onVideoProgress
+        self.onVideoCompleted = onVideoCompleted
         self.onDismiss = onDismiss
 
         super.init(frame: .zero)
@@ -405,9 +483,30 @@ private final class FullscreenInterstitialOverlayView: UIView {
             let player = AVPlayer(url: mediaFile.url)
             let videoContainer = VideoPlayerView(player: player)
             self.player = player
+            completionObserver = NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: player.currentItem,
+                queue: .main
+            ) { [weak self] _ in
+                self?.onVideoCompleted()
+            }
+            progressObserver = player.addPeriodicTimeObserver(
+                forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
+                queue: .main
+            ) { [weak self, weak player] time in
+                guard let self,
+                      let duration = player?.currentItem?.duration.seconds,
+                      duration.isFinite,
+                      duration > 0,
+                      time.seconds.isFinite else {
+                    return
+                }
+                self.onVideoProgress(time.seconds, duration)
+            }
 
             if autoPlayVideo {
                 player.play()
+                onVideoStarted()
             }
 
             return videoContainer
@@ -453,12 +552,25 @@ private final class FullscreenInterstitialOverlayView: UIView {
     }
 
     func dismiss() {
-        player?.pause()
+        releaseVideoPlayer()
         removeFromSuperview()
     }
 
-    deinit {
+    private func releaseVideoPlayer() {
+        if let progressObserver, let player {
+            player.removeTimeObserver(progressObserver)
+            self.progressObserver = nil
+        }
+        if let completionObserver {
+            NotificationCenter.default.removeObserver(completionObserver)
+            self.completionObserver = nil
+        }
         player?.pause()
+        player = nil
+    }
+
+    deinit {
+        releaseVideoPlayer()
     }
 }
 

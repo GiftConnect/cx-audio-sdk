@@ -12,19 +12,24 @@ internal final class VastAdLoader {
         self.session = session
     }
 
-    func loadAudioMediaFile(
+    func loadAudioAd(
         request: VastRequest,
-        completion: @escaping (Result<VastMediaFile, Error>) -> Void
+        completion: @escaping (Result<VastAudioAd, Error>) -> Void
     ) {
         resolve(
             url: request.vastTagURL,
             request: request,
             depth: 0,
+            tracking: .empty,
             select: { document, baseURL in
                 document.bestAudioMediaFile(baseURL: baseURL)
             },
             missingError: CxAudioError.noAudioMediaFile,
-            completion: completion
+            completion: { result in
+                completion(result.map { resolved in
+                    VastAudioAd(mediaFile: resolved.value, tracking: resolved.tracking)
+                })
+            }
         )
     }
 
@@ -36,11 +41,14 @@ internal final class VastAdLoader {
             url: request.vastTagURL,
             request: request,
             depth: 0,
+            tracking: .empty,
             select: { document, baseURL in
                 document.bestCompanion(baseURL: baseURL)
             },
             missingError: CxAudioError.noImageCompanion,
-            completion: completion
+            completion: { result in
+                completion(result.map(\.value))
+            }
         )
     }
 
@@ -52,7 +60,8 @@ internal final class VastAdLoader {
             url: request.vastTagURL,
             request: request,
             depth: 0,
-            select: { document, baseURL in
+            tracking: .empty,
+            select: { document, baseURL -> VastStickyPlayerAd? in
                 guard let mediaFile = document.bestAudioMediaFile(baseURL: baseURL),
                       let companion = document.bestCompanion(baseURL: baseURL) else {
                     return nil
@@ -62,7 +71,15 @@ internal final class VastAdLoader {
             missingError: CxAudioError.invalidOption(
                 "VAST response did not include both audio media and an image companion"
             ),
-            completion: completion
+            completion: { result in
+                completion(result.map { resolved in
+                    VastStickyPlayerAd(
+                        mediaFile: resolved.value.mediaFile,
+                        companion: resolved.value.companion,
+                        tracking: resolved.tracking
+                    )
+                })
+            }
         )
     }
 
@@ -74,11 +91,21 @@ internal final class VastAdLoader {
             url: request.vastTagURL,
             request: request,
             depth: 0,
+            tracking: .empty,
             select: { document, baseURL in
                 document.interstitialAd(baseURL: baseURL)
             },
             missingError: CxAudioError.noUsableInterstitial,
-            completion: completion
+            completion: { result in
+                completion(result.map { resolved in
+                    VastInterstitialAd(
+                        mediaFile: resolved.value.mediaFile,
+                        audioMediaFile: resolved.value.audioMediaFile,
+                        companion: resolved.value.companion,
+                        tracking: resolved.tracking
+                    )
+                })
+            }
         )
     }
 
@@ -110,9 +137,10 @@ internal final class VastAdLoader {
         url: URL,
         request: VastRequest,
         depth: Int,
+        tracking: VastTracking,
         select: @escaping (VastDocument, URL) -> T?,
         missingError: Error,
-        completion: @escaping (Result<T, Error>) -> Void
+        completion: @escaping (Result<VastResolvedAd<T>, Error>) -> Void
     ) {
         guard depth <= maxWrapperDepth else {
             completion(.failure(CxAudioError.wrapperDepthExceeded(maxWrapperDepth)))
@@ -127,8 +155,9 @@ internal final class VastAdLoader {
 
             switch result {
             case .success(let document):
+                let resolvedTracking = tracking.merged(with: document.tracking.resolved(baseURL: url))
                 if let selected = select(document, url) {
-                    completion(.success(selected))
+                    completion(.success(VastResolvedAd(value: selected, tracking: resolvedTracking)))
                     return
                 }
 
@@ -138,6 +167,7 @@ internal final class VastAdLoader {
                         url: wrapperURL,
                         request: request,
                         depth: depth + 1,
+                        tracking: resolvedTracking,
                         select: select,
                         missingError: missingError,
                         completion: completion
@@ -185,4 +215,9 @@ internal final class VastAdLoader {
         urlRequest.setValue(request.userAgent, forHTTPHeaderField: "User-Agent")
         return urlRequest
     }
+}
+
+private struct VastResolvedAd<T> {
+    let value: T
+    let tracking: VastTracking
 }

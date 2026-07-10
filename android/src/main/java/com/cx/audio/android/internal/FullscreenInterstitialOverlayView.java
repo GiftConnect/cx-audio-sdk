@@ -4,6 +4,8 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +23,8 @@ import java.util.Collections;
 
 public final class FullscreenInterstitialOverlayView extends FrameLayout {
     private Runnable onDismissListener;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable videoProgressRunnable;
 
     public FullscreenInterstitialOverlayView(Context context) {
         super(context);
@@ -36,8 +40,11 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
             Bitmap companionBitmap,
             FullscreenInterstitialOptions options,
             String userAgent,
-            OnClickListener companionClickListener) {
+            OnClickListener companionClickListener,
+            VideoPlaybackListener videoPlaybackListener) {
         removeAllViews();
+        mainHandler.removeCallbacksAndMessages(null);
+        videoProgressRunnable = null;
 
         LinearLayout content = new LinearLayout(getContext());
         content.setOrientation(LinearLayout.VERTICAL);
@@ -46,7 +53,12 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT));
 
-        View mediaView = createMediaView(interstitialAd.getMediaFile(), mediaBitmap, options, userAgent);
+        View mediaView = createMediaView(
+                interstitialAd.getMediaFile(),
+                mediaBitmap,
+                options,
+                userAgent,
+                videoPlaybackListener);
         content.addView(mediaView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
@@ -86,7 +98,8 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
             VastMediaFile mediaFile,
             Bitmap mediaBitmap,
             FullscreenInterstitialOptions options,
-            String userAgent) {
+            String userAgent,
+            VideoPlaybackListener videoPlaybackListener) {
         if (mediaFile != null && mediaBitmap != null && mediaFile.isImage()) {
             ImageView imageView = new ImageView(getContext());
             imageView.setImageBitmap(mediaBitmap);
@@ -103,8 +116,20 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
                     Uri.parse(mediaFile.getUrl()),
                     Collections.singletonMap("User-Agent", userAgent));
             if (options.shouldAutoPlayVideo()) {
-                videoView.setOnPreparedListener(player -> videoView.start());
+                videoView.setOnPreparedListener(player -> {
+                    videoView.start();
+                    if (videoPlaybackListener != null) {
+                        videoPlaybackListener.onVideoStarted();
+                        scheduleVideoProgress(videoView, videoPlaybackListener);
+                    }
+                });
             }
+            videoView.setOnCompletionListener(player -> {
+                mainHandler.removeCallbacksAndMessages(null);
+                if (videoPlaybackListener != null) {
+                    videoPlaybackListener.onVideoCompleted();
+                }
+            });
             return videoView;
         }
 
@@ -141,6 +166,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
     }
 
     private void dismissFromUserAction() {
+        mainHandler.removeCallbacksAndMessages(null);
         ViewParent parent = getParent();
         if (parent instanceof ViewGroup) {
             ((ViewGroup) parent).removeView(this);
@@ -153,5 +179,34 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
     private int dp(int value) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(value * density);
+    }
+
+    private void scheduleVideoProgress(VideoView videoView, VideoPlaybackListener listener) {
+        mainHandler.removeCallbacksAndMessages(null);
+        videoProgressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (videoView.getParent() == null) {
+                    return;
+                }
+                listener.onVideoProgress(videoView.getCurrentPosition(), videoView.getDuration());
+                mainHandler.postDelayed(this, 500);
+            }
+        };
+        mainHandler.post(videoProgressRunnable);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        mainHandler.removeCallbacksAndMessages(null);
+        super.onDetachedFromWindow();
+    }
+
+    public interface VideoPlaybackListener {
+        void onVideoStarted();
+
+        void onVideoProgress(int currentPositionMs, int durationMs);
+
+        void onVideoCompleted();
     }
 }

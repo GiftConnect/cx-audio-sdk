@@ -7,6 +7,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
@@ -132,6 +136,23 @@ public final class VastParser {
         return wrapperUrl;
     }
 
+    public VastTracking parseTracking(String vastXml) throws Exception {
+        Document document = parseDocument(vastXml);
+        List<String> impressionUrls = new ArrayList<>();
+        Map<TrackingEvent, List<String>> eventUrls = new EnumMap<>(TrackingEvent.class);
+        List<String> clickTrackingUrls = new ArrayList<>();
+
+        collectElementText(document.getElementsByTagName("Impression"), impressionUrls);
+        collectClickTracking(document.getElementsByTagName("ClickTracking"), clickTrackingUrls);
+        collectTrackingEvents(document.getElementsByTagName("Tracking"), eventUrls);
+
+        return new VastTracking(
+                firstAdIdentifier(document),
+                impressionUrls,
+                eventUrls,
+                clickTrackingUrls);
+    }
+
     private static Document parseDocument(String vastXml) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setExpandEntityReferences(false);
@@ -183,6 +204,64 @@ public final class VastParser {
             }
         }
         return null;
+    }
+
+    private static String firstAdIdentifier(Document document) {
+        NodeList nodes = document.getElementsByTagName("Ad");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (!(node instanceof Element)) {
+                continue;
+            }
+            String id = ((Element) node).getAttribute("id");
+            if (id != null) {
+                id = id.trim();
+                if (!id.isEmpty()) {
+                    return id;
+                }
+            }
+        }
+        return null;
+    }
+
+    private static void collectElementText(NodeList nodes, List<String> output) {
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (node instanceof Element) {
+                String text = textOf((Element) node);
+                if (text != null) {
+                    output.add(text);
+                }
+            }
+        }
+    }
+
+    private static void collectClickTracking(NodeList nodes, List<String> output) {
+        collectElementText(nodes, output);
+    }
+
+    private static void collectTrackingEvents(
+            NodeList nodes,
+            Map<TrackingEvent, List<String>> output) {
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (!(node instanceof Element)) {
+                continue;
+            }
+
+            Element element = (Element) node;
+            TrackingEvent event = TrackingEvent.fromVastEvent(element.getAttribute("event"));
+            String url = textOf(element);
+            if (event == null || url == null) {
+                continue;
+            }
+            List<String> urls = output.get(event);
+            if (urls == null) {
+                urls = new ArrayList<>();
+                output.put(event, urls);
+            }
+            urls.add(url);
+        }
     }
 
     private static String textOf(Element element) {

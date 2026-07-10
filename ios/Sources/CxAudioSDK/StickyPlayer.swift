@@ -151,6 +151,7 @@ public enum CxStickyPlayer {
             image: image,
             options: options,
             onClick: {
+                handle.fireClickTracking()
                 listener.stickyPlayerWasClicked(stickyAd.companion.clickThroughURL)
                 if let clickThroughURL = stickyAd.companion.clickThroughURL {
                     UIApplication.shared.open(clickThroughURL)
@@ -181,9 +182,14 @@ public enum CxStickyPlayer {
         let player = AVPlayer(url: stickyAd.mediaFile.url)
         player.volume = options.volume
         handle.attach(overlay: overlay)
-        handle.attach(player: player, volume: options.volume)
+        handle.attach(
+            player: player,
+            volume: options.volume,
+            trackingState: PerAdTrackingState(tracking: stickyAd.tracking)
+        )
         listener.stickyPlayerDidLoad(handle)
         player.play()
+        handle.notifyAudioStarted()
         listener.stickyPlayerDidStartAudio(handle)
     }
 }
@@ -193,9 +199,12 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
     private weak var overlay: UIView?
     private var player: AVPlayer?
     private var completionObserver: NSObjectProtocol?
+    private var progressObserver: Any?
+    private var trackingState: PerAdTrackingState?
     private(set) var isDismissed = false
     private var completed = false
     private var failed = false
+    private var audioStarted = false
 
     init(listener: StickyPlayerListener) {
         self.listener = listener
@@ -228,13 +237,14 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
         self.overlay = overlay
     }
 
-    func attach(player: AVPlayer, volume: Float) {
+    func attach(player: AVPlayer, volume: Float, trackingState: PerAdTrackingState) {
         guard !isInactive else {
             player.pause()
             return
         }
 
         self.player = player
+        self.trackingState = trackingState
         player.volume = volume
         completionObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
@@ -243,6 +253,26 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
         ) { [weak self] _ in
             self?.completeAudio()
         }
+        progressObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self] time in
+            self?.trackProgress(time)
+        }
+    }
+
+    func notifyAudioStarted() {
+        guard !isInactive, !audioStarted else {
+            return
+        }
+
+        audioStarted = true
+        trackingState?.fireImpression()
+        trackingState?.fireStart()
+    }
+
+    func fireClickTracking() {
+        trackingState?.fireClick()
     }
 
     private func completeAudio() {
@@ -251,13 +281,30 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
         }
 
         completed = true
+        trackingState?.fireComplete()
         releasePlayer()
         listener.stickyPlayerDidCompleteAudio()
         overlay?.removeFromSuperview()
         listener.stickyPlayerDidDismiss()
     }
 
+    private func trackProgress(_ time: CMTime) {
+        guard !isInactive,
+              let duration = player?.currentItem?.duration.seconds,
+              duration.isFinite,
+              duration > 0,
+              time.seconds.isFinite else {
+            return
+        }
+        trackingState?.fireProgress(currentPosition: time.seconds, duration: duration)
+    }
+
     private func releasePlayer() {
+        if let progressObserver, let player {
+            player.removeTimeObserver(progressObserver)
+            self.progressObserver = nil
+        }
+
         player?.pause()
         player = nil
 

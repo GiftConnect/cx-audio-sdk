@@ -9,7 +9,8 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.cx.audio.android.internal.VastAdLoader;
-import com.cx.audio.android.internal.VastMediaFile;
+import com.cx.audio.android.internal.PerAdTrackingState;
+import com.cx.audio.android.internal.VastAudioAd;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -51,8 +52,8 @@ public final class AndroidBackgroundAudio {
 
         EXECUTOR.execute(() -> {
             try {
-                VastMediaFile mediaFile = VastAdLoader.loadAudioMediaFile(request);
-                mainHandler.post(() -> preparePlayer(appContext, request, mediaFile, handle));
+                VastAudioAd audioAd = VastAdLoader.loadAudioAd(request);
+                mainHandler.post(() -> preparePlayer(appContext, request, audioAd, handle));
             } catch (Throwable error) {
                 mainHandler.post(() -> handle.fail(error));
             }
@@ -71,11 +72,12 @@ public final class AndroidBackgroundAudio {
     private static void preparePlayer(
             Context context,
             BackgroundAudioRequest request,
-            VastMediaFile mediaFile,
+            VastAudioAd audioAd,
             PendingBackgroundAudioHandle handle) {
         if (handle.isInactive()) {
             return;
         }
+        handle.setTrackingState(new PerAdTrackingState(audioAd.getTracking()));
 
         MediaPlayer mediaPlayer = new MediaPlayer();
         handle.setMediaPlayer(mediaPlayer);
@@ -105,7 +107,7 @@ public final class AndroidBackgroundAudio {
             });
             mediaPlayer.setDataSource(
                     context,
-                    Uri.parse(mediaFile.getUrl()),
+                    Uri.parse(audioAd.getMediaFile().getUrl()),
                     Collections.singletonMap("User-Agent", request.getUserAgent()));
             mediaPlayer.prepareAsync();
         } catch (Throwable error) {
@@ -143,11 +145,18 @@ public final class AndroidBackgroundAudio {
         private final BackgroundAudioListener listener;
         private final Handler mainHandler;
         private MediaPlayer mediaPlayer;
+        private PerAdTrackingState trackingState;
         private boolean stopped;
         private boolean completed;
         private boolean failed;
         private boolean started;
         private float volume;
+        private final Runnable progressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                trackProgress();
+            }
+        };
 
         private PendingBackgroundAudioHandle(
                 BackgroundAudioListener listener,
@@ -197,6 +206,10 @@ public final class AndroidBackgroundAudio {
             this.mediaPlayer = mediaPlayer;
         }
 
+        private void setTrackingState(PerAdTrackingState trackingState) {
+            this.trackingState = trackingState;
+        }
+
         private float getVolume() {
             return volume;
         }
@@ -210,6 +223,11 @@ public final class AndroidBackgroundAudio {
                 return;
             }
             started = true;
+            if (trackingState != null) {
+                trackingState.fireImpression();
+                trackingState.fireStart();
+            }
+            scheduleProgressTracking();
             listener.onBackgroundAudioStarted(this);
         }
 
@@ -218,6 +236,10 @@ public final class AndroidBackgroundAudio {
                 return;
             }
             completed = true;
+            mainHandler.removeCallbacks(progressRunnable);
+            if (trackingState != null) {
+                trackingState.fireComplete();
+            }
             if (mediaPlayer == player) {
                 mediaPlayer = null;
             }
@@ -230,6 +252,7 @@ public final class AndroidBackgroundAudio {
                 return;
             }
             failed = true;
+            mainHandler.removeCallbacks(progressRunnable);
             MediaPlayer player = mediaPlayer;
             mediaPlayer = null;
             if (player != null) {
@@ -238,11 +261,33 @@ public final class AndroidBackgroundAudio {
             listener.onBackgroundAudioFailed(error);
         }
 
+        private void scheduleProgressTracking() {
+            mainHandler.removeCallbacks(progressRunnable);
+            mainHandler.post(progressRunnable);
+        }
+
+        private void trackProgress() {
+            if (isInactive() || mediaPlayer == null || trackingState == null) {
+                return;
+            }
+
+            try {
+                trackingState.fireProgress(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
+            } catch (IllegalStateException ignored) {
+                return;
+            }
+
+            if (!isInactive()) {
+                mainHandler.postDelayed(progressRunnable, 500);
+            }
+        }
+
         private void stopOnMainThread() {
             if (stopped || completed) {
                 return;
             }
             stopped = true;
+            mainHandler.removeCallbacks(progressRunnable);
             MediaPlayer player = mediaPlayer;
             mediaPlayer = null;
             if (player != null) {

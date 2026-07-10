@@ -34,8 +34,8 @@ public final class VastAdLoader {
         return loadStickyPlayerAd(RequestConfig.from(request));
     }
 
-    public static VastMediaFile loadAudioMediaFile(BackgroundAudioRequest request) throws Exception {
-        return loadAudioMediaFile(RequestConfig.from(request));
+    public static VastAudioAd loadAudioAd(BackgroundAudioRequest request) throws Exception {
+        return loadAudioAd(RequestConfig.from(request));
     }
 
     public static VastInterstitialAd loadInterstitial(FullscreenInterstitialRequest request) throws Exception {
@@ -82,8 +82,10 @@ public final class VastAdLoader {
 
     private static VastCompanion loadCompanion(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
             try {
                 return VAST_PARSER.parseBestCompanion(vastXml);
             } catch (IllegalArgumentException noCompanion) {
@@ -99,12 +101,14 @@ public final class VastAdLoader {
 
     private static VastStickyPlayerAd loadStickyPlayerAd(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
             VastMediaFile mediaFile = parseOptionalAudioMediaFile(vastXml, currentUrl);
             VastCompanion companion = parseOptionalCompanion(vastXml, currentUrl);
             if (mediaFile != null && companion != null) {
-                return new VastStickyPlayerAd(mediaFile, companion);
+                return new VastStickyPlayerAd(mediaFile, companion, tracking);
             }
 
             String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
@@ -117,13 +121,17 @@ public final class VastAdLoader {
         throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
     }
 
-    private static VastMediaFile loadAudioMediaFile(RequestConfig request) throws Exception {
+    private static VastAudioAd loadAudioAd(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
             try {
                 VastMediaFile mediaFile = VAST_PARSER.parseBestAudioMediaFile(vastXml);
-                return mediaFile.withUrl(new URL(currentUrl, mediaFile.getUrl()).toString());
+                return new VastAudioAd(
+                        mediaFile.withUrl(new URL(currentUrl, mediaFile.getUrl()).toString()),
+                        tracking);
             } catch (IllegalArgumentException noMediaFile) {
                 String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
                 if (wrapperUrl == null) {
@@ -137,13 +145,15 @@ public final class VastAdLoader {
 
     private static VastInterstitialAd loadInterstitial(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
             VastMediaFile mediaFile = parseOptionalInterstitialMediaFile(vastXml, currentUrl);
             VastMediaFile audioMediaFile = parseOptionalAudioMediaFile(vastXml, currentUrl);
             VastCompanion companion = parseOptionalCompanion(vastXml, currentUrl);
             if (mediaFile != null || audioMediaFile != null || companion != null) {
-                return new VastInterstitialAd(mediaFile, audioMediaFile, companion);
+                return new VastInterstitialAd(mediaFile, audioMediaFile, companion, tracking);
             }
 
             String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
@@ -184,6 +194,14 @@ public final class VastAdLoader {
                     new URL(baseUrl, companion.getStaticResourceUrl()).toString());
         } catch (IllegalArgumentException noCompanion) {
             return null;
+        }
+    }
+
+    private static VastTracking parseTracking(String vastXml, URL baseUrl) {
+        try {
+            return VAST_PARSER.parseTracking(vastXml).resolve(baseUrl);
+        } catch (Exception ignored) {
+            return VastTracking.empty();
         }
     }
 

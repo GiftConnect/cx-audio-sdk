@@ -67,18 +67,22 @@ public enum CxBackgroundAudio {
             return handle
         }
 
-        VastAdLoader.shared.loadAudioMediaFile(request: request) { result in
+        VastAdLoader.shared.loadAudioAd(request: request) { result in
             DispatchQueue.main.async {
                 guard !handle.isInactive else {
                     return
                 }
 
                 switch result {
-                case .success(let mediaFile):
-                    let player = AVPlayer(url: mediaFile.url)
-                    handle.attach(player: player)
+                case .success(let audioAd):
+                    let player = AVPlayer(url: audioAd.mediaFile.url)
+                    handle.attach(
+                        player: player,
+                        trackingState: PerAdTrackingState(tracking: audioAd.tracking)
+                    )
                     player.volume = options.volume
                     player.play()
+                    handle.notifyStarted()
                     listener.backgroundAudioDidStart(handle)
                 case .failure(let error):
                     handle.fail(error)
@@ -94,9 +98,12 @@ private final class BackgroundAudioHandleImpl: BackgroundAudioHandle {
     private let listener: BackgroundAudioListener
     private var player: AVPlayer?
     private var completionObserver: NSObjectProtocol?
+    private var progressObserver: Any?
+    private var trackingState: PerAdTrackingState?
     private var stopped = false
     private var completed = false
     private var failed = false
+    private var started = false
     private var volume: Float
 
     init(listener: BackgroundAudioListener, volume: Float) {
@@ -134,12 +141,13 @@ private final class BackgroundAudioHandleImpl: BackgroundAudioHandle {
         player?.volume = volume
     }
 
-    func attach(player: AVPlayer) {
+    func attach(player: AVPlayer, trackingState: PerAdTrackingState) {
         guard !isInactive else {
             return
         }
 
         self.player = player
+        self.trackingState = trackingState
         player.volume = volume
         completionObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
@@ -148,6 +156,22 @@ private final class BackgroundAudioHandleImpl: BackgroundAudioHandle {
         ) { [weak self] _ in
             self?.complete()
         }
+        progressObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self] time in
+            self?.trackProgress(time)
+        }
+    }
+
+    func notifyStarted() {
+        guard !isInactive, !started else {
+            return
+        }
+
+        started = true
+        trackingState?.fireImpression()
+        trackingState?.fireStart()
     }
 
     func fail(_ error: Error) {
@@ -166,11 +190,28 @@ private final class BackgroundAudioHandleImpl: BackgroundAudioHandle {
         }
 
         completed = true
+        trackingState?.fireComplete()
         releasePlayer()
         listener.backgroundAudioDidComplete()
     }
 
+    private func trackProgress(_ time: CMTime) {
+        guard !isInactive,
+              let duration = player?.currentItem?.duration.seconds,
+              duration.isFinite,
+              duration > 0,
+              time.seconds.isFinite else {
+            return
+        }
+        trackingState?.fireProgress(currentPosition: time.seconds, duration: duration)
+    }
+
     private func releasePlayer() {
+        if let progressObserver, let player {
+            player.removeTimeObserver(progressObserver)
+            self.progressObserver = nil
+        }
+
         player?.pause()
         player = nil
 

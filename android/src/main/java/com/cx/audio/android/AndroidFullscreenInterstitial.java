@@ -14,6 +14,7 @@ import android.view.ViewParent;
 import android.widget.FrameLayout;
 
 import com.cx.audio.android.internal.FullscreenInterstitialOverlayView;
+import com.cx.audio.android.internal.PerAdTrackingState;
 import com.cx.audio.android.internal.VastAdLoader;
 import com.cx.audio.android.internal.VastCompanion;
 import com.cx.audio.android.internal.VastInterstitialAd;
@@ -141,7 +142,23 @@ public final class AndroidFullscreenInterstitial {
                 companionBitmap,
                 options,
                 request.getUserAgent(),
-                view -> handleCompanionClick(activity, interstitialAd, listener));
+                view -> handleCompanionClick(activity, interstitialAd, listener, handle),
+                new FullscreenInterstitialOverlayView.VideoPlaybackListener() {
+                    @Override
+                    public void onVideoStarted() {
+                        handle.notifyVideoStarted();
+                    }
+
+                    @Override
+                    public void onVideoProgress(int currentPositionMs, int durationMs) {
+                        handle.trackProgress(currentPositionMs, durationMs);
+                    }
+
+                    @Override
+                    public void onVideoCompleted() {
+                        handle.completeVideo();
+                    }
+                });
         overlayView.setOnDismissListener(() -> {
             handle.markDismissed();
             listener.onFullscreenInterstitialDismissed();
@@ -150,8 +167,10 @@ public final class AndroidFullscreenInterstitial {
         decorView.addView(overlayView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
+        handle.setTrackingState(new PerAdTrackingState(interstitialAd.getTracking()));
         handle.setOverlayView(overlayView);
         listener.onFullscreenInterstitialLoaded(handle);
+        handle.notifyAdRendered();
         VastMediaFile audioMediaFile = interstitialAd.getAudioMediaFile();
         if (audioMediaFile != null
                 && (interstitialAd.getMediaFile() == null || !interstitialAd.getMediaFile().isVideo())) {
@@ -233,12 +252,14 @@ public final class AndroidFullscreenInterstitial {
     private static void handleCompanionClick(
             Activity activity,
             VastInterstitialAd interstitialAd,
-            FullscreenInterstitialListener listener) {
+            FullscreenInterstitialListener listener,
+            PendingFullscreenInterstitialHandle handle) {
         VastCompanion companion = interstitialAd.getCompanion();
         if (companion == null) {
             return;
         }
 
+        handle.fireClickTracking();
         listener.onFullscreenInterstitialClicked(companion.getClickThroughUrl());
         try {
             VastAdLoader.openClickThrough(activity, companion.getClickThroughUrl());
@@ -253,11 +274,19 @@ public final class AndroidFullscreenInterstitial {
         private final Handler mainHandler;
         private FullscreenInterstitialOverlayView overlayView;
         private MediaPlayer mediaPlayer;
+        private PerAdTrackingState trackingState;
         private boolean dismissed;
         private boolean completed;
         private boolean failed;
+        private boolean rendered;
         private boolean audioStarted;
         private final float volume;
+        private final Runnable progressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                trackAudioProgress();
+            }
+        };
 
         private PendingFullscreenInterstitialHandle(
                 FullscreenInterstitialListener listener,
@@ -309,6 +338,10 @@ public final class AndroidFullscreenInterstitial {
             this.overlayView = overlayView;
         }
 
+        private void setTrackingState(PerAdTrackingState trackingState) {
+            this.trackingState = trackingState;
+        }
+
         private void setMediaPlayer(MediaPlayer mediaPlayer) {
             if (isInactive()) {
                 mediaPlayer.release();
@@ -326,7 +359,23 @@ public final class AndroidFullscreenInterstitial {
                 return;
             }
             audioStarted = true;
+            scheduleAudioProgressTracking();
             listener.onFullscreenInterstitialAudioStarted(this);
+        }
+
+        private void notifyAdRendered() {
+            if (isInactive() || rendered) {
+                return;
+            }
+            rendered = true;
+            if (trackingState != null) {
+                trackingState.fireImpression();
+                trackingState.fireStart();
+            }
+        }
+
+        private void notifyVideoStarted() {
+            notifyAdRendered();
         }
 
         private void completeAudio(MediaPlayer player) {
@@ -334,6 +383,10 @@ public final class AndroidFullscreenInterstitial {
                 return;
             }
             completed = true;
+            mainHandler.removeCallbacks(progressRunnable);
+            if (trackingState != null) {
+                trackingState.fireComplete();
+            }
             if (mediaPlayer == player) {
                 mediaPlayer = null;
             }
@@ -343,17 +396,61 @@ public final class AndroidFullscreenInterstitial {
             listener.onFullscreenInterstitialDismissed();
         }
 
+        private void completeVideo() {
+            if (isInactive()) {
+                return;
+            }
+            if (trackingState != null) {
+                trackingState.fireComplete();
+            }
+        }
+
+        private void fireClickTracking() {
+            if (trackingState != null) {
+                trackingState.fireClick();
+            }
+        }
+
+        private void trackProgress(long currentPositionMs, long durationMs) {
+            if (trackingState != null) {
+                trackingState.fireProgress(currentPositionMs, durationMs);
+            }
+        }
+
+        private void scheduleAudioProgressTracking() {
+            mainHandler.removeCallbacks(progressRunnable);
+            mainHandler.post(progressRunnable);
+        }
+
+        private void trackAudioProgress() {
+            if (isInactive() || mediaPlayer == null || trackingState == null) {
+                return;
+            }
+
+            try {
+                trackingState.fireProgress(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
+            } catch (IllegalStateException ignored) {
+                return;
+            }
+
+            if (!isInactive()) {
+                mainHandler.postDelayed(progressRunnable, 500);
+            }
+        }
+
         private void fail(Throwable error) {
             if (isInactive()) {
                 return;
             }
             failed = true;
+            mainHandler.removeCallbacks(progressRunnable);
             releasePlayer();
             removeOverlay();
             listener.onFullscreenInterstitialFailed(error);
         }
 
         private void releasePlayer() {
+            mainHandler.removeCallbacks(progressRunnable);
             MediaPlayer player = mediaPlayer;
             mediaPlayer = null;
             if (player != null) {

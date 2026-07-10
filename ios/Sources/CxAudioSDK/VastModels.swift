@@ -3,6 +3,7 @@ import Foundation
 internal struct VastDocument {
     let mediaFiles: [VastMediaFileCandidate]
     let companions: [VastCompanionCandidate]
+    let tracking: VastTracking
     let wrapperURLString: String?
 
     func bestCompanion(baseURL: URL) -> VastCompanion? {
@@ -39,6 +40,11 @@ internal struct VastDocument {
             companion: companion
         )
     }
+}
+
+internal struct VastAudioAd {
+    let mediaFile: VastMediaFile
+    let tracking: VastTracking
 }
 
 internal struct VastMediaFile {
@@ -81,11 +87,35 @@ internal struct VastInterstitialAd {
     let mediaFile: VastMediaFile?
     let audioMediaFile: VastMediaFile?
     let companion: VastCompanion?
+    let tracking: VastTracking
+
+    init(
+        mediaFile: VastMediaFile?,
+        audioMediaFile: VastMediaFile?,
+        companion: VastCompanion?,
+        tracking: VastTracking = .empty
+    ) {
+        self.mediaFile = mediaFile
+        self.audioMediaFile = audioMediaFile
+        self.companion = companion
+        self.tracking = tracking
+    }
 }
 
 internal struct VastStickyPlayerAd {
     let mediaFile: VastMediaFile
     let companion: VastCompanion
+    let tracking: VastTracking
+
+    init(
+        mediaFile: VastMediaFile,
+        companion: VastCompanion,
+        tracking: VastTracking = .empty
+    ) {
+        self.mediaFile = mediaFile
+        self.companion = companion
+        self.tracking = tracking
+    }
 }
 
 internal struct VastMediaFileCandidate {

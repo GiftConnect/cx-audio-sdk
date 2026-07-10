@@ -15,10 +15,12 @@ import android.view.ViewParent;
 import android.widget.FrameLayout;
 
 import com.cx.audio.android.internal.StickyPlayerOverlayView;
+import com.cx.audio.android.internal.PerAdTrackingState;
 import com.cx.audio.android.internal.VastAdLoader;
 import com.cx.audio.android.internal.VastCompanion;
 import com.cx.audio.android.internal.VastMediaFile;
 import com.cx.audio.android.internal.VastStickyPlayerAd;
+import com.cx.audio.android.internal.VastTracking;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -69,6 +71,7 @@ public final class AndroidStickyPlayer {
                         request,
                         stickyAd.getMediaFile(),
                         companion,
+                        stickyAd.getTracking(),
                         bitmap,
                         resolvedOptions,
                         listener,
@@ -98,6 +101,7 @@ public final class AndroidStickyPlayer {
             StickyPlayerRequest request,
             VastMediaFile mediaFile,
             VastCompanion companion,
+            VastTracking tracking,
             Bitmap bitmap,
             StickyPlayerOptions options,
             StickyPlayerListener listener,
@@ -115,6 +119,7 @@ public final class AndroidStickyPlayer {
         StickyPlayerOverlayView overlayView = new StickyPlayerOverlayView(activity);
         overlayView.bind(companion, bitmap, options);
         overlayView.setOnClickListener(view -> {
+            handle.fireClickTracking();
             listener.onStickyPlayerClicked(companion.getClickThroughUrl());
             try {
                 VastAdLoader.openClickThrough(activity, companion.getClickThroughUrl());
@@ -135,6 +140,7 @@ public final class AndroidStickyPlayer {
                 : Gravity.BOTTOM;
 
         decorView.addView(overlayView, layoutParams);
+        handle.setTrackingState(new PerAdTrackingState(tracking));
         handle.setOverlayView(overlayView);
         listener.onStickyPlayerLoaded(handle);
         preparePlayer(appContext, request, mediaFile, handle);
@@ -221,11 +227,18 @@ public final class AndroidStickyPlayer {
         private final Handler mainHandler;
         private StickyPlayerOverlayView overlayView;
         private MediaPlayer mediaPlayer;
+        private PerAdTrackingState trackingState;
         private boolean dismissed;
         private boolean completed;
         private boolean failed;
         private boolean audioStarted;
         private float volume;
+        private final Runnable progressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                trackProgress();
+            }
+        };
 
         private PendingStickyPlayerHandle(
                 StickyPlayerListener listener,
@@ -290,6 +303,10 @@ public final class AndroidStickyPlayer {
             this.mediaPlayer = mediaPlayer;
         }
 
+        private void setTrackingState(PerAdTrackingState trackingState) {
+            this.trackingState = trackingState;
+        }
+
         private float getVolume() {
             return volume;
         }
@@ -299,6 +316,11 @@ public final class AndroidStickyPlayer {
                 return;
             }
             audioStarted = true;
+            if (trackingState != null) {
+                trackingState.fireImpression();
+                trackingState.fireStart();
+            }
+            scheduleProgressTracking();
             listener.onStickyPlayerAudioStarted(this);
         }
 
@@ -307,6 +329,10 @@ public final class AndroidStickyPlayer {
                 return;
             }
             completed = true;
+            mainHandler.removeCallbacks(progressRunnable);
+            if (trackingState != null) {
+                trackingState.fireComplete();
+            }
             if (mediaPlayer == player) {
                 mediaPlayer = null;
             }
@@ -321,12 +347,41 @@ public final class AndroidStickyPlayer {
                 return;
             }
             failed = true;
+            mainHandler.removeCallbacks(progressRunnable);
             releasePlayer();
             removeOverlay();
             listener.onStickyPlayerFailed(error);
         }
 
+        private void fireClickTracking() {
+            if (trackingState != null) {
+                trackingState.fireClick();
+            }
+        }
+
+        private void scheduleProgressTracking() {
+            mainHandler.removeCallbacks(progressRunnable);
+            mainHandler.post(progressRunnable);
+        }
+
+        private void trackProgress() {
+            if (isInactive() || mediaPlayer == null || trackingState == null) {
+                return;
+            }
+
+            try {
+                trackingState.fireProgress(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
+            } catch (IllegalStateException ignored) {
+                return;
+            }
+
+            if (!isInactive()) {
+                mainHandler.postDelayed(progressRunnable, 500);
+            }
+        }
+
         private void releasePlayer() {
+            mainHandler.removeCallbacks(progressRunnable);
             MediaPlayer player = mediaPlayer;
             mediaPlayer = null;
             if (player != null) {
