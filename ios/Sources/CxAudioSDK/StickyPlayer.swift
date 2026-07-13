@@ -1,6 +1,9 @@
 import AVFoundation
 import UIKit
 
+private let stickyPlayerHeight: CGFloat = 72
+private let stickyPlayerHorizontalPadding: CGFloat = 12
+
 public enum StickyPlayerPosition: Equatable {
     case top
     case bottom
@@ -8,23 +11,17 @@ public enum StickyPlayerPosition: Equatable {
 
 public struct StickyPlayerOptions: Equatable {
     public let position: StickyPlayerPosition
-    public let height: CGFloat
-    public let horizontalPadding: CGFloat
     public let showCloseButton: Bool
     public let volume: Float
     public let minDeviceVolume: Float
 
     public init(
         position: StickyPlayerPosition = .bottom,
-        height: CGFloat = 72,
-        horizontalPadding: CGFloat = 12,
         showCloseButton: Bool = true,
         volume: Float = 0.2,
         minDeviceVolume: Float = 0.1
     ) {
         self.position = position
-        self.height = height
-        self.horizontalPadding = horizontalPadding
         self.showCloseButton = showCloseButton
         self.volume = volume
         self.minDeviceVolume = minDeviceVolume
@@ -168,7 +165,7 @@ public enum CxStickyPlayer {
         var constraints = [
             overlay.leadingAnchor.constraint(equalTo: viewController.view.leadingAnchor),
             overlay.trailingAnchor.constraint(equalTo: viewController.view.trailingAnchor),
-            overlay.heightAnchor.constraint(equalToConstant: options.height)
+            overlay.heightAnchor.constraint(equalToConstant: stickyPlayerHeight)
         ]
 
         switch options.position {
@@ -360,18 +357,18 @@ private final class StickyPlayerOverlayView: UIView {
 
         let aspectWidth: CGFloat
         if companion.width > 0 && companion.height > 0 {
-            aspectWidth = options.height * CGFloat(companion.width) / CGFloat(companion.height)
+            aspectWidth = stickyPlayerHeight * CGFloat(companion.width) / CGFloat(companion.height)
         } else {
             aspectWidth = 86
         }
-        let imageWidth = min(max(86, aspectWidth), max(86, options.height * 1.35))
+        let imageWidth = min(max(86, aspectWidth), max(86, stickyPlayerHeight * 1.35))
         NSLayoutConstraint.activate([
             imageView.centerXAnchor.constraint(equalTo: centerXAnchor),
             imageView.topAnchor.constraint(equalTo: topAnchor, constant: 6),
             imageView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
             imageView.widthAnchor.constraint(equalToConstant: max(56, imageWidth)),
-            imageView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: options.horizontalPadding),
-            imageView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -options.horizontalPadding)
+            imageView.leadingAnchor.constraint(greaterThanOrEqualTo: leadingAnchor, constant: stickyPlayerHorizontalPadding),
+            imageView.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -stickyPlayerHorizontalPadding)
         ])
 
         if options.showCloseButton {

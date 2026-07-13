@@ -134,7 +134,7 @@ public final class AndroidStickyPlayer {
 
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(activity, options.getHeightDp()));
+                dp(activity, 72));
         layoutParams.gravity = options.getPosition() == StickyPlayerPosition.TOP
                 ? Gravity.TOP
                 : Gravity.BOTTOM;

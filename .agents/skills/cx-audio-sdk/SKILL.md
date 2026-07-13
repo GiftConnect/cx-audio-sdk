@@ -22,10 +22,10 @@ Use this skill when a task involves integrating this repository's audio ad SDK i
 - Use `ConsumableAdRequest` when the host app should build a Consumable API URL from structured parameters.
 - Use raw `VastRequest` URL constructors only for QA tags or non-Consumable ad servers.
 - Include app metadata when available: app name, bundle/package identifier, app store URL, locale, and privacy strings.
-- Let the SDK auto-fill `u` from the placement request user agent unless the host explicitly provides `userAgentParameter`.
+- Let the SDK own the request endpoint, secure transport, cachebuster, user agent, VAST/OpenRTB protocol fields, creative dimensions, and fixed layout metrics.
 - Do not compute public IP on device for `i`; prefer server-side inference from the request source address, or use a trusted server-provided value.
 - Keep placement lifecycle cleanup explicit: retain handles, call `stop()` or `dismiss()` when the host flow ends, and clear references on terminal callbacks.
-- Respect the placement-specific options already in the SDK: volume, minimum device volume, sticky position, close button visibility, companion sizing, and video autoplay.
+- Respect the supported placement options: volume, minimum device volume, sticky position, close button visibility, and video autoplay. Do not re-expose fixed companion sizing, height, or padding.
 
 ## Advertising Identifiers
 

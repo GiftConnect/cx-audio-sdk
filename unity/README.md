@@ -30,7 +30,7 @@ Pass the advertising ID as both `Gadid(...)` and `Ifa(...)` when the ad endpoint
 
 ## User Agent and IP Parameters
 
-When a `ConsumableAdRequest` is converted into a `VastRequest`, the Unity wrapper automatically uses the request user agent as the `u` query parameter unless `UserAgentParameter(...)` was explicitly provided.
+When a `ConsumableAdRequest` is converted into a `VastRequest`, the Unity wrapper automatically supplies the SDK user agent as the `u` query parameter.
 
 The package does not compute the `i` query parameter on device. Android can expose local network interface addresses, but it cannot reliably know the public/NAT IP seen by an ad server without an external lookup. Prefer server-side inference from the request source address at the Consumable endpoint or proxy. Pass `IpAddress(...)` only when the host game has a trusted server-provided value.
 
@@ -56,13 +56,7 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
             .Gadid(advertisingId)
             .Ifa(advertisingId)
             .LimitAdTracking(limitAdTracking)
-            .Gdpr(false)
-            .Position("preroll")
-            .Delivery(2)
-            .MaxDurationSeconds(30)
-            .MediaMimes("audio/mpeg", "audio/mp4")
-            .CompanionSizes("300x250", "320x50")
-            .Protocols("2", "3", "5", "6", "7", "8");
+            .Gdpr(false);
 
         backgroundAudio = BackgroundAudio.Play(
             new VastRequest(consumableRequest),
@@ -110,7 +104,6 @@ public sealed class StickyAd : MonoBehaviour, IStickyPlayerListener
             new StickyPlayerOptions
             {
                 Position = StickyPlayerPosition.Bottom,
-                HeightDp = 72,
                 ShowCloseButton = true,
                 Volume = 0.2f,
                 MinDeviceVolume = 0.1f
@@ -154,8 +147,6 @@ public sealed class InterstitialAd : MonoBehaviour, IFullscreenInterstitialListe
             new FullscreenInterstitialOptions
             {
                 ShowCloseButton = true,
-                CompanionHeightDp = 250,
-                CompanionMaxWidthDp = 300,
                 AutoPlayVideo = true,
                 Volume = 0.2f,
                 MinDeviceVolume = 0.1f

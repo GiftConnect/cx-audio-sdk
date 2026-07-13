@@ -2,16 +2,12 @@ package com.cx.audio.android;
 
 public final class StickyPlayerOptions {
     private final StickyPlayerPosition position;
-    private final int heightDp;
-    private final int horizontalPaddingDp;
     private final boolean showCloseButton;
     private final float volume;
     private final float minDeviceVolume;
 
     private StickyPlayerOptions(Builder builder) {
         this.position = builder.position;
-        this.heightDp = builder.heightDp;
-        this.horizontalPaddingDp = builder.horizontalPaddingDp;
         this.showCloseButton = builder.showCloseButton;
         this.volume = builder.volume;
         this.minDeviceVolume = builder.minDeviceVolume;
@@ -19,14 +15,6 @@ public final class StickyPlayerOptions {
 
     public StickyPlayerPosition getPosition() {
         return position;
-    }
-
-    public int getHeightDp() {
-        return heightDp;
-    }
-
-    public int getHorizontalPaddingDp() {
-        return horizontalPaddingDp;
     }
 
     public boolean shouldShowCloseButton() {
@@ -47,8 +35,6 @@ public final class StickyPlayerOptions {
 
     public static final class Builder {
         private StickyPlayerPosition position = StickyPlayerPosition.BOTTOM;
-        private int heightDp = 72;
-        private int horizontalPaddingDp = 12;
         private boolean showCloseButton = true;
         private float volume = 0.2f;
         private float minDeviceVolume = 0.1f;
@@ -58,22 +44,6 @@ public final class StickyPlayerOptions {
                 throw new IllegalArgumentException("position must not be null");
             }
             this.position = position;
-            return this;
-        }
-
-        public Builder heightDp(int heightDp) {
-            if (heightDp < 48) {
-                throw new IllegalArgumentException("heightDp must be at least 48");
-            }
-            this.heightDp = heightDp;
-            return this;
-        }
-
-        public Builder horizontalPaddingDp(int horizontalPaddingDp) {
-            if (horizontalPaddingDp < 0) {
-                throw new IllegalArgumentException("horizontalPaddingDp must be >= 0");
-            }
-            this.horizontalPaddingDp = horizontalPaddingDp;
             return this;
         }
 

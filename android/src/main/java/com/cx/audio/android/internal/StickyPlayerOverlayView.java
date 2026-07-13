@@ -13,6 +13,8 @@ import android.widget.ImageView;
 import com.cx.audio.android.StickyPlayerOptions;
 
 public final class StickyPlayerOverlayView extends FrameLayout {
+    private static final int HEIGHT_DP = 72;
+    private static final int HORIZONTAL_PADDING_DP = 12;
     private Runnable onDismissListener;
 
     public StickyPlayerOverlayView(Context context) {
@@ -44,16 +46,16 @@ public final class StickyPlayerOverlayView extends FrameLayout {
         companionImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
         int aspectWidthDp = companion.getWidth() > 0 && companion.getHeight() > 0
-                ? Math.round(options.getHeightDp() * (companion.getWidth() / (float) companion.getHeight()))
+                ? Math.round(HEIGHT_DP * (companion.getWidth() / (float) companion.getHeight()))
                 : 86;
         int imageWidthDp = Math.min(
                 Math.max(86, aspectWidthDp),
-                Math.max(86, Math.round(options.getHeightDp() * 1.35f)));
+                Math.max(86, Math.round(HEIGHT_DP * 1.35f)));
         LayoutParams imageParams = new LayoutParams(
                 Math.max(dp(56), dp(imageWidthDp)),
                 LayoutParams.MATCH_PARENT);
         imageParams.gravity = Gravity.CENTER;
-        int horizontalPadding = dp(options.getHorizontalPaddingDp());
+        int horizontalPadding = dp(HORIZONTAL_PADDING_DP);
         companionImage.setPadding(horizontalPadding, dp(6), horizontalPadding, dp(6));
         addView(companionImage, imageParams);
 

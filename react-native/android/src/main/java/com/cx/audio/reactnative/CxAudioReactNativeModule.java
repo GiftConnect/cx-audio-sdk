@@ -359,9 +359,6 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(requestMap, "readTimeoutMs")) {
             builder.readTimeoutMs(intValue(requestMap, "readTimeoutMs"));
         }
-        if (hasValue(requestMap, "userAgent")) {
-            builder.userAgent(requestMap.getString("userAgent"));
-        }
     }
 
     private static void applyStickyPlayerNetworkOptions(
@@ -373,9 +370,6 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(requestMap, "readTimeoutMs")) {
             builder.readTimeoutMs(intValue(requestMap, "readTimeoutMs"));
         }
-        if (hasValue(requestMap, "userAgent")) {
-            builder.userAgent(requestMap.getString("userAgent"));
-        }
     }
 
     private static void applyFullscreenInterstitialNetworkOptions(
@@ -386,9 +380,6 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         }
         if (hasValue(requestMap, "readTimeoutMs")) {
             builder.readTimeoutMs(intValue(requestMap, "readTimeoutMs"));
-        }
-        if (hasValue(requestMap, "userAgent")) {
-            builder.userAgent(requestMap.getString("userAgent"));
         }
     }
 
@@ -408,12 +399,6 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(optionsMap, "position")) {
             builder.position(readStickyPlayerPosition(optionsMap.getString("position")));
         }
-        if (hasValue(optionsMap, "heightDp")) {
-            builder.heightDp(intValue(optionsMap, "heightDp"));
-        }
-        if (hasValue(optionsMap, "horizontalPaddingDp")) {
-            builder.horizontalPaddingDp(intValue(optionsMap, "horizontalPaddingDp"));
-        }
         if (hasValue(optionsMap, "showCloseButton")) {
             builder.showCloseButton(optionsMap.getBoolean("showCloseButton"));
         }
@@ -431,12 +416,6 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         FullscreenInterstitialOptions.Builder builder = FullscreenInterstitialOptions.builder();
         if (hasValue(optionsMap, "showCloseButton")) {
             builder.showCloseButton(optionsMap.getBoolean("showCloseButton"));
-        }
-        if (hasValue(optionsMap, "companionHeightDp")) {
-            builder.companionHeightDp(intValue(optionsMap, "companionHeightDp"));
-        }
-        if (hasValue(optionsMap, "companionMaxWidthDp")) {
-            builder.companionMaxWidthDp(intValue(optionsMap, "companionMaxWidthDp"));
         }
         if (hasValue(optionsMap, "autoPlayVideo")) {
             builder.autoPlayVideo(optionsMap.getBoolean("autoPlayVideo"));

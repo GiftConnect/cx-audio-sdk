@@ -29,17 +29,11 @@ export interface VastRequest {
   vastTagUrl: string;
   connectTimeoutMs?: number;
   readTimeoutMs?: number;
-  userAgent?: string;
 }
 
 export interface ConsumableAdRequest {
   placementHash: string;
   placement?: CxAudioPlacement;
-  endpointUrl?: string;
-  responseType?: 'vast' | 'html' | 'js' | string;
-  secure?: boolean;
-  cacheBuster?: string;
-  userAgentParameter?: string;
   ipAddress?: string;
   locale?: string;
   contentCategories?: string[];
@@ -47,7 +41,6 @@ export interface ConsumableAdRequest {
   blockedAdvertisers?: string[];
   limitAdTracking?: boolean;
   doNotTrack?: boolean;
-  supplyChain?: string;
   appStoreUrl?: string;
   appName?: string;
   appVersion?: string;
@@ -65,29 +58,11 @@ export interface ConsumableAdRequest {
   usPrivacy?: string;
   gpp?: string;
   gppSectionIds?: string[];
-  playerWidth?: number;
-  playerHeight?: number;
-  videoPlacement?: number;
-  delivery?: number;
-  startDelaySeconds?: number;
-  position?: 'preroll' | 'midroll' | 'postroll' | string;
-  maxDurationSeconds?: number;
-  mediaMimes?: string[];
-  skippable?: boolean;
-  playbackMethod?: number;
-  maxBitrateKbps?: number;
-  minBitrateKbps?: number;
-  companionTypes?: string[];
-  companionMimes?: string[];
-  companionSizes?: string[];
-  protocols?: string[];
   contentId?: string;
   contentGenre?: string[];
   contentTitle?: string;
   contentDurationSeconds?: number;
   contentUrl?: string;
-  contentAudioFeedType?: number;
-  customParameters?: Record<string, string | number | boolean>;
 }
 
 export interface BackgroundAudioOptions {
@@ -97,8 +72,6 @@ export interface BackgroundAudioOptions {
 
 export interface StickyPlayerOptions {
   position?: 'top' | 'bottom';
-  heightDp?: number;
-  horizontalPaddingDp?: number;
   showCloseButton?: boolean;
   volume?: number;
   minDeviceVolume?: number;
@@ -106,8 +79,6 @@ export interface StickyPlayerOptions {
 
 export interface FullscreenInterstitialOptions {
   showCloseButton?: boolean;
-  companionHeightDp?: number;
-  companionMaxWidthDp?: number;
   autoPlayVideo?: boolean;
   volume?: number;
   minDeviceVolume?: number;

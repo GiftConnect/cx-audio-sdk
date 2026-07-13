@@ -16,18 +16,14 @@ import java.util.Map;
 public final class ConsumableAdRequest {
     private static final String DEFAULT_ENDPOINT = "https://2.e.serverbid.com/mpb/get";
 
-    private final String endpointUrl;
     private final LinkedHashMap<String, String> parameters;
 
     private ConsumableAdRequest(Builder builder) {
-        this.endpointUrl = builder.endpointUrl;
         this.parameters = new LinkedHashMap<>(builder.parameters);
-        if (!parameters.containsKey("cb")) {
-            parameters.put("cb", defaultCacheBuster());
-        }
+        parameters.put("cb", defaultCacheBuster());
     }
 
-    public URL toURL() {
+    URL toURL() {
         try {
             return new URL(toURLString());
         } catch (MalformedURLException e) {
@@ -35,7 +31,7 @@ public final class ConsumableAdRequest {
         }
     }
 
-    public String toURLString() {
+    String toURLString() {
         return toURLString(null);
     }
 
@@ -54,8 +50,8 @@ public final class ConsumableAdRequest {
         LinkedHashMap<String, String> params = new LinkedHashMap<>(parameters);
         applyAutomaticParameters(params, placementType, context, userAgentParameter);
 
-        StringBuilder builder = new StringBuilder(endpointUrl);
-        builder.append(endpointUrl.contains("?") ? "&" : "?");
+        StringBuilder builder = new StringBuilder(DEFAULT_ENDPOINT);
+        builder.append(DEFAULT_ENDPOINT.contains("?") ? "&" : "?");
         boolean first = true;
         for (Map.Entry<String, String> entry : params.entrySet()) {
             if (entry.getValue() == null || entry.getValue().trim().isEmpty()) {
@@ -147,38 +143,12 @@ public final class ConsumableAdRequest {
     }
 
     public static final class Builder {
-        private String endpointUrl = DEFAULT_ENDPOINT;
         private final LinkedHashMap<String, String> parameters = new LinkedHashMap<>();
 
         private Builder(String placementHash) {
             putRequired("s", placementHash, "placementHash");
             parameter("rt", "vast");
             parameter("secure", true);
-        }
-
-        public Builder endpointUrl(String endpointUrl) {
-            if (endpointUrl == null || endpointUrl.trim().isEmpty()) {
-                throw new IllegalArgumentException("endpointUrl must not be blank");
-            }
-            try {
-                URL url = new URL(endpointUrl);
-                String protocol = url.getProtocol();
-                if (!"http".equals(protocol) && !"https".equals(protocol)) {
-                    throw new IllegalArgumentException("endpointUrl must use HTTP or HTTPS");
-                }
-            } catch (MalformedURLException e) {
-                throw new IllegalArgumentException("endpointUrl must be a valid URL", e);
-            }
-            this.endpointUrl = endpointUrl;
-            return this;
-        }
-
-        public Builder responseType(String responseType) {
-            return parameter("rt", responseType);
-        }
-
-        public Builder userAgentParameter(String userAgent) {
-            return parameter("u", userAgent);
         }
 
         public Builder ipAddress(String ipAddress) {
@@ -207,18 +177,6 @@ public final class ConsumableAdRequest {
 
         public Builder doNotTrack(boolean value) {
             return parameter("dnt", value);
-        }
-
-        public Builder secure(boolean value) {
-            return parameter("secure", value);
-        }
-
-        public Builder supplyChain(String supplyChain) {
-            return parameter("schain", supplyChain);
-        }
-
-        public Builder cacheBuster(String cacheBuster) {
-            return parameter("cb", cacheBuster);
         }
 
         public Builder appStoreUrl(String appStoreUrl) {
@@ -289,69 +247,6 @@ public final class ConsumableAdRequest {
             return parameter("gpp_sid", commaJoin(sectionIds));
         }
 
-        public Builder playerSize(int width, int height) {
-            parameter("v_w", String.valueOf(width));
-            return parameter("v_h", String.valueOf(height));
-        }
-
-        public Builder videoPlacement(int placement) {
-            return parameter("v_plcmt", String.valueOf(placement));
-        }
-
-        public Builder delivery(int delivery) {
-            return parameter("v_delivery", String.valueOf(delivery));
-        }
-
-        public Builder startDelaySeconds(int seconds) {
-            parameters.remove("v_position");
-            return parameter("v_delay", String.valueOf(seconds));
-        }
-
-        public Builder position(String position) {
-            parameters.remove("v_delay");
-            return parameter("v_position", position);
-        }
-
-        public Builder maxDurationSeconds(int seconds) {
-            return parameter("v_max_dur", String.valueOf(seconds));
-        }
-
-        public Builder mediaMimes(String... mimes) {
-            return parameter("v_mimes", commaJoin(mimes));
-        }
-
-        public Builder skippable(boolean skippable) {
-            return parameter("v_skip", skippable);
-        }
-
-        public Builder playbackMethod(int playbackMethod) {
-            return parameter("v_pm", String.valueOf(playbackMethod));
-        }
-
-        public Builder maxBitrateKbps(int bitrate) {
-            return parameter("v_max_bitrate", String.valueOf(bitrate));
-        }
-
-        public Builder minBitrateKbps(int bitrate) {
-            return parameter("v_min_bitrate", String.valueOf(bitrate));
-        }
-
-        public Builder companionTypes(String... types) {
-            return parameter("v_cmp_types", commaJoin(types));
-        }
-
-        public Builder companionMimes(String... mimes) {
-            return parameter("v_cmp_mimes", commaJoin(mimes));
-        }
-
-        public Builder companionSizes(String... sizes) {
-            return parameter("v_cmp_sizes", commaJoin(sizes));
-        }
-
-        public Builder protocols(String... protocols) {
-            return parameter("v_protocols", commaJoin(protocols));
-        }
-
         public Builder contentId(String contentId) {
             return parameter("c_id", contentId);
         }
@@ -370,14 +265,6 @@ public final class ConsumableAdRequest {
 
         public Builder contentUrl(String url) {
             return parameter("c_url", url);
-        }
-
-        public Builder contentAudioFeedType(int feedType) {
-            return parameter("c_audio_feed_type", String.valueOf(feedType));
-        }
-
-        public Builder customParameter(String name, String value) {
-            return parameter(name, value);
         }
 
         public ConsumableAdRequest build() {

@@ -22,6 +22,8 @@ import com.cx.audio.android.FullscreenInterstitialOptions;
 import java.util.Collections;
 
 public final class FullscreenInterstitialOverlayView extends FrameLayout {
+    private static final int COMPANION_HEIGHT_DP = 250;
+    private static final int COMPANION_MAX_WIDTH_DP = 300;
     private Runnable onDismissListener;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Runnable videoProgressRunnable;
@@ -67,11 +69,10 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         if (interstitialAd.getCompanion() != null && companionBitmap != null) {
             FrameLayout companionContainer = createCompanionView(
                     companionBitmap,
-                    options,
                     companionClickListener);
             content.addView(companionContainer, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    dp(options.getCompanionHeightDp())));
+                    dp(COMPANION_HEIGHT_DP)));
         }
 
         if (options.shouldShowCloseButton()) {
@@ -144,7 +145,6 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
 
     private FrameLayout createCompanionView(
             Bitmap companionBitmap,
-            FullscreenInterstitialOptions options,
             OnClickListener companionClickListener) {
         FrameLayout companionContainer = new FrameLayout(getContext());
         companionContainer.setBackgroundColor(Color.rgb(18, 18, 18));
@@ -158,7 +158,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         companionImage.setClickable(true);
 
         FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(
-                dp(options.getCompanionMaxWidthDp()),
+                dp(COMPANION_MAX_WIDTH_DP),
                 FrameLayout.LayoutParams.MATCH_PARENT);
         imageParams.gravity = Gravity.CENTER;
         companionContainer.addView(companionImage, imageParams);

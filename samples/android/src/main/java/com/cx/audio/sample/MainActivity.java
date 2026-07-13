@@ -46,7 +46,6 @@ public final class MainActivity extends Activity {
     private EditText vastTagInput;
     private EditText connectTimeoutInput;
     private EditText readTimeoutInput;
-    private EditText userAgentInput;
     private Switch consumableRequestSwitch;
     private EditText placementHashInput;
     private EditText appStoreUrlInput;
@@ -57,14 +56,10 @@ public final class MainActivity extends Activity {
     private EditText backgroundVolumeInput;
     private EditText minimumDeviceVolumeInput;
     private Switch stickyTopSwitch;
-    private EditText stickyHeightInput;
-    private EditText stickyPaddingInput;
     private Switch stickyCloseSwitch;
     private EditText stickyVolumeInput;
     private EditText stickyMinimumDeviceVolumeInput;
     private Switch interstitialCloseSwitch;
-    private EditText interstitialCompanionHeightInput;
-    private EditText interstitialCompanionMaxWidthInput;
     private Switch interstitialAutoplaySwitch;
     private EditText interstitialVolumeInput;
     private EditText interstitialMinimumDeviceVolumeInput;
@@ -267,7 +262,6 @@ public final class MainActivity extends Activity {
 
         connectTimeoutInput = optionInput("5000", InputType.TYPE_CLASS_NUMBER);
         readTimeoutInput = optionInput("8000", InputType.TYPE_CLASS_NUMBER);
-        userAgentInput = optionInput("cx-audio-sdk-android/0.1", InputType.TYPE_CLASS_TEXT);
         consumableRequestSwitch = optionSwitch(true);
         placementHashInput = optionInput(DEFAULT_PLACEMENT_HASH, InputType.TYPE_CLASS_TEXT);
         appStoreUrlInput = optionInput(
@@ -280,14 +274,10 @@ public final class MainActivity extends Activity {
         backgroundVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         minimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         stickyTopSwitch = optionSwitch(false);
-        stickyHeightInput = optionInput("96", InputType.TYPE_CLASS_NUMBER);
-        stickyPaddingInput = optionInput("12", InputType.TYPE_CLASS_NUMBER);
         stickyCloseSwitch = optionSwitch(true);
         stickyVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         stickyMinimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         interstitialCloseSwitch = optionSwitch(true);
-        interstitialCompanionHeightInput = optionInput("250", InputType.TYPE_CLASS_NUMBER);
-        interstitialCompanionMaxWidthInput = optionInput("300", InputType.TYPE_CLASS_NUMBER);
         interstitialAutoplaySwitch = optionSwitch(true);
         interstitialVolumeInput = optionInput("0.2", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
         interstitialMinimumDeviceVolumeInput = optionInput("0.1", InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
@@ -338,7 +328,6 @@ public final class MainActivity extends Activity {
         configurationTabContent.addView(optionSection("VAST request"));
         configurationTabContent.addView(textOption("Connect timeout ms", connectTimeoutInput));
         configurationTabContent.addView(textOption("Read timeout ms", readTimeoutInput));
-        configurationTabContent.addView(textOption("User agent", userAgentInput));
 
         configurationTabContent.addView(optionSection("Background audio"));
         configurationTabContent.addView(textOption("Ad volume 0.0-1.0", backgroundVolumeInput));
@@ -346,16 +335,12 @@ public final class MainActivity extends Activity {
 
         configurationTabContent.addView(optionSection("Sticky player"));
         configurationTabContent.addView(switchOption("Position top", stickyTopSwitch));
-        configurationTabContent.addView(textOption("Height dp", stickyHeightInput));
-        configurationTabContent.addView(textOption("Horizontal padding dp", stickyPaddingInput));
         configurationTabContent.addView(switchOption("Show close button", stickyCloseSwitch));
         configurationTabContent.addView(textOption("Audio volume 0.0-1.0", stickyVolumeInput));
         configurationTabContent.addView(textOption("Minimum device volume 0.0-1.0", stickyMinimumDeviceVolumeInput));
 
         configurationTabContent.addView(optionSection("Fullscreen interstitial"));
         configurationTabContent.addView(switchOption("Show close button", interstitialCloseSwitch));
-        configurationTabContent.addView(textOption("Companion height dp", interstitialCompanionHeightInput));
-        configurationTabContent.addView(textOption("Companion max width dp", interstitialCompanionMaxWidthInput));
         configurationTabContent.addView(switchOption("Autoplay video", interstitialAutoplaySwitch));
         configurationTabContent.addView(textOption("Audio volume 0.0-1.0", interstitialVolumeInput));
         configurationTabContent.addView(textOption("Minimum device volume 0.0-1.0", interstitialMinimumDeviceVolumeInput));
@@ -695,15 +680,13 @@ public final class MainActivity extends Activity {
             BackgroundAudioRequest request = BackgroundAudioRequest.builder(this, consumableAdRequest())
                     .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                     .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
-                    .userAgent(requiredText(userAgentInput, "User agent"))
                     .build();
             vastTagInput.setText(request.getVastTagUrl().toString());
             return request;
         }
-        return BackgroundAudioRequest.builder(resolvedVastTagUrl())
+        return BackgroundAudioRequest.builder(vastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
-                .userAgent(requiredText(userAgentInput, "User agent"))
                 .build();
     }
 
@@ -712,15 +695,13 @@ public final class MainActivity extends Activity {
             StickyPlayerRequest request = StickyPlayerRequest.builder(this, consumableAdRequest())
                     .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                     .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
-                    .userAgent(requiredText(userAgentInput, "User agent"))
                     .build();
             vastTagInput.setText(request.getVastTagUrl().toString());
             return request;
         }
-        return StickyPlayerRequest.builder(resolvedVastTagUrl())
+        return StickyPlayerRequest.builder(vastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
-                .userAgent(requiredText(userAgentInput, "User agent"))
                 .build();
     }
 
@@ -730,26 +711,14 @@ public final class MainActivity extends Activity {
                     FullscreenInterstitialRequest.builder(this, consumableAdRequest())
                             .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                             .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
-                            .userAgent(requiredText(userAgentInput, "User agent"))
                             .build();
             vastTagInput.setText(request.getVastTagUrl().toString());
             return request;
         }
-        return FullscreenInterstitialRequest.builder(resolvedVastTagUrl())
+        return FullscreenInterstitialRequest.builder(vastTagUrl())
                 .connectTimeoutMs(intValue(connectTimeoutInput, "Connect timeout ms", 1))
                 .readTimeoutMs(intValue(readTimeoutInput, "Read timeout ms", 1))
-                .userAgent(requiredText(userAgentInput, "User agent"))
                 .build();
-    }
-
-    private String resolvedVastTagUrl() {
-        if (!consumableRequestSwitch.isChecked()) {
-            return vastTagUrl();
-        }
-
-        String url = consumableAdRequest().toURLString();
-        vastTagInput.setText(url);
-        return url;
     }
 
     private ConsumableAdRequest consumableAdRequest() {
@@ -772,8 +741,6 @@ public final class MainActivity extends Activity {
     private StickyPlayerOptions stickyOptions() {
         return StickyPlayerOptions.builder()
                 .position(stickyTopSwitch.isChecked() ? StickyPlayerPosition.TOP : StickyPlayerPosition.BOTTOM)
-                .heightDp(intValue(stickyHeightInput, "Sticky height", 48))
-                .horizontalPaddingDp(intValue(stickyPaddingInput, "Sticky horizontal padding", 0))
                 .showCloseButton(stickyCloseSwitch.isChecked())
                 .volume(floatValue(stickyVolumeInput, "Sticky audio volume", 0.0f, 1.0f))
                 .minDeviceVolume(floatValue(stickyMinimumDeviceVolumeInput, "Sticky minimum device volume", 0.0f, 1.0f))
@@ -783,8 +750,6 @@ public final class MainActivity extends Activity {
     private FullscreenInterstitialOptions interstitialOptions() {
         return FullscreenInterstitialOptions.builder()
                 .showCloseButton(interstitialCloseSwitch.isChecked())
-                .companionHeightDp(intValue(interstitialCompanionHeightInput, "Companion height", 48))
-                .companionMaxWidthDp(intValue(interstitialCompanionMaxWidthInput, "Companion max width", 48))
                 .autoPlayVideo(interstitialAutoplaySwitch.isChecked())
                 .volume(floatValue(interstitialVolumeInput, "Interstitial audio volume", 0.0f, 1.0f))
                 .minDeviceVolume(floatValue(interstitialMinimumDeviceVolumeInput, "Interstitial minimum device volume", 0.0f, 1.0f))

@@ -60,10 +60,12 @@ public final class BackgroundAudioRequest {
         }
         Context applicationContext = context.getApplicationContext();
         String userAgent = defaultUserAgent(applicationContext);
-        return new Builder(request.toURLString(
+        Builder builder = new Builder(request.toURLString(
                 ConsumableAdRequest.PlacementType.BACKGROUND_AUDIO,
                 applicationContext,
-                userAgent)).userAgent(userAgent);
+                userAgent));
+        builder.userAgent = userAgent;
+        return builder;
     }
 
     private static String defaultUserAgent(Context context) {
@@ -109,14 +111,6 @@ public final class BackgroundAudioRequest {
                 throw new IllegalArgumentException("readTimeoutMs must be > 0");
             }
             this.readTimeoutMs = readTimeoutMs;
-            return this;
-        }
-
-        public Builder userAgent(String userAgent) {
-            if (userAgent == null || userAgent.trim().isEmpty()) {
-                throw new IllegalArgumentException("userAgent must not be blank");
-            }
-            this.userAgent = userAgent;
             return this;
         }
 

@@ -8,17 +8,12 @@ final class VastParserTests: XCTestCase {
     func testConsumableAdRequestBuildsEncodedVastURL() throws {
         let consumableRequest = try ConsumableAdRequest(
             placementHash: "abc123",
-            cacheBuster: "fixed",
             limitAdTracking: false,
             appStoreURL: "https://apps.apple.com/app/id123",
             appName: "Test App",
             appBundle: "com.example.app",
             gdpr: true,
-            gdprConsent: "consent string",
-            position: "preroll",
-            mediaMimes: ["audio/mpeg", "audio/mp4"],
-            companionSizes: ["300x250", "320x50"],
-            customParameters: ["x_custom": "hello world"]
+            gdprConsent: "consent string"
         )
 
         let url = try consumableRequest.url()
@@ -32,21 +27,20 @@ final class VastParserTests: XCTestCase {
         XCTAssertEqual(items["s"], "abc123")
         XCTAssertEqual(items["rt"], "vast")
         XCTAssertEqual(items["secure"], "1")
-        XCTAssertEqual(items["cb"], "fixed")
+        let cacheBuster = try XCTUnwrap(items["cb"])
+        XCTAssertNotNil(cacheBuster.range(of: #"^\d+$"#, options: .regularExpression))
         XCTAssertEqual(items["appname"], "Test App")
         XCTAssertEqual(items["appbundle"], "com.example.app")
         XCTAssertEqual(items["appstoreurl"], "https://apps.apple.com/app/id123")
         XCTAssertEqual(items["lmt"], "0")
         XCTAssertEqual(items["gdpr"], "1")
         XCTAssertEqual(items["gdpr_consent"], "consent string")
-        XCTAssertEqual(items["v_position"], "preroll")
         XCTAssertEqual(items["v_delay"], "-1")
         XCTAssertEqual(items["v_delivery"], "2")
-        XCTAssertEqual(items["v_mimes"], "audio/mpeg,audio/mp4")
-        XCTAssertEqual(items["v_cmp_sizes"], "300x250,320x50")
+        XCTAssertEqual(items["v_mimes"], "audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/x-wav,video/mp4,image/jpeg,image/png,image/gif,image/webp")
+        XCTAssertEqual(items["v_cmp_sizes"], "300x250")
         XCTAssertEqual(items["v_pm"], "1")
         XCTAssertEqual(items["c_audio_feed_type"], "6")
-        XCTAssertEqual(items["x_custom"], "hello world")
 
         let vastRequest = try VastRequest(consumableAdRequest: consumableRequest)
         let vastItems = queryItems(from: vastRequest.vastTagURL)
@@ -64,10 +58,7 @@ final class VastParserTests: XCTestCase {
     }
 
     func testConsumableAdRequestAppliesPlacementAutomaticParameters() throws {
-        let consumableRequest = try ConsumableAdRequest(
-            placementHash: "abc123",
-            cacheBuster: "fixed"
-        )
+        let consumableRequest = try ConsumableAdRequest(placementHash: "abc123")
 
         let stickyURL = try VastRequest(
             consumableAdRequest: consumableRequest,

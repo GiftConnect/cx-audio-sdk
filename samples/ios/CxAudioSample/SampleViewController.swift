@@ -15,7 +15,6 @@ final class SampleViewController: UIViewController {
     private let configurationTabs = UISegmentedControl(items: ["General", "Consumable"])
     private let configurationTabContent = UIStackView()
     private let timeoutField = UITextField()
-    private let userAgentField = UITextField()
     private let consumableRequestSwitch = UISwitch()
     private let placementHashField = UITextField()
     private let appStoreURLField = UITextField()
@@ -26,14 +25,10 @@ final class SampleViewController: UIViewController {
     private let backgroundVolumeField = UITextField()
     private let minimumDeviceVolumeField = UITextField()
     private let stickyPositionControl = UISegmentedControl(items: ["Bottom", "Top"])
-    private let stickyHeightField = UITextField()
-    private let stickyPaddingField = UITextField()
     private let stickyCloseSwitch = UISwitch()
     private let stickyVolumeField = UITextField()
     private let stickyMinimumDeviceVolumeField = UITextField()
     private let interstitialCloseSwitch = UISwitch()
-    private let interstitialCompanionHeightField = UITextField()
-    private let interstitialCompanionMaxWidthField = UITextField()
     private let interstitialAutoplaySwitch = UISwitch()
     private let interstitialVolumeField = UITextField()
     private let interstitialMinimumDeviceVolumeField = UITextField()
@@ -231,7 +226,6 @@ final class SampleViewController: UIViewController {
         container.addArrangedSubview(title)
 
         timeoutField.text = "8"
-        userAgentField.text = "cx-audio-sdk-ios/0.1"
         consumableRequestSwitch.isOn = true
         placementHashField.text = defaultPlacementHash
         appStoreURLField.text = "https://apps.apple.com/app/id123"
@@ -242,14 +236,10 @@ final class SampleViewController: UIViewController {
         backgroundVolumeField.text = "0.2"
         minimumDeviceVolumeField.text = "0.1"
         stickyPositionControl.selectedSegmentIndex = 0
-        stickyHeightField.text = "96"
-        stickyPaddingField.text = "12"
         stickyCloseSwitch.isOn = true
         stickyVolumeField.text = "0.2"
         stickyMinimumDeviceVolumeField.text = "0.1"
         interstitialCloseSwitch.isOn = true
-        interstitialCompanionHeightField.text = "250"
-        interstitialCompanionMaxWidthField.text = "300"
         interstitialAutoplaySwitch.isOn = true
         interstitialVolumeField.text = "0.2"
         interstitialMinimumDeviceVolumeField.text = "0.1"
@@ -286,7 +276,6 @@ final class SampleViewController: UIViewController {
     private func addExistingConfiguration(to container: UIStackView) {
         container.addArrangedSubview(optionSection("VAST request"))
         container.addArrangedSubview(textOption("Timeout seconds", field: timeoutField, keyboardType: .decimalPad))
-        container.addArrangedSubview(textOption("User agent", field: userAgentField, keyboardType: .default))
 
         container.addArrangedSubview(optionSection("Background audio"))
         container.addArrangedSubview(textOption("Ad volume 0.0-1.0", field: backgroundVolumeField, keyboardType: .decimalPad))
@@ -294,16 +283,12 @@ final class SampleViewController: UIViewController {
 
         container.addArrangedSubview(optionSection("Sticky player"))
         container.addArrangedSubview(controlOption("Position", control: stickyPositionControl))
-        container.addArrangedSubview(textOption("Height points", field: stickyHeightField, keyboardType: .numberPad))
-        container.addArrangedSubview(textOption("Horizontal padding", field: stickyPaddingField, keyboardType: .numberPad))
         container.addArrangedSubview(switchOption("Show close button", control: stickyCloseSwitch))
         container.addArrangedSubview(textOption("Audio volume 0.0-1.0", field: stickyVolumeField, keyboardType: .decimalPad))
         container.addArrangedSubview(textOption("Minimum device volume 0.0-1.0", field: stickyMinimumDeviceVolumeField, keyboardType: .decimalPad))
 
         container.addArrangedSubview(optionSection("Fullscreen interstitial"))
         container.addArrangedSubview(switchOption("Show close button", control: interstitialCloseSwitch))
-        container.addArrangedSubview(textOption("Companion height", field: interstitialCompanionHeightField, keyboardType: .numberPad))
-        container.addArrangedSubview(textOption("Companion max width", field: interstitialCompanionMaxWidthField, keyboardType: .numberPad))
         container.addArrangedSubview(switchOption("Autoplay video", control: interstitialAutoplaySwitch))
         container.addArrangedSubview(textOption("Audio volume 0.0-1.0", field: interstitialVolumeField, keyboardType: .decimalPad))
         container.addArrangedSubview(textOption("Minimum device volume 0.0-1.0", field: interstitialMinimumDeviceVolumeField, keyboardType: .decimalPad))
@@ -520,13 +505,10 @@ final class SampleViewController: UIViewController {
 
     private func vastRequest(placement: ConsumablePlacement = .backgroundAudio) throws -> VastRequest {
         let timeout = try doubleValue(timeoutField, name: "Timeout seconds", minimum: 0.1)
-        let userAgent = userAgentField.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
         if !consumableRequestSwitch.isOn {
             return try VastRequest(
                 vastTagURLString: vastTagField.text.trimmingCharacters(in: .whitespacesAndNewlines),
-                timeoutInterval: timeout,
-                userAgent: userAgent
+                timeoutInterval: timeout
             )
         }
 
@@ -538,13 +520,10 @@ final class SampleViewController: UIViewController {
             gdprConsent: optionalText(gdprConsentField),
             usPrivacy: optionalText(usPrivacyField)
         )
-        let generatedURL = try consumableRequest.url(placement: placement)
-        vastTagField.text = generatedURL.absoluteString
         return try VastRequest(
             consumableAdRequest: consumableRequest,
             placement: placement,
-            timeoutInterval: timeout,
-            userAgent: userAgent
+            timeoutInterval: timeout
         )
     }
 
@@ -558,8 +537,6 @@ final class SampleViewController: UIViewController {
     private func stickyOptions() throws -> StickyPlayerOptions {
         StickyPlayerOptions(
             position: stickyPositionControl.selectedSegmentIndex == 1 ? .top : .bottom,
-            height: try CGFloat(doubleValue(stickyHeightField, name: "Sticky height", minimum: 48)),
-            horizontalPadding: try CGFloat(doubleValue(stickyPaddingField, name: "Sticky horizontal padding", minimum: 0)),
             showCloseButton: stickyCloseSwitch.isOn,
             volume: try floatValue(stickyVolumeField, name: "Sticky audio volume", minimum: 0, maximum: 1),
             minDeviceVolume: try floatValue(stickyMinimumDeviceVolumeField, name: "Sticky minimum device volume", minimum: 0, maximum: 1)
@@ -569,8 +546,6 @@ final class SampleViewController: UIViewController {
     private func interstitialOptions() throws -> FullscreenInterstitialOptions {
         FullscreenInterstitialOptions(
             showCloseButton: interstitialCloseSwitch.isOn,
-            companionHeight: try CGFloat(doubleValue(interstitialCompanionHeightField, name: "Companion height", minimum: 48)),
-            companionMaxWidth: try CGFloat(doubleValue(interstitialCompanionMaxWidthField, name: "Companion max width", minimum: 48)),
             autoPlayVideo: interstitialAutoplaySwitch.isOn,
             volume: try floatValue(interstitialVolumeField, name: "Interstitial audio volume", minimum: 0, maximum: 1),
             minDeviceVolume: try floatValue(interstitialMinimumDeviceVolumeField, name: "Interstitial minimum device volume", minimum: 0, maximum: 1)

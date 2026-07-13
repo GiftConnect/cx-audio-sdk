@@ -1,18 +1,12 @@
 import Foundation
 
 public struct ConsumableAdRequest: Equatable {
-    public static let defaultEndpointURL = URL(string: "https://2.e.serverbid.com/mpb/get")!
+    private static let endpointURL = URL(string: "https://2.e.serverbid.com/mpb/get")!
 
-    public let endpointURL: URL
-    public let parameters: [String: String]
+    let parameters: [String: String]
 
     public init(
         placementHash: String,
-        endpointURL: URL = ConsumableAdRequest.defaultEndpointURL,
-        responseType: String = "vast",
-        secure: Bool = true,
-        cacheBuster: String = String(Int64(Date().timeIntervalSince1970 * 1000)),
-        userAgentParameter: String? = nil,
         ipAddress: String? = nil,
         locale: String? = nil,
         contentCategories: [String] = [],
@@ -20,7 +14,6 @@ public struct ConsumableAdRequest: Equatable {
         blockedAdvertisers: [String] = [],
         limitAdTracking: Bool? = nil,
         doNotTrack: Bool? = nil,
-        supplyChain: String? = nil,
         appStoreURL: String? = nil,
         appName: String? = nil,
         appVersion: String? = nil,
@@ -38,46 +31,22 @@ public struct ConsumableAdRequest: Equatable {
         usPrivacy: String? = nil,
         gpp: String? = nil,
         gppSectionIds: [String] = [],
-        playerWidth: Int? = nil,
-        playerHeight: Int? = nil,
-        videoPlacement: Int? = nil,
-        delivery: Int? = nil,
-        startDelaySeconds: Int? = nil,
-        position: String? = nil,
-        maxDurationSeconds: Int? = nil,
-        mediaMimes: [String] = [],
-        skippable: Bool? = nil,
-        playbackMethod: Int? = nil,
-        maxBitrateKbps: Int? = nil,
-        minBitrateKbps: Int? = nil,
-        companionTypes: [String] = [],
-        companionMimes: [String] = [],
-        companionSizes: [String] = [],
-        protocols: [String] = [],
         contentId: String? = nil,
         contentGenre: [String] = [],
         contentTitle: String? = nil,
         contentDurationSeconds: Int? = nil,
-        contentURL: String? = nil,
-        contentAudioFeedType: Int? = nil,
-        customParameters: [String: String] = [:]
+        contentURL: String? = nil
     ) throws {
         guard !placementHash.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             throw CxAudioError.invalidOption("placementHash must not be blank")
         }
-        let scheme = endpointURL.scheme?.lowercased()
-        guard scheme == "http" || scheme == "https" else {
-            throw CxAudioError.unsupportedURLScheme(endpointURL.scheme ?? "")
-        }
-
         var params: [String: String] = [
             "s": placementHash,
-            "rt": responseType,
-            "secure": secure ? "1" : "0",
-            "cb": cacheBuster
+            "rt": "vast",
+            "secure": "1",
+            "cb": String(Int64(Date().timeIntervalSince1970 * 1000))
         ]
 
-        put(&params, "u", userAgentParameter)
         put(&params, "i", ipAddress)
         put(&params, "locale", locale)
         put(&params, "cat", joined(contentCategories))
@@ -85,7 +54,6 @@ public struct ConsumableAdRequest: Equatable {
         put(&params, "badv", joined(blockedAdvertisers))
         put(&params, "lmt", boolString(limitAdTracking))
         put(&params, "dnt", boolString(doNotTrack))
-        put(&params, "schain", supplyChain)
         put(&params, "appstoreurl", appStoreURL)
         put(&params, "appname", appName)
         put(&params, "appversion", appVersion)
@@ -103,42 +71,19 @@ public struct ConsumableAdRequest: Equatable {
         put(&params, "us_privacy", usPrivacy)
         put(&params, "gpp", gpp)
         put(&params, "gpp_sid", joined(gppSectionIds))
-        put(&params, "v_w", playerWidth.map(String.init))
-        put(&params, "v_h", playerHeight.map(String.init))
-        put(&params, "v_plcmt", videoPlacement.map(String.init))
-        put(&params, "v_delivery", delivery.map(String.init))
-        if let startDelaySeconds {
-            put(&params, "v_delay", String(startDelaySeconds))
-        } else {
-            put(&params, "v_position", position)
-        }
-        put(&params, "v_max_dur", maxDurationSeconds.map(String.init))
-        put(&params, "v_mimes", joined(mediaMimes))
-        put(&params, "v_skip", boolString(skippable))
-        put(&params, "v_pm", playbackMethod.map(String.init))
-        put(&params, "v_max_bitrate", maxBitrateKbps.map(String.init))
-        put(&params, "v_min_bitrate", minBitrateKbps.map(String.init))
-        put(&params, "v_cmp_types", joined(companionTypes))
-        put(&params, "v_cmp_mimes", joined(companionMimes))
-        put(&params, "v_cmp_sizes", joined(companionSizes))
-        put(&params, "v_protocols", joined(protocols))
         put(&params, "c_id", contentId)
         put(&params, "c_genre", joined(contentGenre))
         put(&params, "c_title", contentTitle)
         put(&params, "c_dur", contentDurationSeconds.map(String.init))
         put(&params, "c_url", contentURL)
-        put(&params, "c_audio_feed_type", contentAudioFeedType.map(String.init))
-        customParameters.forEach { params[$0.key] = $0.value }
-
-        self.endpointURL = endpointURL
         self.parameters = params
     }
 
-    public func url(
+    func url(
         placement: ConsumablePlacement? = nil,
         userAgentParameter: String? = nil
     ) throws -> URL {
-        var components = URLComponents(url: endpointURL, resolvingAgainstBaseURL: false)
+        var components = URLComponents(url: Self.endpointURL, resolvingAgainstBaseURL: false)
         components?.queryItems = parametersWithAutomaticValues(
             placement: placement,
             userAgentParameter: userAgentParameter
@@ -147,7 +92,7 @@ public struct ConsumableAdRequest: Equatable {
             .sorted { $0.key < $1.key }
             .map { URLQueryItem(name: $0.key, value: $0.value) }
         guard let url = components?.url else {
-            throw CxAudioError.invalidURL(endpointURL.absoluteString)
+            throw CxAudioError.invalidURL(Self.endpointURL.absoluteString)
         }
         return url
     }
@@ -204,14 +149,15 @@ public enum ConsumablePlacement: Equatable {
 }
 
 public struct VastRequest: Equatable {
+    private static let defaultUserAgent = "cx-audio-sdk-ios/0.1"
+
     public let vastTagURL: URL
     public let timeoutInterval: TimeInterval
-    public let userAgent: String
+    let userAgent: String
 
     public init(
         vastTagURL: URL,
-        timeoutInterval: TimeInterval = 8,
-        userAgent: String = "cx-audio-sdk-ios/0.1"
+        timeoutInterval: TimeInterval = 8
     ) throws {
         let scheme = vastTagURL.scheme?.lowercased()
         guard scheme == "http" || scheme == "https" else {
@@ -220,43 +166,35 @@ public struct VastRequest: Equatable {
         guard timeoutInterval > 0 else {
             throw CxAudioError.invalidOption("timeoutInterval must be > 0")
         }
-        guard !userAgent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw CxAudioError.invalidOption("userAgent must not be blank")
-        }
-
         self.vastTagURL = vastTagURL
         self.timeoutInterval = timeoutInterval
-        self.userAgent = userAgent
+        self.userAgent = Self.defaultUserAgent
     }
 
     public init(
         vastTagURLString: String,
-        timeoutInterval: TimeInterval = 8,
-        userAgent: String = "cx-audio-sdk-ios/0.1"
+        timeoutInterval: TimeInterval = 8
     ) throws {
         guard let url = URL(string: vastTagURLString) else {
             throw CxAudioError.invalidURL(vastTagURLString)
         }
         try self.init(
             vastTagURL: url,
-            timeoutInterval: timeoutInterval,
-            userAgent: userAgent
+            timeoutInterval: timeoutInterval
         )
     }
 
     public init(
         consumableAdRequest: ConsumableAdRequest,
         placement: ConsumablePlacement? = nil,
-        timeoutInterval: TimeInterval = 8,
-        userAgent: String = "cx-audio-sdk-ios/0.1"
+        timeoutInterval: TimeInterval = 8
     ) throws {
         try self.init(
             vastTagURL: consumableAdRequest.url(
                 placement: placement,
-                userAgentParameter: userAgent
+                userAgentParameter: Self.defaultUserAgent
             ),
-            timeoutInterval: timeoutInterval,
-            userAgent: userAgent
+            timeoutInterval: timeoutInterval
         )
     }
 }

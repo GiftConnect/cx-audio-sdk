@@ -23,19 +23,13 @@ final class MinimalAudioAdController: BackgroundAudioListener {
                 appName: "Flappy CX",
                 appBundle: Bundle.main.bundleIdentifier,
                 gdpr: false,
-                delivery: 2,
-                position: "postroll",
-                maxDurationSeconds: 30,
-                mediaMimes: ["audio/mpeg", "audio/mp4"],
-                protocols: ["2", "3", "5", "6", "7", "8"],
                 contentGenre: ["game"],
                 contentTitle: "Flappy CX"
             )
             let request = try VastRequest(
                 consumableAdRequest: consumableRequest,
                 placement: .backgroundAudio,
-                timeoutInterval: 8,
-                userAgent: "flappy-cx-ios/0.1"
+                timeoutInterval: 8
             )
             handle = CxBackgroundAudio.play(
                 request: request,

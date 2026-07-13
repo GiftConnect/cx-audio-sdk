@@ -134,7 +134,129 @@ final class AudioAdController: BackgroundAudioListener {
 }
 ```
 
-For other environments and placements, continue with [React Native](#react-native), [Unity](#unity), [Android background audio](#android-background-audio), or the complete [iOS guide](ios/README.md).
+### React Native
+
+React Native currently supports Android host apps. Retain the returned handle ID and remove the event subscription when the owning component unmounts.
+
+```js
+import {
+  addCxAudioListener,
+  BackgroundAudio,
+  createConsumableVastRequest,
+} from 'cx-audio-sdk';
+
+let backgroundAdHandle = null;
+
+const subscription = addCxAudioListener((event) => {
+  const isTerminal = ['completed', 'stopped', 'failed'].includes(event.type);
+  const isCurrentAd = event.handleId === backgroundAdHandle;
+  if (event.placement === 'backgroundAudio' && isTerminal && isCurrentAd) {
+    backgroundAdHandle = null;
+  }
+});
+
+export async function playAudioAd() {
+  const request = createConsumableVastRequest({
+    placementHash: 'YOUR_PLACEMENT_HASH',
+    placement: 'backgroundAudio',
+    appName: 'Example App',
+    appBundle: 'com.example.app',
+  });
+
+  backgroundAdHandle = await BackgroundAudio.play(request);
+}
+
+export async function stopAudioAd() {
+  if (backgroundAdHandle) {
+    const handle = backgroundAdHandle;
+    backgroundAdHandle = null;
+    await BackgroundAudio.stop(handle);
+  }
+}
+
+export function disposeAudioAds() {
+  subscription.remove();
+  void stopAudioAd().catch(() => {});
+}
+```
+
+### Unity
+
+Unity currently supports Android player builds. Retain and dispose the native handle when playback reaches a terminal state or the owning `MonoBehaviour` is destroyed.
+
+```csharp
+using Cx.Audio.Unity;
+using UnityEngine;
+
+public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
+{
+    private BackgroundAudioHandle backgroundAd;
+
+    public void PlayAudioAd()
+    {
+        ConsumableAdRequest adRequest =
+            new ConsumableAdRequest("YOUR_PLACEMENT_HASH")
+                .AppName("Example App")
+                .AppBundle(Application.identifier);
+
+        VastRequest request = new VastRequest(
+            adRequest,
+            ConsumablePlacement.BackgroundAudio);
+
+        backgroundAd = BackgroundAudio.Play(
+            request,
+            new BackgroundAudioOptions(),
+            this);
+    }
+
+    public void StopAudioAd()
+    {
+        if (backgroundAd == null)
+        {
+            return;
+        }
+
+        backgroundAd.Stop();
+        ReleaseHandle();
+    }
+
+    private void OnDestroy()
+    {
+        StopAudioAd();
+    }
+
+    public void OnBackgroundAudioStarted(BackgroundAudioHandle handle)
+    {
+        // The ad is playing.
+    }
+
+    public void OnBackgroundAudioCompleted()
+    {
+        ReleaseHandle();
+    }
+
+    public void OnBackgroundAudioStopped()
+    {
+        ReleaseHandle();
+    }
+
+    public void OnBackgroundAudioFailed(CxAudioError error)
+    {
+        ReleaseHandle();
+    }
+
+    private void ReleaseHandle()
+    {
+        if (backgroundAd != null)
+        {
+            backgroundAd.Dispose();
+            backgroundAd = null;
+        }
+    }
+}
+```
+
+For additional placements and options, continue with [Android background audio](#android-background-audio), the complete [iOS guide](ios/README.md), [React Native](#react-native), or [Unity](#unity).
 
 ## Target Platforms
 - Android
@@ -231,12 +353,7 @@ Use the platform advertising identifier only when it is available and permitted:
 Do not fall back to fingerprinting or persistent device identifiers for advertising when IDFA, GAID, or IFA is unavailable.
 
 ## User Agent and IP Parameters
-Consumable requests support two environment-related query parameters:
-
-- `u`: user agent.
-- `i`: IP address.
-
-The SDK automatically fills `u` when it converts a `ConsumableAdRequest` into a placement `VastRequest`, unless the host app explicitly provided `userAgentParameter`. Android context-aware builders use the platform WebView default user agent when available; other builders use the SDK request user agent.
+The SDK owns the request user agent and automatically fills `u` when it creates a placement request. Android context-aware builders use the platform WebView default user agent when available; other builders use the SDK user agent.
 
 The SDK does not compute `i` on device. Mobile runtime APIs can expose local interface addresses, but they cannot reliably know the public/NAT IP seen by an ad server without calling an external IP lookup service. The preferred automatic source for `i` is the server-side request source address at the Consumable endpoint or proxy. Host apps may still pass `ipAddress` explicitly when they have a trusted server-provided value.
 
@@ -263,12 +380,6 @@ ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("b0816e0aa07
         .ifa(advertisingId)
         .limitAdTracking(limitAdTracking)
         .gdpr(false)
-        .position("preroll")
-        .delivery(2)
-        .maxDurationSeconds(30)
-        .mediaMimes("audio/mpeg", "audio/mp4")
-        .companionSizes("300x250", "320x50")
-        .protocols("2", "3", "5", "6", "7", "8")
         .build();
 
 BackgroundAudioRequest request = BackgroundAudioRequest
@@ -323,7 +434,7 @@ The Android full screen interstitial placement:
 - Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
 
 ### Lifecycle
-1. Build a `FullscreenInterstitialRequest` with the VAST tag URL, timeout values, and optional user agent.
+1. Build a `FullscreenInterstitialRequest` with the VAST tag URL and timeout values.
 2. Call `AndroidFullscreenInterstitial.show(...)` at a natural break in app flow.
 3. Retain the returned `FullscreenInterstitialHandle`; the SDK loads the VAST response and media asynchronously.
 4. Treat `onFullscreenInterstitialLoaded` as the moment the overlay is visible.
@@ -342,8 +453,6 @@ FullscreenInterstitialRequest request = FullscreenInterstitialRequest
 
 FullscreenInterstitialOptions options = FullscreenInterstitialOptions.builder()
         .showCloseButton(true)
-        .companionHeightDp(250)
-        .companionMaxWidthDp(300)
         .autoPlayVideo(true)
         .volume(0.2f)
         .minDeviceVolume(0.1f)
@@ -402,7 +511,7 @@ The Android sticky player:
 - Opens `CompanionClickThrough` URLs using an Android `ACTION_VIEW` intent.
 
 ### Lifecycle
-1. Build a `StickyPlayerRequest` with the VAST tag URL, timeout values, and optional user agent.
+1. Build a `StickyPlayerRequest` with the VAST tag URL and timeout values.
 2. Call `AndroidStickyPlayer.show(...)` when the host screen can support a persistent top or bottom overlay.
 3. Retain the returned `StickyPlayerHandle`; the SDK loads the VAST response, companion image, and audio media asynchronously.
 4. Treat `onStickyPlayerLoaded` as the moment the overlay is visible.
@@ -420,7 +529,6 @@ StickyPlayerRequest request = StickyPlayerRequest
 
 StickyPlayerOptions options = StickyPlayerOptions.builder()
         .position(StickyPlayerPosition.BOTTOM)
-        .heightDp(72)
         .showCloseButton(true)
         .volume(0.2f)
         .minDeviceVolume(0.1f)
@@ -506,14 +614,12 @@ let consumableRequest = try ConsumableAdRequest(
     idfa: idfa,
     ifa: idfa,
     limitAdTracking: limitAdTracking,
-    gdpr: false,
-    position: "preroll"
+    gdpr: false
 )
 
 let request = try VastRequest(
     consumableAdRequest: consumableRequest,
-    timeoutInterval: 8,
-    userAgent: "my-ios-app/1.0"
+    timeoutInterval: 8
 )
 ```
 
@@ -570,7 +676,7 @@ handle.dismiss()
 
 Lifecycle guidance:
 
-1. Build a `VastRequest` with the VAST tag URL, timeout interval, and optional user agent.
+1. Build a `VastRequest` with the VAST tag URL and timeout interval.
 2. Call `CxStickyPlayer.show(...)` when the current view controller can support a persistent safe-area overlay.
 3. Retain the returned `StickyPlayerHandle`; VAST, image, and audio setup happen asynchronously.
 4. Treat `stickyPlayerDidLoad` as the moment the overlay is visible.
@@ -602,8 +708,6 @@ let handle = CxFullscreenInterstitial.show(
     request: request,
     options: FullscreenInterstitialOptions(
         showCloseButton: true,
-        companionHeight: 250,
-        companionMaxWidth: 300,
         autoPlayVideo: true,
         volume: 0.2,
         minDeviceVolume: 0.1
@@ -618,7 +722,7 @@ The full-screen placement displays the selected visual `MediaFile` as either an 
 
 Lifecycle guidance:
 
-1. Build a `VastRequest` with the VAST tag URL, timeout interval, and optional user agent.
+1. Build a `VastRequest` with the VAST tag URL and timeout interval.
 2. Call `CxFullscreenInterstitial.show(...)` at a natural break in app flow.
 3. Retain the returned `FullscreenInterstitialHandle`; VAST, image, and video setup happen asynchronously.
 4. Treat `fullscreenInterstitialDidLoad` as the moment the overlay is visible.
@@ -681,12 +785,6 @@ const request = createConsumableVastRequest({
   ifa: advertisingId,
   limitAdTracking,
   gdpr: false,
-  position: 'preroll',
-  delivery: 2,
-  maxDurationSeconds: 30,
-  mediaMimes: ['audio/mpeg', 'audio/mp4'],
-  companionSizes: ['300x250', '320x50'],
-  protocols: ['2', '3', '5', '6', '7', '8'],
 });
 
 const handleId = await BackgroundAudio.play(
@@ -708,7 +806,6 @@ const handleId = await StickyPlayer.show(
   { vastTagUrl: 'https://ads.example.com/vast.xml' },
   {
     position: StickyPlayerPosition.BOTTOM,
-    heightDp: 72,
     showCloseButton: true,
     volume: 0.2,
     minDeviceVolume: 0.1,
@@ -726,8 +823,6 @@ const handleId = await FullscreenInterstitial.show(
   { vastTagUrl: 'https://ads.example.com/vast.xml' },
   {
     showCloseButton: true,
-    companionHeightDp: 250,
-    companionMaxWidthDp: 300,
     autoPlayVideo: true,
   }
 );
@@ -790,7 +885,6 @@ StickyPlayerHandle handle = StickyPlayer.Show(
     new StickyPlayerOptions
     {
         Position = StickyPlayerPosition.Bottom,
-        HeightDp = 72,
         ShowCloseButton = true
     },
     listener);
@@ -808,8 +902,6 @@ FullscreenInterstitialHandle handle = FullscreenInterstitial.Show(
     new FullscreenInterstitialOptions
     {
         ShowCloseButton = true,
-        CompanionHeightDp = 250,
-        CompanionMaxWidthDp = 300,
         AutoPlayVideo = true
     },
     listener);

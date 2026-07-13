@@ -43,19 +43,12 @@ let consumableRequest = try ConsumableAdRequest(
     idfa: idfa,
     ifa: idfa,
     limitAdTracking: limitAdTracking,
-    gdpr: false,
-    position: "preroll",
-    delivery: 2,
-    maxDurationSeconds: 30,
-    mediaMimes: ["audio/mpeg", "audio/mp4"],
-    companionSizes: ["300x250", "320x50"],
-    protocols: ["2", "3", "5", "6", "7", "8"]
+    gdpr: false
 )
 
 let request = try VastRequest(
     consumableAdRequest: consumableRequest,
-    timeoutInterval: 8,
-    userAgent: "my-ios-app/1.0"
+    timeoutInterval: 8
 )
 ```
 
@@ -64,8 +57,7 @@ Use the raw VAST URL initializer for QA tags or non-Consumable ad servers:
 ```swift
 let request = try VastRequest(
     vastTagURLString: "https://ads.example.com/vast.xml",
-    timeoutInterval: 8,
-    userAgent: "my-ios-app/1.0"
+    timeoutInterval: 8
 )
 ```
 
@@ -133,7 +125,7 @@ If the host app requests ATT, it must include `NSUserTrackingUsageDescription` i
 
 ## User Agent and IP Parameters
 
-When a `ConsumableAdRequest` is converted into a `VastRequest`, the SDK automatically uses the `VastRequest.userAgent` value as the `u` query parameter unless `userAgentParameter` was explicitly provided on `ConsumableAdRequest`.
+When a `ConsumableAdRequest` is converted into a `VastRequest`, the SDK automatically supplies its internal user agent as the `u` query parameter.
 
 The SDK does not compute the `i` query parameter on device. iOS can expose local network interface addresses, but it cannot reliably know the public/NAT IP seen by an ad server without an external lookup. Prefer server-side inference from the request source address at the Consumable endpoint or proxy. Pass `ipAddress` only when the host app has a trusted server-provided value.
 
@@ -176,8 +168,6 @@ let handle = CxStickyPlayer.show(
     request: request,
     options: StickyPlayerOptions(
         position: .bottom,
-        height: 72,
-        horizontalPadding: 12,
         showCloseButton: true,
         volume: 0.2,
         minDeviceVolume: 0.1
@@ -206,8 +196,6 @@ let handle = CxFullscreenInterstitial.show(
     request: request,
     options: FullscreenInterstitialOptions(
         showCloseButton: true,
-        companionHeight: 250,
-        companionMaxWidth: 300,
         autoPlayVideo: true,
         volume: 0.2,
         minDeviceVolume: 0.1

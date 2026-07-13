@@ -1,25 +1,22 @@
 import AVFoundation
 import UIKit
 
+private let fullscreenCompanionHeight: CGFloat = 250
+private let fullscreenCompanionMaxWidth: CGFloat = 300
+
 public struct FullscreenInterstitialOptions: Equatable {
     public let showCloseButton: Bool
-    public let companionHeight: CGFloat
-    public let companionMaxWidth: CGFloat
     public let autoPlayVideo: Bool
     public let volume: Float
     public let minDeviceVolume: Float
 
     public init(
         showCloseButton: Bool = true,
-        companionHeight: CGFloat = 250,
-        companionMaxWidth: CGFloat = 300,
         autoPlayVideo: Bool = true,
         volume: Float = 0.2,
         minDeviceVolume: Float = 0.1
     ) {
         self.showCloseButton = showCloseButton
-        self.companionHeight = companionHeight
-        self.companionMaxWidth = companionMaxWidth
         self.autoPlayVideo = autoPlayVideo
         self.volume = volume
         self.minDeviceVolume = minDeviceVolume
@@ -437,10 +434,10 @@ private final class FullscreenInterstitialOverlayView: UIView {
         if let companionImage, interstitialAd.companion != nil {
             let companionContainer = makeCompanionView(
                 image: companionImage,
-                maxWidth: options.companionMaxWidth
+                maxWidth: fullscreenCompanionMaxWidth
             )
             contentStack.addArrangedSubview(companionContainer)
-            companionContainer.heightAnchor.constraint(equalToConstant: options.companionHeight).isActive = true
+            companionContainer.heightAnchor.constraint(equalToConstant: fullscreenCompanionHeight).isActive = true
         }
 
         if options.showCloseButton {
