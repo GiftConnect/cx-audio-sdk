@@ -52,6 +52,17 @@ The sample app lets you test:
 - Sticky player render, click, and dismiss.
 - Full screen interstitial render, click, video/image playback, and dismiss.
 
+### iOS Flappy Sample
+iOS game sample workspace: `samples/flappy-ios/CxFlappyBird.xcworkspace`
+
+Build the sample app:
+
+```sh
+xcodebuild -workspace samples/flappy-ios/CxFlappyBird.xcworkspace -scheme CxFlappyBird -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
+```
+
+The sample is a small Flappy-style game that demonstrates a minimal host-app integration: when a run ends, it builds a `ConsumableAdRequest`, wraps it in `VastRequest`, and starts a background audio placement with `CxBackgroundAudio.play`.
+
 ## Android Build
 Android module: `:android`
 
