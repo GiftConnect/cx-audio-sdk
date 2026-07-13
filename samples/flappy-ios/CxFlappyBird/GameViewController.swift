@@ -7,6 +7,7 @@ final class GameViewController: UIViewController {
     private let adStatusLabel = UILabel()
     private let primaryButton = UIButton(type: .system)
     private let adButton = UIButton(type: .system)
+    private let difficultyControl = UISegmentedControl(items: ["Easy", "Normal", "Hard"])
     private lazy var audioAds = MinimalAudioAdController { [weak self] status in
         self?.setAdStatus(status)
     }
@@ -16,7 +17,7 @@ final class GameViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(red: 17 / 255, green: 24 / 255, blue: 39 / 255, alpha: 1)
+        view.backgroundColor = UIColor(red: 2 / 255, green: 32 / 255, blue: 58 / 255, alpha: 1)
         buildInterface()
         gameView.delegate = self
         gameView.reset()
@@ -40,7 +41,7 @@ final class GameViewController: UIViewController {
         configureMetricLabel(bestLabel, title: "Best", value: "0")
 
         let titleLabel = UILabel()
-        titleLabel.text = "Flappy CX"
+        titleLabel.text = "Flappy Blobfish"
         titleLabel.textColor = .white
         titleLabel.font = .systemFont(ofSize: 24, weight: .black)
         titleLabel.textAlignment = .center
@@ -64,10 +65,10 @@ final class GameViewController: UIViewController {
         buttonRow.spacing = 10
         buttonRow.distribution = .fillEqually
 
-        configureButton(primaryButton, title: "Start", color: UIColor(red: 249 / 255, green: 115 / 255, blue: 22 / 255, alpha: 1))
+        configureButton(primaryButton, title: "Dive In", color: UIColor(red: 14 / 255, green: 165 / 255, blue: 233 / 255, alpha: 1))
         primaryButton.addTarget(self, action: #selector(primaryButtonTapped), for: .touchUpInside)
 
-        configureButton(adButton, title: "Audio Ad", color: UIColor(red: 20 / 255, green: 184 / 255, blue: 166 / 255, alpha: 1))
+        configureButton(adButton, title: "Audio Ad", color: UIColor(red: 13 / 255, green: 148 / 255, blue: 136 / 255, alpha: 1))
         adButton.addTarget(self, action: #selector(adButtonTapped), for: .touchUpInside)
 
         buttonRow.addArrangedSubview(primaryButton)
@@ -81,6 +82,30 @@ final class GameViewController: UIViewController {
         adStatusLabel.adjustsFontSizeToFitWidth = true
         adStatusLabel.minimumScaleFactor = 0.75
 
+        let difficultyRow = UIStackView()
+        difficultyRow.axis = .horizontal
+        difficultyRow.alignment = .center
+        difficultyRow.spacing = 12
+
+        let difficultyLabel = UILabel()
+        difficultyLabel.text = "Difficulty"
+        difficultyLabel.textColor = UIColor(red: 203 / 255, green: 213 / 255, blue: 225 / 255, alpha: 1)
+        difficultyLabel.font = .systemFont(ofSize: 13, weight: .bold)
+
+        difficultyControl.selectedSegmentIndex = 1
+        difficultyControl.selectedSegmentTintColor = UIColor(red: 14 / 255, green: 165 / 255, blue: 233 / 255, alpha: 1)
+        difficultyControl.setTitleTextAttributes([.foregroundColor: UIColor.white], for: .selected)
+        difficultyControl.setTitleTextAttributes(
+            [.foregroundColor: UIColor(red: 148 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)],
+            for: .normal
+        )
+        difficultyControl.addTarget(self, action: #selector(difficultyChanged), for: .valueChanged)
+
+        difficultyRow.addArrangedSubview(difficultyLabel)
+        difficultyRow.addArrangedSubview(difficultyControl)
+        difficultyControl.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        bottomBar.addArrangedSubview(difficultyRow)
         bottomBar.addArrangedSubview(buttonRow)
         bottomBar.addArrangedSubview(adStatusLabel)
 
@@ -103,7 +128,8 @@ final class GameViewController: UIViewController {
             bottomBar.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
             primaryButton.heightAnchor.constraint(equalToConstant: 48),
-            adButton.heightAnchor.constraint(equalToConstant: 48)
+            adButton.heightAnchor.constraint(equalToConstant: 48),
+            difficultyControl.heightAnchor.constraint(equalToConstant: 32)
         ])
     }
 
@@ -137,13 +163,24 @@ final class GameViewController: UIViewController {
         audioAds.playPostGameAudioAd()
     }
 
+    @objc private func difficultyChanged() {
+        switch difficultyControl.selectedSegmentIndex {
+        case 0:
+            gameView.difficulty = .easy
+        case 2:
+            gameView.difficulty = .hard
+        default:
+            gameView.difficulty = .normal
+        }
+    }
+
     private func updateButtons(for state: FlappyGameView.State) {
         let title: String
         switch state {
         case .ready:
-            title = "Start"
+            title = "Dive In"
         case .playing:
-            title = "Flap"
+            title = "Swim"
         case .gameOver:
             title = "Restart"
         }

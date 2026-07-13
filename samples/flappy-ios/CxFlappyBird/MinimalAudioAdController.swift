@@ -20,11 +20,11 @@ final class MinimalAudioAdController: BackgroundAudioListener {
             let consumableRequest = try ConsumableAdRequest(
                 placementHash: placementHash,
                 limitAdTracking: true,
-                appName: "Flappy CX",
+                appName: "Flappy Blobfish",
                 appBundle: Bundle.main.bundleIdentifier,
                 gdpr: false,
                 contentGenre: ["game"],
-                contentTitle: "Flappy CX"
+                contentTitle: "Flappy Blobfish"
             )
             let request = try VastRequest(
                 consumableAdRequest: consumableRequest,

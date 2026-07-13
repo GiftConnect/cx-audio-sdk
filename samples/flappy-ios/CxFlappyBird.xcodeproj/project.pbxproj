@@ -13,6 +13,10 @@
 		FB0000000000000000000004 /* FlappyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000014 /* FlappyGameView.swift */; };
 		FB0000000000000000000005 /* MinimalAudioAdController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000015 /* MinimalAudioAdController.swift */; };
 		FB0000000000000000000006 /* CxAudioSDK in Frameworks */ = {isa = PBXBuildFile; productRef = FB0000000000000000000031 /* CxAudioSDK */; };
+		FB0000000000000000000007 /* blobfish.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000017 /* blobfish.png */; };
+		FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000018 /* blobfish-smile-fins-up.png */; };
+		FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000019 /* blobfish-smile-fins-down.png */; };
+		FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001A /* blobfish-frown-fins-up.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +27,10 @@
 		FB0000000000000000000014 /* FlappyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlappyGameView.swift; sourceTree = "<group>"; };
 		FB0000000000000000000015 /* MinimalAudioAdController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MinimalAudioAdController.swift; sourceTree = "<group>"; };
 		FB0000000000000000000016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FB0000000000000000000017 /* blobfish.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish.png; sourceTree = "<group>"; };
+		FB0000000000000000000018 /* blobfish-smile-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-smile-fins-up.png; sourceTree = "<group>"; };
+		FB0000000000000000000019 /* blobfish-smile-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-smile-fins-down.png; sourceTree = "<group>"; };
+		FB000000000000000000001A /* blobfish-frown-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-frown-fins-up.png; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -54,6 +62,10 @@
 				FB0000000000000000000014 /* FlappyGameView.swift */,
 				FB0000000000000000000015 /* MinimalAudioAdController.swift */,
 				FB0000000000000000000016 /* Info.plist */,
+				FB0000000000000000000017 /* blobfish.png */,
+				FB0000000000000000000018 /* blobfish-smile-fins-up.png */,
+				FB0000000000000000000019 /* blobfish-smile-fins-down.png */,
+				FB000000000000000000001A /* blobfish-frown-fins-up.png */,
 			);
 			path = CxFlappyBird;
 			sourceTree = "<group>";
@@ -130,6 +142,10 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FB0000000000000000000007 /* blobfish.png in Resources */,
+				FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */,
+				FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */,
+				FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
