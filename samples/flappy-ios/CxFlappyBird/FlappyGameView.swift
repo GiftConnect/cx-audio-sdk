@@ -39,6 +39,7 @@ final class FlappyGameView: UIView {
     weak var delegate: FlappyGameViewDelegate?
 
     var difficulty: Difficulty = .normal
+    var tapLift: CGFloat = 345
 
     private(set) var state: State = .ready {
         didSet {
@@ -52,18 +53,19 @@ final class FlappyGameView: UIView {
     private let pipeWidth: CGFloat = 72
     private let pipeGap: CGFloat = 170
     private let gravity: CGFloat = 1_050
-    private let flapVelocity: CGFloat = -345
     private let groundHeight: CGFloat = 74
     private let blobfishFrownFinsDownImage = UIImage(named: "blobfish")
     private let blobfishFrownFinsUpImage = UIImage(named: "blobfish-frown-fins-up")
-    private let blobfishSmileFinsDownImage = UIImage(named: "blobfish-smile-fins-down")
-    private let blobfishSmileFinsUpImage = UIImage(named: "blobfish-smile-fins-up")
+    private let blobfishGrinFinsDownImage = UIImage(named: "blobfish-grin-fins-down")
+    private let blobfishGrinFinsUpImage = UIImage(named: "blobfish-grin-fins-up")
+    private let blobfishCryingImage = UIImage(named: "blobfish-crying-front")
 
     private var displayLink: CADisplayLink?
     private var lastTimestamp: CFTimeInterval = 0
     private var birdX: CGFloat = 88
     private var birdY: CGFloat = 180
     private var velocity: CGFloat = 0
+    private var deathVelocity: CGFloat = 0
     private var swimAnimationTime: CGFloat = 0
     private var pipes: [Pipe] = []
     private var score = 0
@@ -100,6 +102,7 @@ final class FlappyGameView: UIView {
         stopLoop()
         score = 0
         velocity = 0
+        deathVelocity = 0
         swimAnimationTime = 0
         birdX = max(76, bounds.width * 0.28)
         birdY = max(120, bounds.height * 0.42)
@@ -134,7 +137,7 @@ final class FlappyGameView: UIView {
     }
 
     private func flap() {
-        velocity = flapVelocity
+        velocity = -tapLift
         swimAnimationTime = 0
         setNeedsDisplay()
     }
@@ -158,7 +161,7 @@ final class FlappyGameView: UIView {
     }
 
     @objc private func tick(_ link: CADisplayLink) {
-        guard state == .playing else {
+        guard state != .ready else {
             return
         }
 
@@ -169,7 +172,14 @@ final class FlappyGameView: UIView {
 
         let delta = min(CGFloat(link.timestamp - lastTimestamp), 0.035)
         lastTimestamp = link.timestamp
-        step(delta: delta)
+        switch state {
+        case .playing:
+            step(delta: delta)
+        case .gameOver:
+            stepDeath(delta: delta)
+        case .ready:
+            break
+        }
         setNeedsDisplay()
     }
 
@@ -195,6 +205,14 @@ final class FlappyGameView: UIView {
 
         if collidesWithWorld() {
             endGame()
+        }
+    }
+
+    private func stepDeath(delta: CGFloat) {
+        deathVelocity += 820 * delta
+        birdY += deathVelocity * delta
+        if birdY - 36 > bounds.height {
+            stopLoop()
         }
     }
 
@@ -251,7 +269,7 @@ final class FlappyGameView: UIView {
     }
 
     private func endGame() {
-        stopLoop()
+        deathVelocity = 110
         state = .gameOver
         setNeedsDisplay()
     }
@@ -412,7 +430,9 @@ final class FlappyGameView: UIView {
     }
 
     private func drawBird() {
-        let fishRect = CGRect(x: birdX - 31, y: birdY - 25, width: 62, height: 50)
+        let fishRect = state == .gameOver
+            ? CGRect(x: birdX - 31, y: birdY - 31, width: 62, height: 62)
+            : CGRect(x: birdX - 31, y: birdY - 25, width: 62, height: 50)
         if let blobfishImage = currentBlobfishImage {
             blobfishImage.draw(in: fishRect, blendMode: .normal, alpha: 1)
         } else {
@@ -420,28 +440,35 @@ final class FlappyGameView: UIView {
             UIBezierPath(ovalIn: fishRect).fill()
         }
 
-        UIColor.white.withAlphaComponent(0.55).setStroke()
-        for offset in 0..<3 {
-            let radius = CGFloat(3 + offset * 2)
-            let bubble = UIBezierPath(ovalIn: CGRect(
-                x: fishRect.minX - CGFloat(offset * 8) - radius,
-                y: fishRect.midY - CGFloat(offset * 9),
-                width: radius * 2,
-                height: radius * 2
-            ))
-            bubble.lineWidth = 1
-            bubble.stroke()
+        if state == .playing {
+            UIColor.white.withAlphaComponent(0.55).setStroke()
+            for offset in 0..<3 {
+                let radius = CGFloat(3 + offset * 2)
+                let bubble = UIBezierPath(ovalIn: CGRect(
+                    x: fishRect.minX - CGFloat(offset * 8) - radius,
+                    y: fishRect.midY - CGFloat(offset * 9),
+                    width: radius * 2,
+                    height: radius * 2
+                ))
+                bubble.lineWidth = 1
+                bubble.stroke()
+            }
         }
     }
 
     private var currentBlobfishImage: UIImage? {
-        guard state == .playing else {
+        switch state {
+        case .ready:
             return blobfishFrownFinsDownImage
+        case .gameOver:
+            return blobfishCryingImage
+        case .playing:
+            break
         }
 
         let finsAreUp = Int(swimAnimationTime / 0.14).isMultiple(of: 2)
         if velocity < 0 {
-            return finsAreUp ? blobfishSmileFinsUpImage : blobfishSmileFinsDownImage
+            return finsAreUp ? blobfishGrinFinsUpImage : blobfishGrinFinsDownImage
         }
         return finsAreUp ? blobfishFrownFinsUpImage : blobfishFrownFinsDownImage
     }
@@ -451,7 +478,7 @@ final class FlappyGameView: UIView {
         case .playing:
             return
         case .ready:
-            drawCentered(text: "Flappy Blobfish", y: bounds.height * 0.31, fontSize: 32, color: .white)
+            drawCentered(text: "Flappy Blob", y: bounds.height * 0.31, fontSize: 32, color: .white)
             drawCentered(text: "Tap to swim", y: bounds.height * 0.40, fontSize: 18, color: UIColor.white.withAlphaComponent(0.86))
         case .gameOver:
             drawCentered(text: "Dive Over", y: bounds.height * 0.33, fontSize: 32, color: .white)

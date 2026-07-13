@@ -318,7 +318,7 @@ Build the sample app:
 xcodebuild -workspace samples/flappy-ios/CxFlappyBird.xcworkspace -scheme CxFlappyBird -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
-The sample is a small aquatic Flappy Blobfish game that demonstrates a minimal host-app integration: when a run ends, it builds a `ConsumableAdRequest`, wraps it in `VastRequest`, and starts a background audio placement with `CxBackgroundAudio.play`.
+The sample is a small aquatic Flappy Blob game that demonstrates a minimal host-app integration: when a run ends, it builds a `ConsumableAdRequest`, wraps it in `VastRequest`, and starts a background audio placement with `CxBackgroundAudio.play`.
 
 ## Android Build
 Android module: `:android`

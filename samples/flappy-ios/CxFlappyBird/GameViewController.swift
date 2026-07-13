@@ -8,6 +8,8 @@ final class GameViewController: UIViewController {
     private let primaryButton = UIButton(type: .system)
     private let adButton = UIButton(type: .system)
     private let difficultyControl = UISegmentedControl(items: ["Easy", "Normal", "Hard"])
+    private let tapLiftSlider = UISlider()
+    private let tapLiftValueLabel = UILabel()
     private lazy var audioAds = MinimalAudioAdController { [weak self] status in
         self?.setAdStatus(status)
     }
@@ -41,7 +43,7 @@ final class GameViewController: UIViewController {
         configureMetricLabel(bestLabel, title: "Best", value: "0")
 
         let titleLabel = UILabel()
-        titleLabel.text = "Flappy Blobfish"
+        titleLabel.text = "Flappy Blob"
         titleLabel.textColor = .white
         titleLabel.font = .systemFont(ofSize: 24, weight: .black)
         titleLabel.textAlignment = .center
@@ -105,7 +107,35 @@ final class GameViewController: UIViewController {
         difficultyRow.addArrangedSubview(difficultyControl)
         difficultyControl.setContentHuggingPriority(.defaultLow, for: .horizontal)
 
+        let tapLiftRow = UIStackView()
+        tapLiftRow.axis = .horizontal
+        tapLiftRow.alignment = .center
+        tapLiftRow.spacing = 10
+
+        let tapLiftLabel = UILabel()
+        tapLiftLabel.text = "Tap lift"
+        tapLiftLabel.textColor = difficultyLabel.textColor
+        tapLiftLabel.font = difficultyLabel.font
+
+        tapLiftSlider.minimumValue = 240
+        tapLiftSlider.maximumValue = 480
+        tapLiftSlider.value = 345
+        tapLiftSlider.minimumTrackTintColor = UIColor(red: 14 / 255, green: 165 / 255, blue: 233 / 255, alpha: 1)
+        tapLiftSlider.maximumTrackTintColor = UIColor(red: 30 / 255, green: 64 / 255, blue: 93 / 255, alpha: 1)
+        tapLiftSlider.addTarget(self, action: #selector(tapLiftChanged), for: .valueChanged)
+
+        tapLiftValueLabel.text = "345"
+        tapLiftValueLabel.textColor = .white
+        tapLiftValueLabel.font = .monospacedDigitSystemFont(ofSize: 13, weight: .bold)
+        tapLiftValueLabel.textAlignment = .right
+        tapLiftValueLabel.widthAnchor.constraint(equalToConstant: 34).isActive = true
+
+        tapLiftRow.addArrangedSubview(tapLiftLabel)
+        tapLiftRow.addArrangedSubview(tapLiftSlider)
+        tapLiftRow.addArrangedSubview(tapLiftValueLabel)
+
         bottomBar.addArrangedSubview(difficultyRow)
+        bottomBar.addArrangedSubview(tapLiftRow)
         bottomBar.addArrangedSubview(buttonRow)
         bottomBar.addArrangedSubview(adStatusLabel)
 
@@ -172,6 +202,12 @@ final class GameViewController: UIViewController {
         default:
             gameView.difficulty = .normal
         }
+    }
+
+    @objc private func tapLiftChanged() {
+        let lift = Int(tapLiftSlider.value.rounded())
+        gameView.tapLift = CGFloat(lift)
+        tapLiftValueLabel.text = "\(lift)"
     }
 
     private func updateButtons(for state: FlappyGameView.State) {
