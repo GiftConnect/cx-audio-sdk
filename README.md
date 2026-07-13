@@ -1,6 +1,141 @@
 # cx-audio-sdk
 An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST tag for a VAST 4.x audio ad response.
 
+## Quick Start
+
+These examples use the current public API to request and play a contextual background audio ad. Replace `YOUR_PLACEMENT_HASH` with the placement hash supplied by CX. The primary flow does not require a raw VAST URL or advertising identifier.
+
+> [!IMPORTANT]
+> The automatic privacy ingestion and centralized enforcement described in [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md) are accepted target architecture but are not fully implemented in the current SDK. Before a production release, review the [Advertising Identifiers](#advertising-identifiers) section and applicable platform privacy requirements. The host app owns consent collection and user-facing privacy prompts.
+
+### Integration Lifecycle
+
+| State | Developer action | SDK behavior |
+| --- | --- | --- |
+| Host ready | Complete app-owned consent UI and configure the app audio session when applicable. | No SDK request has started. |
+| Configured | Create a `ConsumableAdRequest` with the placement hash and normal app metadata. | Builds the placement request from structured values. |
+| Loading | Call the placement's `play(...)` or `show(...)` method and retain its handle. | Loads VAST and the required creative asynchronously. |
+| Active | Respond to started, loaded, clicked, or completed callbacks as needed. | Plays the creative and fires supported tracking events. |
+| Terminal | On completion, failure, stop, or dismissal, clear the retained handle. Call `stop()` or `dismiss()` when the host flow ends early. | Stops work and releases placement resources. |
+
+The host app owns consent collection and user-facing privacy prompts. Do not add a second consent dialog for the SDK. See [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md) for the accepted ownership and enforcement model.
+
+### Android
+
+```java
+import android.app.Activity;
+
+import com.cx.audio.android.AndroidBackgroundAudio;
+import com.cx.audio.android.BackgroundAudioHandle;
+import com.cx.audio.android.BackgroundAudioListener;
+import com.cx.audio.android.BackgroundAudioOptions;
+import com.cx.audio.android.BackgroundAudioRequest;
+import com.cx.audio.android.ConsumableAdRequest;
+
+public final class MainActivity extends Activity {
+    private BackgroundAudioHandle backgroundAd;
+
+    private void playAudioAd() {
+        ConsumableAdRequest adRequest = ConsumableAdRequest
+                .builder("YOUR_PLACEMENT_HASH")
+                .appName("Example App")
+                .appBundle(getPackageName())
+                .build();
+
+        BackgroundAudioRequest request = BackgroundAudioRequest
+                .builder(this, adRequest)
+                .build();
+
+        backgroundAd = AndroidBackgroundAudio.play(
+                this,
+                request,
+                BackgroundAudioOptions.builder().build(),
+                new BackgroundAudioListener() {
+                    @Override
+                    public void onBackgroundAudioStarted(BackgroundAudioHandle handle) {
+                        // The ad is playing.
+                    }
+
+                    @Override
+                    public void onBackgroundAudioCompleted() {
+                        backgroundAd = null;
+                    }
+
+                    @Override
+                    public void onBackgroundAudioStopped() {
+                        backgroundAd = null;
+                    }
+
+                    @Override
+                    public void onBackgroundAudioFailed(Throwable error) {
+                        backgroundAd = null;
+                    }
+                });
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (backgroundAd != null) {
+            backgroundAd.stop();
+            backgroundAd = null;
+        }
+        super.onDestroy();
+    }
+}
+```
+
+### iOS
+
+```swift
+import Foundation
+import CxAudioSDK
+
+final class AudioAdController: BackgroundAudioListener {
+    private var backgroundAd: BackgroundAudioHandle?
+
+    func playAudioAd() throws {
+        let adRequest = try ConsumableAdRequest(
+            placementHash: "YOUR_PLACEMENT_HASH",
+            appName: "Example App",
+            appBundle: Bundle.main.bundleIdentifier
+        )
+
+        let request = try VastRequest(
+            consumableAdRequest: adRequest,
+            placement: .backgroundAudio
+        )
+
+        backgroundAd = CxBackgroundAudio.play(
+            request: request,
+            listener: self
+        )
+    }
+
+    func stopAudioAd() {
+        backgroundAd?.stop()
+        backgroundAd = nil
+    }
+
+    func backgroundAudioDidStart(_ handle: BackgroundAudioHandle) {
+        // The ad is playing.
+    }
+
+    func backgroundAudioDidComplete() {
+        backgroundAd = nil
+    }
+
+    func backgroundAudioDidStop() {
+        backgroundAd = nil
+    }
+
+    func backgroundAudioDidFail(_ error: Error) {
+        backgroundAd = nil
+    }
+}
+```
+
+For other environments and placements, continue with [React Native](#react-native), [Unity](#unity), [Android background audio](#android-background-audio), or the complete [iOS guide](ios/README.md).
+
 ## Target Platforms
 - Android
 - iOS
