@@ -54,6 +54,8 @@ private func request(for placement: ConsumablePlacement) throws -> VastRequest {
 
 Replace `placementHash` in [`GameAdController.swift`](CxFlappyBird/GameAdController.swift#L6) with the value supplied by CX.
 
+The `placement` argument is the only placement-routing choice made by the sample. The SDK converts it to its internal Consumable request code automatically: background audio is `1`, sticky audio is `2`, and fullscreen interstitial is `3`. The interstitial code asks the Consumable endpoint for a video-compatible response. The sample does not construct or expose that protocol parameter itself.
+
 ## State-Driven Ad Flow
 
 | Game state or event | Ad behavior |

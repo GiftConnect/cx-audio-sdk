@@ -45,6 +45,13 @@ final class VastParserTests: XCTestCase {
         let vastRequest = try VastRequest(consumableAdRequest: consumableRequest)
         let vastItems = queryItems(from: vastRequest.vastTagURL)
         XCTAssertEqual(vastItems["u"], "cx-audio-sdk-ios/0.1")
+        XCTAssertEqual(vastItems["sdkpt"], "1")
+
+        let legacyNilPlacement = try VastRequest(
+            consumableAdRequest: consumableRequest,
+            placement: nil
+        )
+        XCTAssertEqual(queryItems(from: legacyNilPlacement.vastTagURL)["sdkpt"], "1")
     }
 
     func testConsumableAdRequestDefaultsCacheBusterToMillisecondTimestamp() throws {
@@ -60,11 +67,18 @@ final class VastParserTests: XCTestCase {
     func testConsumableAdRequestAppliesPlacementAutomaticParameters() throws {
         let consumableRequest = try ConsumableAdRequest(placementHash: "abc123")
 
+        let backgroundURL = try VastRequest(
+            consumableAdRequest: consumableRequest,
+            placement: .backgroundAudio
+        ).vastTagURL
+        XCTAssertEqual(queryItems(from: backgroundURL)["sdkpt"], "1")
+
         let stickyURL = try VastRequest(
             consumableAdRequest: consumableRequest,
             placement: .stickyPlayer
         ).vastTagURL
         let stickyItems = queryItems(from: stickyURL)
+        XCTAssertEqual(stickyItems["sdkpt"], "2")
         XCTAssertEqual(stickyItems["v_plcmt"], "2")
         XCTAssertEqual(stickyItems["v_linearity"], "2")
         XCTAssertEqual(stickyItems["v_delivery"], "2")
@@ -83,10 +97,20 @@ final class VastParserTests: XCTestCase {
             placement: .fullscreenInterstitial
         ).vastTagURL
         let interstitialItems = queryItems(from: interstitialURL)
+        XCTAssertEqual(interstitialItems["sdkpt"], "3")
         XCTAssertEqual(interstitialItems["v_plcmt"], "3")
         XCTAssertEqual(interstitialItems["v_linearity"], "1")
         XCTAssertEqual(interstitialItems["v_min_bitrate"], "64")
         XCTAssertEqual(interstitialItems["v_max_bitrate"], "2500")
+    }
+
+    func testRawVastRequestDoesNotModifyURLWithSdkPlacementType() throws {
+        let rawURL = "https://ads.example.com/vast.xml?custom=1"
+
+        let request = try VastRequest(vastTagURLString: rawURL)
+
+        XCTAssertEqual(request.vastTagURL.absoluteString, rawURL)
+        XCTAssertNil(queryItems(from: request.vastTagURL)["sdkpt"])
     }
 
     func testCompanionParserPrefersClosestThreeHundredByTwoFiftyImage() throws {

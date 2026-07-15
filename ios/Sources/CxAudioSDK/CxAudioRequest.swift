@@ -121,6 +121,9 @@ public struct ConsumableAdRequest: Equatable {
         putAutomatic(&params, "v_cmp_sizes", "300x250")
         putAutomatic(&params, "v_protocols", "2,3,5,6,7,8")
         putAutomatic(&params, "c_audio_feed_type", "6")
+        if let placement {
+            putAutomatic(&params, "sdkpt", placement.sdkPlacementTypeCode)
+        }
 
         switch placement {
         case .backgroundAudio, .stickyPlayer:
@@ -146,6 +149,17 @@ public enum ConsumablePlacement: Equatable {
     case backgroundAudio
     case stickyPlayer
     case fullscreenInterstitial
+
+    fileprivate var sdkPlacementTypeCode: String {
+        switch self {
+        case .backgroundAudio:
+            return "1"
+        case .stickyPlayer:
+            return "2"
+        case .fullscreenInterstitial:
+            return "3"
+        }
+    }
 }
 
 public struct VastRequest: Equatable {
@@ -186,12 +200,13 @@ public struct VastRequest: Equatable {
 
     public init(
         consumableAdRequest: ConsumableAdRequest,
-        placement: ConsumablePlacement? = nil,
+        placement: ConsumablePlacement? = .backgroundAudio,
         timeoutInterval: TimeInterval = 8
     ) throws {
+        let resolvedPlacement = placement ?? .backgroundAudio
         try self.init(
             vastTagURL: consumableAdRequest.url(
-                placement: placement,
+                placement: resolvedPlacement,
                 userAgentParameter: Self.defaultUserAgent
             ),
             timeoutInterval: timeoutInterval

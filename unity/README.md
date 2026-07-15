@@ -34,6 +34,10 @@ When a `ConsumableAdRequest` is converted into a `VastRequest`, the Unity wrappe
 
 The package does not compute the `i` query parameter on device. Android can expose local network interface addresses, but it cannot reliably know the public/NAT IP seen by an ad server without an external lookup. Prefer server-side inference from the request source address at the Consumable endpoint or proxy. Pass `IpAddress(...)` only when the host game has a trusted server-provided value.
 
+## Placement Request Routing
+
+Pass the matching `ConsumablePlacement` when constructing a request. The wrapper automatically maps background audio, sticky player, and fullscreen interstitial to the internal Consumable placement codes `1`, `2`, and `3`. Code `3` requests a video-compatible response for the interstitial renderer. The code is an internal protocol detail and is not publisher-configurable. The one-argument structured constructor defaults to background audio for compatibility; raw VAST URL constructors remain unchanged.
+
 ## Background Audio
 
 ```csharp
@@ -59,7 +63,7 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
             .Gdpr(false);
 
         backgroundAudio = BackgroundAudio.Play(
-            new VastRequest(consumableRequest),
+            new VastRequest(consumableRequest, ConsumablePlacement.BackgroundAudio),
             new BackgroundAudioOptions
             {
                 Volume = 0.2f,
@@ -85,7 +89,7 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
 }
 ```
 
-Use `new VastRequest("https://...")` for QA tags or non-Consumable ad servers. Use `new VastRequest(new ConsumableAdRequest(...))` when the SDK should generate the Consumable API URL.
+Use `new VastRequest("https://...")` for QA tags or non-Consumable ad servers. Use `new VastRequest(new ConsumableAdRequest(...), ConsumablePlacement.BackgroundAudio)` when the SDK should generate the Consumable API URL.
 
 ## Sticky Player
 
@@ -99,8 +103,9 @@ public sealed class StickyAd : MonoBehaviour, IStickyPlayerListener
 
     public void ShowStickyPlayer()
     {
+        ConsumableAdRequest request = new ConsumableAdRequest("YOUR_PLACEMENT_HASH");
         stickyPlayer = StickyPlayer.Show(
-            new VastRequest("https://ads.example.com/vast.xml"),
+            new VastRequest(request, ConsumablePlacement.StickyPlayer),
             new StickyPlayerOptions
             {
                 Position = StickyPlayerPosition.Bottom,
@@ -142,8 +147,9 @@ public sealed class InterstitialAd : MonoBehaviour, IFullscreenInterstitialListe
 
     public void ShowInterstitial()
     {
+        ConsumableAdRequest request = new ConsumableAdRequest("YOUR_PLACEMENT_HASH");
         interstitial = FullscreenInterstitial.Show(
-            new VastRequest("https://ads.example.com/vast.xml"),
+            new VastRequest(request, ConsumablePlacement.FullscreenInterstitial),
             new FullscreenInterstitialOptions
             {
                 ShowCloseButton = true,

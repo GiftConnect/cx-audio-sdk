@@ -27,7 +27,7 @@
     "samples/ios/CxAudioSample"
   ],
   "scripts": {
-    "check:react-native": "node --check react-native/src/index.js"
+    "check:react-native": "node --check react-native/src/index.js && node --check react-native/src/consumableRequest.js && node --test react-native/test/consumableRequest.test.js"
   },
   "peerDependencies": {
     "react": ">=18.2.0",

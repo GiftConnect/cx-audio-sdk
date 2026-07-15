@@ -48,9 +48,12 @@ let consumableRequest = try ConsumableAdRequest(
 
 let request = try VastRequest(
     consumableAdRequest: consumableRequest,
+    placement: .backgroundAudio,
     timeoutInterval: 8
 )
 ```
+
+Always pass the placement that will consume the request. The SDK automatically maps background audio, sticky player, and fullscreen interstitial to the internal Consumable placement codes `1`, `2`, and `3`. Code `3` requests a video-compatible response for the interstitial renderer. This protocol value is internal and is not publisher-configurable. Omitting `placement` remains backward-compatible and defaults to `.backgroundAudio`.
 
 Use the raw VAST URL initializer for QA tags or non-Consumable ad servers:
 

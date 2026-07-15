@@ -20,6 +20,18 @@ These examples use the current public API to request and play a contextual backg
 
 The host app owns consent collection and user-facing privacy prompts. Do not add a second consent dialog for the SDK. See [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md) for the accepted ownership and enforcement model.
 
+### Placement Request Routing
+
+For requests built with `ConsumableAdRequest`, choose the SDK placement type and let the SDK construct the Consumable VAST URL. The SDK adds its internal placement signal automatically:
+
+| Public placement | Internal request code | Expected demand |
+| --- | ---: | --- |
+| Background audio | `1` | Audio |
+| Sticky audio | `2` | Audio with the sticky placement's visual support |
+| Fullscreen interstitial | `3` | Video-compatible interstitial response |
+
+The internal query parameter is not publisher configuration and should not be added or overridden by host apps. Raw VAST URLs supplied for QA or non-Consumable ad servers are passed through unchanged.
+
 ### Android
 
 ```java
@@ -780,6 +792,7 @@ const limitAdTracking = !advertisingId;
 
 const request = createConsumableVastRequest({
   placementHash: 'b0816e0aa072e446e7737dd92dd34d10',
+  placement: 'backgroundAudio',
   appName: 'Example Game',
   appBundle: 'com.example.game',
   appStoreUrl: 'https://play.google.com/store/apps/details?id=com.example.game',
@@ -865,7 +878,7 @@ ConsumableAdRequest consumableRequest = new ConsumableAdRequest("b0816e0aa072e44
     .LimitAdTracking(limitAdTracking);
 
 BackgroundAudioHandle handle = BackgroundAudio.Play(
-    new VastRequest(consumableRequest),
+    new VastRequest(consumableRequest, ConsumablePlacement.BackgroundAudio),
     new BackgroundAudioOptions
     {
         Volume = 0.2f,
@@ -882,8 +895,11 @@ handle.Dispose();
 ```csharp
 using Cx.Audio.Unity;
 
+ConsumableAdRequest consumableRequest =
+    new ConsumableAdRequest("YOUR_PLACEMENT_HASH");
+
 StickyPlayerHandle handle = StickyPlayer.Show(
-    new VastRequest("https://ads.example.com/vast.xml"),
+    new VastRequest(consumableRequest, ConsumablePlacement.StickyPlayer),
     new StickyPlayerOptions
     {
         Position = StickyPlayerPosition.Bottom,
@@ -899,8 +915,11 @@ handle.Dispose();
 ```csharp
 using Cx.Audio.Unity;
 
+ConsumableAdRequest consumableRequest =
+    new ConsumableAdRequest("YOUR_PLACEMENT_HASH");
+
 FullscreenInterstitialHandle handle = FullscreenInterstitial.Show(
-    new VastRequest("https://ads.example.com/vast.xml"),
+    new VastRequest(consumableRequest, ConsumablePlacement.FullscreenInterstitial),
     new FullscreenInterstitialOptions
     {
         ShowCloseButton = true,

@@ -122,14 +122,23 @@ namespace Cx.Audio.Unity
 
             if (placement == ConsumablePlacement.FullscreenInterstitial)
             {
+                SetAutomatic(requestParameters, "sdkpt", "3");
                 SetAutomatic(requestParameters, "v_plcmt", "3");
                 SetAutomatic(requestParameters, "v_linearity", "1");
                 SetAutomatic(requestParameters, "v_min_bitrate", "64");
                 SetAutomatic(requestParameters, "v_max_bitrate", "2500");
             }
-            else if (placement == ConsumablePlacement.BackgroundAudio ||
-                     placement == ConsumablePlacement.StickyPlayer)
+            else if (placement == ConsumablePlacement.StickyPlayer)
             {
+                SetAutomatic(requestParameters, "sdkpt", "2");
+                SetAutomatic(requestParameters, "v_plcmt", "2");
+                SetAutomatic(requestParameters, "v_linearity", "2");
+                SetAutomatic(requestParameters, "v_min_bitrate", "64");
+                SetAutomatic(requestParameters, "v_max_bitrate", "320");
+            }
+            else if (placement == ConsumablePlacement.BackgroundAudio)
+            {
+                SetAutomatic(requestParameters, "sdkpt", "1");
                 SetAutomatic(requestParameters, "v_plcmt", "2");
                 SetAutomatic(requestParameters, "v_linearity", "2");
                 SetAutomatic(requestParameters, "v_min_bitrate", "64");
@@ -212,7 +221,7 @@ namespace Cx.Audio.Unity
         }
 
         public VastRequest(ConsumableAdRequest request)
-            : this(request, null)
+            : this(request, ConsumablePlacement.BackgroundAudio)
         {
         }
 
@@ -223,7 +232,8 @@ namespace Cx.Audio.Unity
                 throw new ArgumentNullException("request");
             }
             UserAgent = DefaultUserAgent;
-            VastTagUrl = request.ToVastTagUrl(placement, UserAgent);
+            ConsumablePlacement resolvedPlacement = placement ?? ConsumablePlacement.BackgroundAudio;
+            VastTagUrl = request.ToVastTagUrl(resolvedPlacement, UserAgent);
         }
 
         public string VastTagUrl { get; private set; }

@@ -93,11 +93,19 @@ public final class ConsumableAdRequest {
         putAutomatic(parameters, "c_audio_feed_type", "6");
 
         if (placementType == PlacementType.FULLSCREEN_INTERSTITIAL) {
+            putAutomatic(parameters, "sdkpt", "3");
             putAutomatic(parameters, "v_plcmt", "3");
             putAutomatic(parameters, "v_linearity", "1");
             putAutomatic(parameters, "v_min_bitrate", "64");
             putAutomatic(parameters, "v_max_bitrate", "2500");
-        } else if (placementType != null) {
+        } else if (placementType == PlacementType.STICKY_PLAYER) {
+            putAutomatic(parameters, "sdkpt", "2");
+            putAutomatic(parameters, "v_plcmt", "2");
+            putAutomatic(parameters, "v_linearity", "2");
+            putAutomatic(parameters, "v_min_bitrate", "64");
+            putAutomatic(parameters, "v_max_bitrate", "320");
+        } else if (placementType == PlacementType.BACKGROUND_AUDIO) {
+            putAutomatic(parameters, "sdkpt", "1");
             putAutomatic(parameters, "v_plcmt", "2");
             putAutomatic(parameters, "v_linearity", "2");
             putAutomatic(parameters, "v_min_bitrate", "64");

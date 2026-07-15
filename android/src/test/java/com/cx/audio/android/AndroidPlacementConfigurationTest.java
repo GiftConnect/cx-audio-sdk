@@ -16,6 +16,7 @@ public final class AndroidPlacementConfigurationTest {
                 .build();
 
         assertEquals("https://ads.example.com/vast.xml", request.getVastTagUrl().toString());
+        assertFalse(request.getVastTagUrl().toString().contains("sdkpt="));
         assertEquals(1000, request.getConnectTimeoutMs());
         assertEquals(2000, request.getReadTimeoutMs());
         assertEquals("cx-audio-sdk-android/0.1", request.getUserAgent());
@@ -29,6 +30,7 @@ public final class AndroidPlacementConfigurationTest {
                 .build();
 
         assertEquals("http://ads.example.com/vast.xml", request.getVastTagUrl().toString());
+        assertFalse(request.getVastTagUrl().toString().contains("sdkpt="));
         assertEquals(1500, request.getConnectTimeoutMs());
         assertEquals(2500, request.getReadTimeoutMs());
         assertEquals("cx-audio-sdk-android/0.1", request.getUserAgent());
@@ -43,6 +45,7 @@ public final class AndroidPlacementConfigurationTest {
                 .build();
 
         assertEquals("https://ads.example.com/interstitial.xml", request.getVastTagUrl().toString());
+        assertFalse(request.getVastTagUrl().toString().contains("sdkpt="));
         assertEquals(1200, request.getConnectTimeoutMs());
         assertEquals(2200, request.getReadTimeoutMs());
         assertEquals("cx-audio-sdk-android/0.1", request.getUserAgent());
@@ -94,6 +97,7 @@ public final class AndroidPlacementConfigurationTest {
                         "cx-audio-sdk-android/0.1"),
                 stickyUrl);
         assertTrue(stickyUrl.contains("u=cx-audio-sdk-android%2F0.1"));
+        assertTrue(stickyUrl.contains("sdkpt=2"));
         assertTrue(stickyUrl.contains("v_plcmt=2"));
         assertTrue(stickyUrl.contains("v_linearity=2"));
         assertTrue(stickyUrl.contains("v_min_bitrate=64"));
@@ -118,6 +122,7 @@ public final class AndroidPlacementConfigurationTest {
         String url = request.getVastTagUrl().toString();
 
         assertTrue(url.contains("u=cx-audio-sdk-android%2F0.1"));
+        assertTrue(url.contains("sdkpt=3"));
         assertTrue(url.contains("v_plcmt=3"));
         assertTrue(url.contains("v_linearity=1"));
         assertTrue(url.contains("v_delivery=2"));
@@ -130,6 +135,15 @@ public final class AndroidPlacementConfigurationTest {
         assertTrue(url.contains("v_cmp_sizes=300x250"));
         assertTrue(url.contains("v_protocols=2%2C3%2C5%2C6%2C7%2C8"));
         assertTrue(url.contains("c_audio_feed_type=6"));
+    }
+
+    @Test
+    public void consumableAdRequestMapsBackgroundAudioSdkPlacementType() {
+        ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("abc123").build();
+
+        BackgroundAudioRequest request = BackgroundAudioRequest.builder(consumableRequest).build();
+
+        assertTrue(request.getVastTagUrl().toString().contains("sdkpt=1"));
     }
 
     @Test
