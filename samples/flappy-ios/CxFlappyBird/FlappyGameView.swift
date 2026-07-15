@@ -40,6 +40,11 @@ final class FlappyGameView: UIView {
 
     var difficulty: Difficulty = .normal
     var tapLift: CGFloat = 345
+    var isReplayEnabled = true {
+        didSet {
+            setNeedsDisplay()
+        }
+    }
 
     private(set) var state: State = .ready {
         didSet {
@@ -120,6 +125,9 @@ final class FlappyGameView: UIView {
         case .playing:
             flap()
         case .gameOver:
+            guard isReplayEnabled else {
+                return
+            }
             reset()
         }
     }
@@ -483,6 +491,12 @@ final class FlappyGameView: UIView {
         case .gameOver:
             drawCentered(text: "Dive Over", y: bounds.height * 0.33, fontSize: 32, color: .white)
             drawCentered(text: "\(score)", y: bounds.height * 0.42, fontSize: 42, color: UIColor.white.withAlphaComponent(0.92))
+            drawCentered(
+                text: isReplayEnabled ? "Tap to replay" : "Ad loading…",
+                y: bounds.height * 0.51,
+                fontSize: 18,
+                color: UIColor.white.withAlphaComponent(0.86)
+            )
         }
     }
 

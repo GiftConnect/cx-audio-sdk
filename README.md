@@ -281,7 +281,7 @@ For additional placements and options, continue with [Android background audio](
 | Full screen / interstitial | Supported | Supported | Supported on Android hosts | Supported on Android hosts |
 
 ## Sample Apps
-Native sample apps live under `samples/` and expose buttons for all three placement types. Each sample includes a VAST tag URL field. Replace the default placeholder with a known-good test tag before running a placement.
+Native sample apps live under `samples/`. The Android and general iOS QA samples expose controls for testing all three placement types. Flappy Blob demonstrates placements triggered by host-app gameplay state.
 
 ### Android Sample
 Android sample module: `:sample-android`
@@ -312,13 +312,15 @@ The sample app lets you test:
 ### iOS Flappy Sample
 iOS game sample workspace: `samples/flappy-ios/CxFlappyBird.xcworkspace`
 
+See the [Flappy Blob sample integration guide](samples/flappy-ios/README.md) for direct links to its placement requests, SDK calls, listeners, lifecycle cleanup, and state policy.
+
 Build the sample app:
 
 ```sh
 xcodebuild -workspace samples/flappy-ios/CxFlappyBird.xcworkspace -scheme CxFlappyBird -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
-The sample is a small aquatic Flappy Blob game that demonstrates a minimal host-app integration: when a run ends, it builds a `ConsumableAdRequest`, wraps it in `VastRequest`, and starts a background audio placement with `CxBackgroundAudio.play`.
+The sample is a small aquatic Flappy Blob game demonstrating state-driven integration. It can show one sticky placement while the game is idle on the ready screen, dismisses that placement when play starts, and shows frequency-capped fullscreen interstitials at eligible game-over transitions. It does not request new ads during an active run.
 
 ## Android Build
 Android module: `:android`
