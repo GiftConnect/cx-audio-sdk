@@ -8,6 +8,9 @@
   "files": [
     "LICENSE",
     "README.md",
+    "docs/ADVANCED_USAGE.md",
+    "docs/PRIVACY_ARCHITECTURE.md",
+    "docs/QUICK_START.md",
     "Package.swift",
     "android/src/main/java",
     "ios/README.md",

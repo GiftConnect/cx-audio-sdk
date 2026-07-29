@@ -1,9 +1,23 @@
 # cx-audio-sdk
 An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST tag for a VAST 4.x audio ad response.
 
+## Documentation
+
+- [Quick start](docs/QUICK_START.md): install the SDK and play a first
+  background audio ad on Android, iOS, React Native, or Unity.
+- [Advanced usage](docs/ADVANCED_USAGE.md): placements, request metadata,
+  options, lifecycle, privacy, timeouts, raw QA tags, and troubleshooting.
+- [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md): mandatory
+  privacy ownership and enforcement design.
+- Platform detail: [iOS](ios/README.md), [Unity](unity/README.md), and the
+  [Flappy Blob sample](samples/flappy-ios/README.md).
+
 ## Quick Start
 
-These examples use the current public API to request and play a contextual background audio ad. Replace `YOUR_PLACEMENT_HASH` with the placement hash supplied by CX. The primary flow does not require a raw VAST URL or advertising identifier.
+The shortest complete integrations are in the
+[cross-platform quick start](docs/QUICK_START.md). Replace
+`YOUR_PLACEMENT_HASH` with the placement hash supplied by CX. The primary flow
+does not require a raw VAST URL or advertising identifier.
 
 > [!IMPORTANT]
 > The automatic privacy ingestion and centralized enforcement described in [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md) are accepted target architecture but are not fully implemented in the current SDK. Before a production release, review the [Advertising Identifiers](#advertising-identifiers) section and applicable platform privacy requirements. The host app owns consent collection and user-facing privacy prompts.
@@ -268,7 +282,10 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
 }
 ```
 
-For additional placements and options, continue with [Android background audio](#android-background-audio), the complete [iOS guide](ios/README.md), [React Native](#react-native), or [Unity](#unity).
+For additional placements and options, continue with
+[Advanced usage](docs/ADVANCED_USAGE.md), [Android background
+audio](#android-background-audio), the complete [iOS guide](ios/README.md),
+[React Native](#react-native), or [Unity](#unity).
 
 ## Target Platforms
 - Android
@@ -590,7 +607,7 @@ Call `handle.dismiss()` from the host app when the placement should be removed p
 ## iOS
 The iOS target is implemented as a Swift Package in `Package.swift`, with source under `ios/Sources/CxAudioSDK`.
 
-Minimum iOS: 13
+Minimum iOS: 15
 
 Runtime dependencies: none beyond Apple platform frameworks.
 
@@ -617,27 +634,25 @@ Call placement APIs from the main thread when passing view controllers or updati
 ```swift
 import CxAudioSDK
 
-let idfa: String? = nil // Host app supplies this only after ATT authorization.
-let limitAdTracking = idfa == nil
-
 let consumableRequest = try ConsumableAdRequest(
     placementHash: "b0816e0aa072e446e7737dd92dd34d10",
     appStoreURL: "https://apps.apple.com/app/id123",
     appName: "Example Game",
-    appBundle: "com.example.game",
-    idfa: idfa,
-    ifa: idfa,
-    limitAdTracking: limitAdTracking,
-    gdpr: false
+    appBundle: "com.example.game"
 )
 
 let request = try VastRequest(
     consumableAdRequest: consumableRequest,
+    placement: .backgroundAudio,
     timeoutInterval: 8
 )
 ```
 
 Use `VastRequest(vastTagURLString:)` for QA tags or non-Consumable ad servers.
+Normal integrations should not manually parse consent strings or retrieve
+advertising identifiers. See
+[Privacy and consent](docs/ADVANCED_USAGE.md#privacy-and-consent) for current
+production-readiness constraints.
 
 ### Background Audio
 ```swift
@@ -675,7 +690,6 @@ let handle = CxStickyPlayer.show(
     request: request,
     options: StickyPlayerOptions(
         position: .bottom,
-        height: 72,
         showCloseButton: true,
         volume: 0.2,
         minDeviceVolume: 0.1

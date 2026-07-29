@@ -4,7 +4,7 @@ Native iOS implementation for the CX audio ad SDK.
 
 ## Requirements
 
-- iOS 13 or newer.
+- iOS 15 or newer.
 - Xcode 15 or newer.
 - Swift 5.9 or newer through Xcode.
 - `Foundation`, `UIKit`, and `AVFoundation`.
@@ -32,18 +32,11 @@ All placements fetch a VAST tag URL, resolve up to five wrappers, and select the
 ```swift
 import CxAudioSDK
 
-let idfa: String? = nil // Host app supplies this only after ATT authorization.
-let limitAdTracking = idfa == nil
-
 let consumableRequest = try ConsumableAdRequest(
     placementHash: "b0816e0aa072e446e7737dd92dd34d10",
     appStoreURL: "https://apps.apple.com/app/id123",
     appName: "Example Game",
-    appBundle: "com.example.game",
-    idfa: idfa,
-    ifa: idfa,
-    limitAdTracking: limitAdTracking,
-    gdpr: false
+    appBundle: "com.example.game"
 )
 
 let request = try VastRequest(
@@ -54,6 +47,11 @@ let request = try VastRequest(
 ```
 
 Always pass the placement that will consume the request. The SDK automatically maps background audio, sticky player, and fullscreen interstitial to the internal Consumable placement codes `1`, `2`, and `3`. Code `3` requests a video-compatible response for the interstitial renderer. This protocol value is internal and is not publisher-configurable. Omitting `placement` remains backward-compatible and defaults to `.backgroundAudio`.
+
+Normal integrations should not manually parse consent strings or retrieve
+advertising identifiers. See
+[Privacy and consent](../docs/ADVANCED_USAGE.md#privacy-and-consent) for the
+current production-readiness constraints.
 
 Use the raw VAST URL initializer for QA tags or non-Consumable ad servers:
 
