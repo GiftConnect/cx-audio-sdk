@@ -6,6 +6,7 @@
   "react-native": "react-native/src/index.js",
   "types": "react-native/src/index.d.ts",
   "files": [
+    "LICENSE",
     "README.md",
     "Package.swift",
     "android/src/main/java",
@@ -40,5 +41,5 @@
     "react-native",
     "unity"
   ],
-  "license": "UNLICENSED"
+  "license": "Apache-2.0"
 }

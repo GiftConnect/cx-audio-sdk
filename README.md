@@ -966,5 +966,9 @@ The sample app includes a shared `CxAudioSample` scheme for command-line builds.
 - Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.
 - Full screen interstitial renders image or video media, shows the companion area when present, dismisses, and opens companion click-through URLs.
 
+## License
+
+Licensed under the [Apache License, Version 2.0](LICENSE).
+
 ## TODO
 - Investigate implementing this as a mediation layer in AdMob SDK.

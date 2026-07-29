@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "displayName": "CX Audio SDK",
   "description": "Unity Android bindings for the CX audio ad SDK.",
+  "license": "Apache-2.0",
   "unity": "2021.3",
   "keywords": [
     "audio",
