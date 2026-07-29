@@ -498,9 +498,8 @@ review.
 
 ## Privacy and consent
 
-The accepted design is documented in
-[Privacy and Consent Architecture](PRIVACY_ARCHITECTURE.md). Its ownership
-boundary is mandatory:
+The publisher-facing privacy status and ownership boundary are documented in
+[Privacy and consent](PRIVACY.md):
 
 - The host selects and presents its CMP and regional privacy notices.
 - The host presents ATT when appropriate and owns location permission.
@@ -515,7 +514,7 @@ boundary is mandatory:
 > centralized enforcement layer are not fully implemented in the current SDK.
 > Do not treat the presence of request fields as proof of end-to-end privacy
 > enforcement. A production release must close that gap and pass the privacy
-> tests specified by the architecture.
+> production-readiness review.
 
 ### Explicit privacy fields
 
@@ -609,4 +608,3 @@ swift test
 
 Unity package behavior requires the Unity Editor with Android Build Support.
 Full iOS validation requires Xcode and an iOS simulator or device.
-

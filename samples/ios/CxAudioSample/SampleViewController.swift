@@ -2,9 +2,8 @@ import CxAudioSDK
 import UIKit
 
 final class SampleViewController: UIViewController {
-    private let defaultVastTagURL =
-        "https://2.e.serverbid.com/mpb/get?s=b0816e0aa072e446e7737dd92dd34d10"
-    private let defaultPlacementHash = "b0816e0aa072e446e7737dd92dd34d10"
+    private let defaultVastTagURL = ""
+    private let defaultPlacementHash = ""
     private let blue = UIColor(red: 25 / 255, green: 111 / 255, blue: 215 / 255, alpha: 1)
     private let green = UIColor(red: 36 / 255, green: 172 / 255, blue: 54 / 255, alpha: 1)
     private let purple = UIColor(red: 111 / 255, green: 78 / 255, blue: 198 / 255, alpha: 1)
@@ -229,7 +228,7 @@ final class SampleViewController: UIViewController {
         consumableRequestSwitch.isOn = true
         placementHashField.text = defaultPlacementHash
         appStoreURLField.text = "https://apps.apple.com/app/id123"
-        limitAdTrackingSwitch.isOn = false
+        limitAdTrackingSwitch.isOn = true
         gdprSwitch.isOn = false
         gdprConsentField.text = ""
         usPrivacyField.text = ""
@@ -516,7 +515,7 @@ final class SampleViewController: UIViewController {
             placementHash: requiredText(placementHashField, name: "Placement hash"),
             limitAdTracking: limitAdTrackingSwitch.isOn,
             appStoreURL: requiredText(appStoreURLField, name: "App store URL"),
-            gdpr: gdprSwitch.isOn,
+            gdpr: gdprSwitch.isOn ? true : nil,
             gdprConsent: optionalText(gdprConsentField),
             usPrivacy: optionalText(usPrivacyField)
         )

@@ -53,7 +53,7 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
         string advertisingId = null; // Host game supplies GAID/AAID when available and permitted.
         bool limitAdTracking = string.IsNullOrEmpty(advertisingId);
 
-        ConsumableAdRequest consumableRequest = new ConsumableAdRequest("b0816e0aa072e446e7737dd92dd34d10")
+        ConsumableAdRequest consumableRequest = new ConsumableAdRequest("YOUR_PLACEMENT_HASH")
             .AppName("Example Game")
             .AppBundle("com.example.game")
             .AppStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")

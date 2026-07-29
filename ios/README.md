@@ -33,7 +33,7 @@ All placements fetch a VAST tag URL, resolve up to five wrappers, and select the
 import CxAudioSDK
 
 let consumableRequest = try ConsumableAdRequest(
-    placementHash: "b0816e0aa072e446e7737dd92dd34d10",
+    placementHash: "YOUR_PLACEMENT_HASH",
     appStoreURL: "https://apps.apple.com/app/id123",
     appName: "Example Game",
     appBundle: "com.example.game"
@@ -113,7 +113,7 @@ Pass the returned values into the SDK request:
 let advertisingIds = await loadAdvertisingIds()
 
 let consumableRequest = try ConsumableAdRequest(
-    placementHash: "b0816e0aa072e446e7737dd92dd34d10",
+    placementHash: "YOUR_PLACEMENT_HASH",
     idfa: advertisingIds.idfa,
     ifa: advertisingIds.ifa,
     limitAdTracking: advertisingIds.limitAdTracking

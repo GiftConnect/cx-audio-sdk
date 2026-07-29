@@ -7,8 +7,8 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
   background audio ad on Android, iOS, React Native, or Unity.
 - [Advanced usage](docs/ADVANCED_USAGE.md): placements, request metadata,
   options, lifecycle, privacy, timeouts, raw QA tags, and troubleshooting.
-- [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md): mandatory
-  privacy ownership and enforcement design.
+- [Privacy and consent](docs/PRIVACY.md): publisher responsibilities and
+  current SDK privacy status.
 - Platform detail: [iOS](ios/README.md), [Unity](unity/README.md), and the
   [Flappy Blob sample](samples/flappy-ios/README.md).
 
@@ -20,7 +20,12 @@ The shortest complete integrations are in the
 does not require a raw VAST URL or advertising identifier.
 
 > [!IMPORTANT]
-> The automatic privacy ingestion and centralized enforcement described in [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md) are accepted target architecture but are not fully implemented in the current SDK. Before a production release, review the [Advertising Identifiers](#advertising-identifiers) section and applicable platform privacy requirements. The host app owns consent collection and user-facing privacy prompts.
+> Automatic privacy ingestion and centralized enforcement are not fully
+> implemented in the current SDK. Before a production release, review
+> [Privacy and consent](docs/PRIVACY.md), the
+> [Advertising Identifiers](#advertising-identifiers) section, and applicable
+> platform requirements. The host app owns consent collection and user-facing
+> privacy prompts.
 
 ### Integration Lifecycle
 
@@ -32,7 +37,10 @@ does not require a raw VAST URL or advertising identifier.
 | Active | Respond to started, loaded, clicked, or completed callbacks as needed. | Plays the creative and fires supported tracking events. |
 | Terminal | On completion, failure, stop, or dismissal, clear the retained handle. Call `stop()` or `dismiss()` when the host flow ends early. | Stops work and releases placement resources. |
 
-The host app owns consent collection and user-facing privacy prompts. Do not add a second consent dialog for the SDK. See [Privacy and Consent Architecture](docs/PRIVACY_ARCHITECTURE.md) for the accepted ownership and enforcement model.
+The host app owns consent collection and user-facing privacy prompts. Do not
+add a second consent dialog for the SDK. See
+[Privacy and consent](docs/PRIVACY.md) for ownership and production-readiness
+guidance.
 
 ### Placement Request Routing
 
@@ -403,7 +411,7 @@ The Android background audio placement:
 String advertisingId = null; // Host app retrieves GAID/AAID when available and permitted.
 boolean limitAdTracking = advertisingId == null;
 
-ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("b0816e0aa072e446e7737dd92dd34d10")
+ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("YOUR_PLACEMENT_HASH")
         .appName("Example Game")
         .appBundle("com.example.game")
         .appStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
@@ -635,7 +643,7 @@ Call placement APIs from the main thread when passing view controllers or updati
 import CxAudioSDK
 
 let consumableRequest = try ConsumableAdRequest(
-    placementHash: "b0816e0aa072e446e7737dd92dd34d10",
+    placementHash: "YOUR_PLACEMENT_HASH",
     appStoreURL: "https://apps.apple.com/app/id123",
     appName: "Example Game",
     appBundle: "com.example.game"
@@ -805,7 +813,7 @@ const advertisingId = undefined; // Host app retrieves GAID/AAID when available 
 const limitAdTracking = !advertisingId;
 
 const request = createConsumableVastRequest({
-  placementHash: 'b0816e0aa072e446e7737dd92dd34d10',
+  placementHash: 'YOUR_PLACEMENT_HASH',
   placement: 'backgroundAudio',
   appName: 'Example Game',
   appBundle: 'com.example.game',
@@ -883,7 +891,7 @@ using Cx.Audio.Unity;
 string advertisingId = null; // Host app retrieves GAID/AAID when available and permitted.
 bool limitAdTracking = string.IsNullOrEmpty(advertisingId);
 
-ConsumableAdRequest consumableRequest = new ConsumableAdRequest("b0816e0aa072e446e7737dd92dd34d10")
+ConsumableAdRequest consumableRequest = new ConsumableAdRequest("YOUR_PLACEMENT_HASH")
     .AppName("Example Game")
     .AppBundle("com.example.game")
     .AppStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
@@ -983,6 +991,3 @@ The sample app includes a shared `CxAudioSample` scheme for command-line builds.
 ## License
 
 Licensed under the [Apache License, Version 2.0](LICENSE).
-
-## TODO
-- Investigate implementing this as a mediation layer in AdMob SDK.

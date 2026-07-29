@@ -35,9 +35,8 @@ import com.cx.audio.android.StickyPlayerPosition;
 import com.cx.audio.android.StickyPlayerRequest;
 
 public final class MainActivity extends Activity {
-    private static final String DEFAULT_VAST_TAG_URL =
-            "https://2.e.serverbid.com/mpb/get?s=b0816e0aa072e446e7737dd92dd34d10";
-    private static final String DEFAULT_PLACEMENT_HASH = "b0816e0aa072e446e7737dd92dd34d10";
+    private static final String DEFAULT_VAST_TAG_URL = "";
+    private static final String DEFAULT_PLACEMENT_HASH = "";
     private static final int BLUE = Color.rgb(25, 111, 215);
     private static final int GREEN = Color.rgb(36, 172, 54);
     private static final int PURPLE = Color.rgb(111, 78, 198);
@@ -267,7 +266,7 @@ public final class MainActivity extends Activity {
         appStoreUrlInput = optionInput(
                 "https://play.google.com/store/apps/details?id=" + getPackageName(),
                 InputType.TYPE_TEXT_VARIATION_URI);
-        limitAdTrackingSwitch = optionSwitch(false);
+        limitAdTrackingSwitch = optionSwitch(true);
         gdprSwitch = optionSwitch(false);
         gdprConsentInput = optionInput("", InputType.TYPE_CLASS_TEXT);
         usPrivacyInput = optionInput("", InputType.TYPE_CLASS_TEXT);
@@ -722,13 +721,16 @@ public final class MainActivity extends Activity {
     }
 
     private ConsumableAdRequest consumableAdRequest() {
-        return ConsumableAdRequest.builder(requiredText(placementHashInput, "Placement hash"))
+        ConsumableAdRequest.Builder builder =
+                ConsumableAdRequest.builder(requiredText(placementHashInput, "Placement hash"))
                 .appStoreUrl(requiredText(appStoreUrlInput, "App store URL"))
                 .limitAdTracking(limitAdTrackingSwitch.isChecked())
-                .gdpr(gdprSwitch.isChecked())
                 .gdprConsent(optionalText(gdprConsentInput))
-                .usPrivacy(optionalText(usPrivacyInput))
-                .build();
+                .usPrivacy(optionalText(usPrivacyInput));
+        if (gdprSwitch.isChecked()) {
+            builder.gdpr(true);
+        }
+        return builder.build();
     }
 
     private BackgroundAudioOptions backgroundOptions() {

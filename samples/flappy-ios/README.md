@@ -6,7 +6,7 @@ Flappy Blob is a small host app demonstrating how an iOS game can connect CX ad 
 
 | What to inspect | File |
 | --- | --- |
-| Placement hash, `ConsumableAdRequest`, and `VastRequest` construction | [`GameAdController.request(for:)`](CxFlappyBird/GameAdController.swift#L142) |
+| Placement configuration, `ConsumableAdRequest`, and `VastRequest` construction | [`GameAdController.request(for:)`](CxFlappyBird/GameAdController.swift#L142) |
 | Ready-screen sticky placement | [`GameAdController.showReadySticky(in:)`](CxFlappyBird/GameAdController.swift#L16) |
 | Post-game fullscreen interstitial | [`GameAdController.showInterstitial(from:onFinished:)`](CxFlappyBird/GameAdController.swift#L46) |
 | Sticky and interstitial listener callbacks and handle cleanup | [`GameAdController.swift`](CxFlappyBird/GameAdController.swift) |
@@ -52,7 +52,10 @@ private func request(for placement: ConsumablePlacement) throws -> VastRequest {
 }
 ```
 
-Replace `placementHash` in [`GameAdController.swift`](CxFlappyBird/GameAdController.swift#L6) with the value supplied by CX.
+Replace `YOUR_PLACEMENT_HASH` for the `CXPlacementHash` key in
+[`Info.plist`](CxFlappyBird/Info.plist) with the value supplied by CX. The
+sample refuses to request an ad while the value is blank or still the
+placeholder.
 
 The `placement` argument is the only placement-routing choice made by the sample. The SDK converts it to its internal Consumable request code automatically: background audio is `1`, sticky audio is `2`, and fullscreen interstitial is `3`. The interstitial code asks the Consumable endpoint for a video-compatible response. The sample does not construct or expose that protocol parameter itself.
 
@@ -84,4 +87,8 @@ xcodebuild \
 
 ## Production Privacy Note
 
-This sample deliberately omits advertising identifiers and sets `limitAdTracking: true`. A production host app must collect consent through its own CMP or privacy UI and pass only privacy and identifier values permitted by the resolved state. Do not treat the sample's fixed privacy values as production defaults. See the repository's [Privacy and Consent Architecture](../../docs/PRIVACY_ARCHITECTURE.md).
+This sample deliberately omits advertising identifiers and sets
+`limitAdTracking: true`. A production host app must collect consent through
+its own CMP or privacy UI and pass only privacy and identifier values permitted
+by the resolved state. Do not treat the sample's fixed privacy values as
+production defaults. See [Privacy and consent](../../docs/PRIVACY.md).

@@ -3,13 +3,16 @@ import Foundation
 import UIKit
 
 final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPlayerListener {
-    private let placementHash = "b0816e0aa072e446e7737dd92dd34d10"
+    private let placementHash: String
     private let statusHandler: (String) -> Void
     private var interstitialHandle: FullscreenInterstitialHandle?
     private var stickyHandle: StickyPlayerHandle?
     private var interstitialFinishHandler: (() -> Void)?
 
     init(statusHandler: @escaping (String) -> Void) {
+        placementHash =
+            Bundle.main.object(forInfoDictionaryKey: "CXPlacementHash") as? String
+            ?? ""
         self.statusHandler = statusHandler
     }
 
@@ -140,12 +143,17 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
     }
 
     private func request(for placement: ConsumablePlacement) throws -> VastRequest {
+        guard !placementHash.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              placementHash != "YOUR_PLACEMENT_HASH" else {
+            throw CxAudioError.invalidOption(
+                "Set CXPlacementHash in Info.plist before requesting an ad"
+            )
+        }
         let consumableRequest = try ConsumableAdRequest(
             placementHash: placementHash,
             limitAdTracking: true,
             appName: "Flappy Blob",
             appBundle: Bundle.main.bundleIdentifier,
-            gdpr: false,
             contentGenre: ["game"],
             contentTitle: "Flappy Blob"
         )
