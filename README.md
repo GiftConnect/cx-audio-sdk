@@ -170,7 +170,9 @@ final class AudioAdController: BackgroundAudioListener {
 
 ### React Native
 
-React Native currently supports Android host apps. Retain the returned handle ID and remove the event subscription when the owning component unmounts.
+React Native supports Android and iOS host apps. Retain the returned handle ID
+and remove the event subscription when the owning component unmounts. Native
+projects must be rebuilt after installing or updating the package.
 
 ```js
 import {
@@ -313,9 +315,9 @@ audio](#android-background-audio), the complete [iOS guide](ios/README.md),
 ## Implementation Matrix
 | Placement | Android | iOS | React Native | Unity |
 | --- | --- | --- | --- | --- |
-| Background audio | Supported | Supported | Supported on Android hosts | Supported on Android hosts |
-| Sticky player | Supported | Supported | Supported on Android hosts | Supported on Android hosts |
-| Full screen / interstitial | Supported | Supported | Supported on Android hosts | Supported on Android hosts |
+| Background audio | Supported | Supported | Supported on Android and iOS hosts | Supported on Android hosts |
+| Sticky player | Supported | Supported | Supported on Android and iOS hosts | Supported on Android hosts |
+| Full screen / interstitial | Supported | Supported | Supported on Android and iOS hosts | Supported on Android hosts |
 
 ## Sample Apps
 Native sample apps live under `samples/`. The Android and general iOS QA samples expose controls for testing all three placement types. Flappy Blob demonstrates placements triggered by host-app gameplay state.
@@ -783,7 +785,8 @@ final class InterstitialAdListener: FullscreenInterstitialListener {
 ```
 
 ## React Native
-The React Native package exposes all three placement types and delegates to the Android native implementation. The standalone native iOS SDK exists, but the React Native iOS bridge is not implemented yet.
+The React Native package exposes all three placement types and delegates to
+the corresponding Android or iOS native implementation.
 
 Package entry point: `cx-audio-sdk`
 
@@ -791,7 +794,10 @@ Android native module: `react-native/android`
 
 Runtime peer dependencies: `react` and `react-native`
 
-The React Native Android bridge compiles against the React Native Android SDK artifact `com.facebook.react:react-android`, which is normally supplied by a React Native app build.
+The React Native Android bridge compiles against the React Native Android SDK
+artifact `com.facebook.react:react-android`, which is normally supplied by a
+React Native app build. The iOS bridge is linked through CocoaPods using the
+included `cx-audio-sdk.podspec`.
 
 ### Events
 ```js

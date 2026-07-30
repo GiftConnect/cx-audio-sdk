@@ -4,7 +4,7 @@ module.exports = {
       android: {
         sourceDir: './react-native/android',
       },
-      ios: null,
+      ios: {},
     },
   },
 };

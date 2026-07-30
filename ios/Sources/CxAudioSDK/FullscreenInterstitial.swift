@@ -36,6 +36,8 @@ public protocol FullscreenInterstitialListener: AnyObject {
 
     func fullscreenInterstitialDidCompleteAudio()
 
+    func fullscreenInterstitialDidComplete()
+
     func fullscreenInterstitialWasClicked(_ clickThroughURL: URL?)
 
     func fullscreenInterstitialDidDismiss()
@@ -47,6 +49,8 @@ public extension FullscreenInterstitialListener {
     func fullscreenInterstitialDidStartAudio(_ handle: FullscreenInterstitialHandle) {}
 
     func fullscreenInterstitialDidCompleteAudio() {}
+
+    func fullscreenInterstitialDidComplete() {}
 }
 
 public enum CxFullscreenInterstitial {
@@ -333,7 +337,11 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         guard !isInactive else {
             return
         }
+        completed = true
         trackingState?.fireComplete()
+        listener.fullscreenInterstitialDidComplete()
+        overlay?.dismiss()
+        listener.fullscreenInterstitialDidDismiss()
     }
 
     private func completeAudio() {
@@ -345,6 +353,7 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         trackingState?.fireComplete()
         releasePlayer()
         listener.fullscreenInterstitialDidCompleteAudio()
+        listener.fullscreenInterstitialDidComplete()
         overlay?.dismiss()
         listener.fullscreenInterstitialDidDismiss()
     }

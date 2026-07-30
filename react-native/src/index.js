@@ -1,7 +1,9 @@
 'use strict';
 
 const { NativeEventEmitter, NativeModules, Platform } = require('react-native');
-const { createConsumableVastRequest } = require('./consumableRequest');
+const {
+  createConsumableVastRequest: createConsumableVastRequestForPlatform,
+} = require('./consumableRequest');
 
 const EVENT_NAME = 'CxAudioEvent';
 const NATIVE_MODULE_NAME = 'CxAudioReactNative';
@@ -13,8 +15,8 @@ const StickyPlayerPosition = Object.freeze({
 });
 
 function getNativeModule() {
-  if (Platform.OS !== 'android') {
-    throw new Error('cx-audio-sdk React Native bindings currently support Android hosts only.');
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
+    throw new Error('cx-audio-sdk React Native bindings support Android and iOS hosts.');
   }
   if (!NativeCxAudio) {
     throw new Error(
@@ -22,6 +24,14 @@ function getNativeModule() {
     );
   }
   return NativeCxAudio;
+}
+
+function createConsumableVastRequest(request, networkOptions) {
+  return createConsumableVastRequestForPlatform(
+    request,
+    networkOptions,
+    Platform.OS
+  );
 }
 
 function addCxAudioListener(listener) {

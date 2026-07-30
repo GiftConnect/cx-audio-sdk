@@ -9,6 +9,9 @@ public interface FullscreenInterstitialListener {
     default void onFullscreenInterstitialAudioCompleted() {
     }
 
+    default void onFullscreenInterstitialCompleted() {
+    }
+
     void onFullscreenInterstitialClicked(String clickThroughUrl);
 
     void onFullscreenInterstitialDismissed();

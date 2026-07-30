@@ -43,3 +43,23 @@ test('preserves network options without exposing sdkpt as configuration', () => 
   assert.equal(request.connectTimeoutMs, 1200);
   assert.equal(query(request).get('sdkpt'), '2');
 });
+
+test('uses the native platform SDK user agent', () => {
+  const android = new URL(
+    createConsumableVastRequest(
+      { placementHash: 'placement' },
+      undefined,
+      'android'
+    ).vastTagUrl
+  );
+  const ios = new URL(
+    createConsumableVastRequest(
+      { placementHash: 'placement' },
+      undefined,
+      'ios'
+    ).vastTagUrl
+  );
+
+  assert.equal(android.searchParams.get('u'), 'cx-audio-sdk-android/0.1');
+  assert.equal(ios.searchParams.get('u'), 'cx-audio-sdk-ios/0.1');
+});

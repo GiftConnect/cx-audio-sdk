@@ -12,10 +12,10 @@ Start with the [quick start](QUICK_START.md) if you have not played a first ad.
 | --- | --- | --- | --- | --- |
 | Android | API 23 | Yes | Yes | Yes |
 | iOS | iOS 15 | Yes | Yes | Yes |
-| React Native | React Native 0.71+, Android host | Yes | Yes | Yes |
+| React Native | React Native 0.71+, Android or iOS host | Yes | Yes | Yes |
 | Unity | Unity 2021.3+, Android player | Yes | Yes | Yes |
 
-React Native does not currently include an iOS bridge. Unity code can be
+React Native includes native Android and iOS bridges. Unity code can be
 compiled in the Editor, but placement calls require an Android player build.
 
 ## Choosing a placement
@@ -578,7 +578,7 @@ host experience moving, and record non-sensitive diagnostics.
 | No audio media | VAST does not contain a supported audio file | Verify demand and use the matching placement. |
 | Sticky player fails | Missing usable image companion, audio, or visible host screen | Verify creative assets and current Activity/view controller. |
 | Fullscreen fails | No usable interstitial media/companion or visible host screen | Verify the response type and presentation context. |
-| React Native module is not linked | App was not rebuilt after installation or host is iOS | Rebuild Android; the bridge is Android-only. |
+| React Native module is not linked | App was not rebuilt after installation | Rebuild the Android or iOS native app after installing the package. |
 | React Native handle not found | A terminal event already removed it or the wrong ID was used | Match by `placement` and `handleId`; make cleanup idempotent. |
 | Unity throws unsupported-platform | Call ran in Editor or a non-Android player | Test in an Android player build with the AAR installed. |
 | Click or asset load fails | Bad URL, network error, or privacy/network policy | Inspect sanitized, non-sensitive diagnostics and the test VAST response. |

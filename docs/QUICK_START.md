@@ -10,8 +10,8 @@ metadata, options, lifecycle details, and QA tags, see
 You need:
 
 - A placement hash issued by CX.
-- A supported host: Android 6.0/API 23+, iOS 15+, React Native on Android,
-  or Unity 2021.3+ with an Android player build.
+- A supported host: Android 6.0/API 23+, iOS 15+, React Native 0.71+ on
+  Android or iOS, or Unity 2021.3+ with an Android player build.
 - The host application's consent flow completed before it requests an ad.
 
 The host application owns its CMP, privacy prompts, ATT prompt, age-related
@@ -34,8 +34,8 @@ Use the source checkout or the artifact supplied by CX:
 - **iOS:** add the repository root as a Swift Package and select the
   `CxAudioSDK` product.
 - **React Native:** add the repository/package as a dependency, then rebuild
-  the Android app so the native module is linked. React Native 0.71+ is
-  supported.
+  the Android or iOS app so the native module is linked. React Native 0.71+
+  is supported. iOS autolinking uses the included CocoaPods specification.
 - **Unity:** add the `unity` directory as a local Unity package, build the
   Android AAR with `./gradlew :android:assembleRelease`, and place
   `android/build/outputs/aar/android-release.aar` under
@@ -162,9 +162,9 @@ agent when available.
 
 ## React Native
 
-React Native bindings currently support Android hosts only. Subscribe before
-starting a placement, match events by `handleId`, and remove the subscription
-when the owning component unmounts.
+React Native bindings support Android and iOS hosts. Subscribe before starting
+a placement, match events by `handleId`, and remove the subscription when the
+owning component unmounts.
 
 ```js
 import {

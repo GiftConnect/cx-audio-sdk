@@ -1,9 +1,12 @@
 'use strict';
 
 const CONSUMABLE_ENDPOINT = 'https://2.e.serverbid.com/mpb/get';
-const DEFAULT_ANDROID_USER_AGENT = 'cx-audio-sdk-android/0.1';
+const DEFAULT_USER_AGENTS = Object.freeze({
+  android: 'cx-audio-sdk-android/0.1',
+  ios: 'cx-audio-sdk-ios/0.1',
+});
 
-function createConsumableVastRequest(request, networkOptions) {
+function createConsumableVastRequest(request, networkOptions, platform = 'android') {
   if (!request || !request.placementHash || !String(request.placementHash).trim()) {
     throw new Error('placementHash must not be blank');
   }
@@ -45,7 +48,11 @@ function createConsumableVastRequest(request, networkOptions) {
   put(params, 'c_title', request.contentTitle);
   put(params, 'c_dur', request.contentDurationSeconds);
   put(params, 'c_url', request.contentUrl);
-  applyAutomaticParameters(params, placement, DEFAULT_ANDROID_USER_AGENT);
+  applyAutomaticParameters(
+    params,
+    placement,
+    DEFAULT_USER_AGENTS[platform] || DEFAULT_USER_AGENTS.android
+  );
 
   return {
     ...(networkOptions || {}),

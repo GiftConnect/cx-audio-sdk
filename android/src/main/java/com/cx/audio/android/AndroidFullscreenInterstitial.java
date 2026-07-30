@@ -392,6 +392,7 @@ public final class AndroidFullscreenInterstitial {
             }
             player.release();
             listener.onFullscreenInterstitialAudioCompleted();
+            listener.onFullscreenInterstitialCompleted();
             removeOverlay();
             listener.onFullscreenInterstitialDismissed();
         }
@@ -400,9 +401,13 @@ public final class AndroidFullscreenInterstitial {
             if (isInactive()) {
                 return;
             }
+            completed = true;
             if (trackingState != null) {
                 trackingState.fireComplete();
             }
+            listener.onFullscreenInterstitialCompleted();
+            removeOverlay();
+            listener.onFullscreenInterstitialDismissed();
         }
 
         private void fireClickTracking() {

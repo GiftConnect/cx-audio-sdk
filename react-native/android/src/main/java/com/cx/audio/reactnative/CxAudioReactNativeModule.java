@@ -233,6 +233,10 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
 
                         @Override
                         public void onFullscreenInterstitialAudioCompleted() {
+                        }
+
+                        @Override
+                        public void onFullscreenInterstitialCompleted() {
                             sendEvent("completed", FULLSCREEN_INTERSTITIAL, handleId, null, null);
                         }
 
