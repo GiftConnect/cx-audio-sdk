@@ -1,6 +1,8 @@
 'use strict';
 
 const CONSUMABLE_ENDPOINT = 'https://2.e.serverbid.com/mpb/get';
+const DEFAULT_SDK_NAME = 'Consumable Audio';
+const SDK_VERSION = require('../../package.json').version;
 const DEFAULT_USER_AGENTS = Object.freeze({
   android: 'cx-audio-sdk-android/0.1',
   ios: 'cx-audio-sdk-ios/0.1',
@@ -21,6 +23,7 @@ function createConsumableVastRequest(request, networkOptions, platform = 'androi
 
   put(params, 'i', request.ipAddress);
   put(params, 'locale', request.locale);
+  put(params, 'sdk', request.sdkName);
   putList(params, 'cat', request.contentCategories);
   putList(params, 'bcat', request.blockedCategories);
   putList(params, 'badv', request.blockedAdvertisers);
@@ -62,6 +65,8 @@ function createConsumableVastRequest(request, networkOptions, platform = 'androi
 
 function applyAutomaticParameters(params, placement, userAgentParameter) {
   putAutomatic(params, 'u', userAgentParameter);
+  putAutomatic(params, 'sdk', DEFAULT_SDK_NAME);
+  putAutomatic(params, 'sdkv', SDK_VERSION);
   putAutomatic(params, 'locale', getLocale());
   putAutomatic(params, 'v_delivery', '2');
   putAutomatic(params, 'v_delay', '-1');

@@ -124,9 +124,21 @@ When ATT is denied, restricted, not determined, or IDFA is all zeros, omit `idfa
 
 If the host app requests ATT, it must include `NSUserTrackingUsageDescription` in its `Info.plist`.
 
-## User Agent and IP Parameters
+## SDK Identity, User Agent, and IP Parameters
 
 When a `ConsumableAdRequest` is converted into a `VastRequest`, the SDK automatically supplies its internal user agent as the `u` query parameter.
+
+Structured requests also include `sdk=Consumable Audio` and the current SDK
+build version in `sdkv`. Both values are percent-encoded by the request
+builder. An approved branded or mirrored distribution can override the SDK
+name without changing the SDK version:
+
+```swift
+let consumableRequest = try ConsumableAdRequest(
+    placementHash: "YOUR_PLACEMENT_HASH",
+    sdkName: "Radio.com Audio"
+)
+```
 
 The SDK does not compute the `i` query parameter on device. iOS can expose local network interface addresses, but it cannot reliably know the public/NAT IP seen by an ad server without an external lookup. Prefer server-side inference from the request source address at the Consumable endpoint or proxy. Pass `ipAddress` only when the host app has a trusted server-provided value.
 

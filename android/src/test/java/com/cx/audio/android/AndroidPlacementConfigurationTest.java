@@ -81,6 +81,8 @@ public final class AndroidPlacementConfigurationTest {
         assertTrue(url.contains("lmt=0"));
         assertTrue(url.contains("gdpr=1"));
         assertTrue(url.contains("gdpr_consent=consent%20string"));
+        assertTrue(url.contains("sdk=Consumable%20Audio"));
+        assertTrue(url.contains("sdkv=0.1.0"));
         assertTrue(url.contains("v_delay=-1"));
         assertTrue(url.contains("v_delivery=2"));
         assertTrue(url.contains("v_mimes=audio%2Fmpeg%2Caudio%2Fmp4%2Caudio%2Faac"));
@@ -102,6 +104,18 @@ public final class AndroidPlacementConfigurationTest {
         assertTrue(stickyUrl.contains("v_linearity=2"));
         assertTrue(stickyUrl.contains("v_min_bitrate=64"));
         assertTrue(stickyUrl.contains("v_max_bitrate=320"));
+    }
+
+    @Test
+    public void consumableAdRequestEncodesConfiguredSdkNameAndAutomaticVersion() {
+        ConsumableAdRequest consumableRequest = ConsumableAdRequest.builder("abc123")
+                .sdkName("Radio.com Audio / SDK")
+                .build();
+
+        String url = consumableRequest.toURLString();
+
+        assertTrue(url.contains("sdk=Radio.com%20Audio%20%2F%20SDK"));
+        assertTrue(url.contains("sdkv=0.1.0"));
     }
 
     @Test

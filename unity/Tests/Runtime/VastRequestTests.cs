@@ -20,6 +20,20 @@ namespace Cx.Audio.Unity.Tests
             VastRequest request = new VastRequest(new ConsumableAdRequest("abc123"));
 
             StringAssert.Contains("sdkpt=1", request.VastTagUrl);
+            StringAssert.Contains("sdk=Consumable%20Audio", request.VastTagUrl);
+            StringAssert.Contains("sdkv=0.1.0", request.VastTagUrl);
+        }
+
+        [Test]
+        public void StructuredRequestEncodesConfiguredSdkNameAndAutomaticVersion()
+        {
+            ConsumableAdRequest consumableRequest = new ConsumableAdRequest("abc123")
+                .SdkName("Radio.com Audio / SDK");
+
+            VastRequest request = new VastRequest(consumableRequest);
+
+            StringAssert.Contains("sdk=Radio.com%20Audio%20%2F%20SDK", request.VastTagUrl);
+            StringAssert.Contains("sdkv=0.1.0", request.VastTagUrl);
         }
 
         [Test]

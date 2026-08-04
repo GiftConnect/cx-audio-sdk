@@ -118,6 +118,7 @@ case methods.
 | --- | --- | --- |
 | `placementHash` | String | Required placement identifier issued by CX. |
 | `locale` | String | BCP 47-style app/user locale when the automatic value is unsuitable. |
+| `sdkName` | String | Optional SDK brand override. Defaults to `Consumable Audio`; intended for approved branded or mirrored SDK distributions. |
 | `appStoreUrl` / `appStoreURL` | String | Public store listing URL. |
 | `appName` | String | Display name of the host application. |
 | `appVersion` | String | Host application version. |
@@ -127,7 +128,36 @@ case methods.
 Android, iOS, and Unity fill common app metadata and locale when it is
 available and not explicitly supplied. React Native fills locale; provide app
 metadata explicitly if required. The SDK owns cache busting, secure transport,
-user agent, endpoint selection, and placement/protocol fields.
+user agent, endpoint selection, SDK version, and placement/protocol fields.
+Every structured request includes the URL-encoded `sdk` name and the SDK
+build version in `sdkv`. Publishers cannot override `sdkv`.
+
+Approved branded distributions can override the default SDK name:
+
+```java
+ConsumableAdRequest.builder("YOUR_PLACEMENT_HASH")
+        .sdkName("Radio.com Audio")
+        .build();
+```
+
+```swift
+let request = try ConsumableAdRequest(
+    placementHash: "YOUR_PLACEMENT_HASH",
+    sdkName: "Radio.com Audio"
+)
+```
+
+```js
+const request = createConsumableVastRequest({
+  placementHash: 'YOUR_PLACEMENT_HASH',
+  sdkName: 'Radio.com Audio',
+});
+```
+
+```csharp
+ConsumableAdRequest request = new ConsumableAdRequest("YOUR_PLACEMENT_HASH")
+    .SdkName("Radio.com Audio");
+```
 
 Do not discover the public IP address on the device just to populate
 `ipAddress`.

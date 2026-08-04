@@ -15,6 +15,8 @@ import java.util.Map;
 
 public final class ConsumableAdRequest {
     private static final String DEFAULT_ENDPOINT = "https://2.e.serverbid.com/mpb/get";
+    private static final String DEFAULT_SDK_NAME = "Consumable Audio";
+    private static final String SDK_VERSION = "0.1.0";
 
     private final LinkedHashMap<String, String> parameters;
 
@@ -74,6 +76,8 @@ public final class ConsumableAdRequest {
             Context context,
             String userAgentParameter) {
         putAutomatic(parameters, "u", userAgentParameter);
+        putAutomatic(parameters, "sdk", DEFAULT_SDK_NAME);
+        putAutomatic(parameters, "sdkv", SDK_VERSION);
         putAutomatic(parameters, "locale", Locale.getDefault().toLanguageTag());
         if (context != null) {
             putAutomatic(parameters, "appbundle", context.getPackageName());
@@ -165,6 +169,10 @@ public final class ConsumableAdRequest {
 
         public Builder locale(String locale) {
             return parameter("locale", locale);
+        }
+
+        public Builder sdkName(String sdkName) {
+            return parameter("sdk", sdkName);
         }
 
         public Builder contentCategories(String... categories) {

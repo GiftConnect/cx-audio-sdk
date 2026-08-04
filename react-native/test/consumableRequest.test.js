@@ -12,6 +12,19 @@ test('defaults structured requests to background audio sdkpt', () => {
   const request = createConsumableVastRequest({ placementHash: 'abc123' });
 
   assert.equal(query(request).get('sdkpt'), '1');
+  assert.equal(query(request).get('sdk'), 'Consumable Audio');
+  assert.equal(query(request).get('sdkv'), '0.1.0');
+});
+
+test('encodes a configured SDK name and the automatic SDK version', () => {
+  const request = createConsumableVastRequest({
+    placementHash: 'abc123',
+    sdkName: 'Radio.com Audio / SDK',
+  });
+
+  assert.match(request.vastTagUrl, /sdk=Radio.com%20Audio%20%2F%20SDK/);
+  assert.equal(query(request).get('sdk'), 'Radio.com Audio / SDK');
+  assert.equal(query(request).get('sdkv'), '0.1.0');
 });
 
 test('maps each explicit placement to its internal sdkpt code', () => {

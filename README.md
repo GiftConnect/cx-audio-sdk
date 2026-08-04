@@ -54,6 +54,20 @@ For requests built with `ConsumableAdRequest`, choose the SDK placement type and
 
 The internal query parameter is not publisher configuration and should not be added or overridden by host apps. Raw VAST URLs supplied for QA or non-Consumable ad servers are passed through unchanged.
 
+### SDK Identity
+
+Structured Consumable requests automatically include the URL-encoded SDK
+identity:
+
+- `sdk=Consumable Audio`
+- `sdkv=0.1.0`
+
+The SDK version always comes from the SDK build and is not publisher
+configuration. A branded or mirrored distribution can override only the SDK
+name with Android `sdkName(...)`, iOS `sdkName:`, React Native `sdkName`, or
+Unity `SdkName(...)`. The request builder percent-encodes both values. Raw
+VAST URLs remain unchanged.
+
 ### Android
 
 ```java

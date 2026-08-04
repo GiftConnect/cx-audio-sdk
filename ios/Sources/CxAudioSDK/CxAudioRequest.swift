@@ -2,6 +2,8 @@ import Foundation
 
 public struct ConsumableAdRequest: Equatable {
     private static let endpointURL = URL(string: "https://2.e.serverbid.com/mpb/get")!
+    private static let defaultSDKName = "Consumable Audio"
+    private static let sdkVersion = "0.1.0"
 
     let parameters: [String: String]
 
@@ -9,6 +11,7 @@ public struct ConsumableAdRequest: Equatable {
         placementHash: String,
         ipAddress: String? = nil,
         locale: String? = nil,
+        sdkName: String? = nil,
         contentCategories: [String] = [],
         blockedCategories: [String] = [],
         blockedAdvertisers: [String] = [],
@@ -49,6 +52,7 @@ public struct ConsumableAdRequest: Equatable {
 
         put(&params, "i", ipAddress)
         put(&params, "locale", locale)
+        put(&params, "sdk", sdkName)
         put(&params, "cat", joined(contentCategories))
         put(&params, "bcat", joined(blockedCategories))
         put(&params, "badv", joined(blockedAdvertisers))
@@ -84,13 +88,14 @@ public struct ConsumableAdRequest: Equatable {
         userAgentParameter: String? = nil
     ) throws -> URL {
         var components = URLComponents(url: Self.endpointURL, resolvingAgainstBaseURL: false)
-        components?.queryItems = parametersWithAutomaticValues(
+        components?.percentEncodedQuery = parametersWithAutomaticValues(
             placement: placement,
             userAgentParameter: userAgentParameter
         )
             .filter { !$0.value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
             .sorted { $0.key < $1.key }
-            .map { URLQueryItem(name: $0.key, value: $0.value) }
+            .map { "\(percentEncodeQueryComponent($0.key))=\(percentEncodeQueryComponent($0.value))" }
+            .joined(separator: "&")
         guard let url = components?.url else {
             throw CxAudioError.invalidURL(Self.endpointURL.absoluteString)
         }
@@ -103,6 +108,8 @@ public struct ConsumableAdRequest: Equatable {
     ) -> [String: String] {
         var params = parameters
         putAutomatic(&params, "u", userAgentParameter)
+        putAutomatic(&params, "sdk", Self.defaultSDKName)
+        putAutomatic(&params, "sdkv", Self.sdkVersion)
         putAutomatic(&params, "locale", Locale.current.identifier.replacingOccurrences(of: "_", with: "-"))
         putAutomatic(&params, "appbundle", Bundle.main.bundleIdentifier)
         putAutomatic(&params, "appname", Bundle.main.displayName)
@@ -142,6 +149,11 @@ public struct ConsumableAdRequest: Equatable {
             break
         }
         return params
+    }
+
+    private func percentEncodeQueryComponent(_ value: String) -> String {
+        let unreserved = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
+        return value.addingPercentEncoding(withAllowedCharacters: unreserved) ?? ""
     }
 }
 

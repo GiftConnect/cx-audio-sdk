@@ -16,6 +16,8 @@ namespace Cx.Audio.Unity
     public sealed class ConsumableAdRequest
     {
         private const string DefaultEndpointUrl = "https://2.e.serverbid.com/mpb/get";
+        private const string DefaultSdkName = "Consumable Audio";
+        private const string SdkVersion = "0.1.0";
         private static readonly DateTime UnixEpoch =
             new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private readonly Dictionary<string, string> parameters = new Dictionary<string, string>();
@@ -35,6 +37,7 @@ namespace Cx.Audio.Unity
 
         public ConsumableAdRequest IpAddress(string value) { return Set("i", value); }
         public ConsumableAdRequest Locale(string value) { return Set("locale", value); }
+        public ConsumableAdRequest SdkName(string value) { return Set("sdk", value); }
         public ConsumableAdRequest ContentCategories(params string[] values) { return Set("cat", Join(values)); }
         public ConsumableAdRequest BlockedCategories(params string[] values) { return Set("bcat", Join(values)); }
         public ConsumableAdRequest BlockedAdvertisers(params string[] values) { return Set("badv", Join(values)); }
@@ -103,6 +106,8 @@ namespace Cx.Audio.Unity
         {
             Dictionary<string, string> requestParameters = new Dictionary<string, string>(parameters);
             SetAutomatic(requestParameters, "u", userAgentParameter);
+            SetAutomatic(requestParameters, "sdk", DefaultSdkName);
+            SetAutomatic(requestParameters, "sdkv", SdkVersion);
             SetAutomatic(requestParameters, "locale", CultureInfo.CurrentCulture.Name);
             SetAutomatic(requestParameters, "appname", Application.productName);
             SetAutomatic(requestParameters, "appbundle", Application.identifier);

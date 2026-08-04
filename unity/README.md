@@ -28,9 +28,19 @@ The Unity package does not automatically collect advertising identifiers. For An
 
 Pass the advertising ID as both `Gadid(...)` and `Ifa(...)` when the ad endpoint expects OpenRTB-style IFA. If the ID is deleted, limited, unavailable, or all zeros, omit `Gadid(...)` and `Ifa(...)` and call `LimitAdTracking(true)`. Do not fall back to fingerprinting or another persistent device identifier for advertising.
 
-## User Agent and IP Parameters
+## SDK Identity, User Agent, and IP Parameters
 
 When a `ConsumableAdRequest` is converted into a `VastRequest`, the Unity wrapper automatically supplies the SDK user agent as the `u` query parameter.
+
+Structured requests also include `sdk=Consumable Audio` and the current SDK
+build version in `sdkv`. Both values are percent-encoded by the request
+builder. An approved branded or mirrored distribution can override the SDK
+name without changing the SDK version:
+
+```csharp
+ConsumableAdRequest request = new ConsumableAdRequest("YOUR_PLACEMENT_HASH")
+    .SdkName("Radio.com Audio");
+```
 
 The package does not compute the `i` query parameter on device. Android can expose local network interface addresses, but it cannot reliably know the public/NAT IP seen by an ad server without an external lookup. Prefer server-side inference from the request source address at the Consumable endpoint or proxy. Pass `IpAddress(...)` only when the host game has a trusted server-provided value.
 

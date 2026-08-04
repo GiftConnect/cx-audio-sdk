@@ -36,6 +36,7 @@ export interface ConsumableAdRequest {
   placement?: CxAudioPlacement;
   ipAddress?: string;
   locale?: string;
+  sdkName?: string;
   contentCategories?: string[];
   blockedCategories?: string[];
   blockedAdvertisers?: string[];

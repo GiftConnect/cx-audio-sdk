@@ -35,6 +35,8 @@ final class VastParserTests: XCTestCase {
         XCTAssertEqual(items["lmt"], "0")
         XCTAssertEqual(items["gdpr"], "1")
         XCTAssertEqual(items["gdpr_consent"], "consent string")
+        XCTAssertEqual(items["sdk"], "Consumable Audio")
+        XCTAssertEqual(items["sdkv"], "0.1.0")
         XCTAssertEqual(items["v_delay"], "-1")
         XCTAssertEqual(items["v_delivery"], "2")
         XCTAssertEqual(items["v_mimes"], "audio/mpeg,audio/mp4,audio/aac,audio/ogg,audio/wav,audio/x-wav,video/mp4,image/jpeg,image/png,image/gif,image/webp")
@@ -52,6 +54,20 @@ final class VastParserTests: XCTestCase {
             placement: nil
         )
         XCTAssertEqual(queryItems(from: legacyNilPlacement.vastTagURL)["sdkpt"], "1")
+    }
+
+    func testConsumableAdRequestEncodesConfiguredSDKNameAndAutomaticVersion() throws {
+        let consumableRequest = try ConsumableAdRequest(
+            placementHash: "abc123",
+            sdkName: "Radio.com Audio / SDK"
+        )
+
+        let url = try consumableRequest.url()
+        let items = queryItems(from: url)
+
+        XCTAssertEqual(items["sdk"], "Radio.com Audio / SDK")
+        XCTAssertEqual(items["sdkv"], "0.1.0")
+        XCTAssertTrue(url.absoluteString.contains("sdk=Radio.com%20Audio%20%2F%20SDK"))
     }
 
     func testConsumableAdRequestDefaultsCacheBusterToMillisecondTimestamp() throws {
