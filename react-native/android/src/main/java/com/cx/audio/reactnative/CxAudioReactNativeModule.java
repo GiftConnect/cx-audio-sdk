@@ -332,24 +332,30 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
                 .emit(EVENT_NAME, event);
     }
 
-    private static BackgroundAudioRequest readBackgroundAudioRequest(ReadableMap requestMap) {
+    private BackgroundAudioRequest readBackgroundAudioRequest(ReadableMap requestMap) {
         BackgroundAudioRequest.Builder builder =
-                BackgroundAudioRequest.builder(requiredString(requestMap, "vastTagUrl"));
+                BackgroundAudioRequest.builder(
+                        reactContext,
+                        requiredString(requestMap, "vastTagUrl"));
         applyBackgroundAudioNetworkOptions(builder, requestMap);
         return builder.build();
     }
 
-    private static StickyPlayerRequest readStickyPlayerRequest(ReadableMap requestMap) {
+    private StickyPlayerRequest readStickyPlayerRequest(ReadableMap requestMap) {
         StickyPlayerRequest.Builder builder =
-                StickyPlayerRequest.builder(requiredString(requestMap, "vastTagUrl"));
+                StickyPlayerRequest.builder(
+                        reactContext,
+                        requiredString(requestMap, "vastTagUrl"));
         applyStickyPlayerNetworkOptions(builder, requestMap);
         return builder.build();
     }
 
-    private static FullscreenInterstitialRequest readFullscreenInterstitialRequest(
+    private FullscreenInterstitialRequest readFullscreenInterstitialRequest(
             ReadableMap requestMap) {
         FullscreenInterstitialRequest.Builder builder =
-                FullscreenInterstitialRequest.builder(requiredString(requestMap, "vastTagUrl"));
+                FullscreenInterstitialRequest.builder(
+                        reactContext,
+                        requiredString(requestMap, "vastTagUrl"));
         applyFullscreenInterstitialNetworkOptions(builder, requestMap);
         return builder.build();
     }

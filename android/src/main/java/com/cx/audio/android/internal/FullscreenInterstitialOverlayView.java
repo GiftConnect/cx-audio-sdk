@@ -112,12 +112,18 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
 
         if (mediaFile != null && mediaFile.isVideo()) {
             VideoView videoView = new VideoView(getContext());
-            videoView.setBackgroundColor(Color.BLACK);
+            // VideoView renders decoded frames on a SurfaceView. An opaque background on
+            // the VideoView can be composited above that surface on emulators (and some
+            // devices), leaving audio playing behind a permanently black rectangle.
+            // The fullscreen overlay already supplies the desired black letterbox color.
+            videoView.setBackgroundColor(Color.TRANSPARENT);
+            videoView.setZOrderMediaOverlay(true);
             videoView.setVideoURI(
                     Uri.parse(mediaFile.getUrl()),
                     Collections.singletonMap("User-Agent", userAgent));
             if (options.shouldAutoPlayVideo()) {
                 videoView.setOnPreparedListener(player -> {
+                    videoView.setBackgroundColor(Color.TRANSPARENT);
                     videoView.start();
                     if (videoPlaybackListener != null) {
                         videoPlaybackListener.onVideoStarted();
@@ -130,6 +136,13 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
                 if (videoPlaybackListener != null) {
                     videoPlaybackListener.onVideoCompleted();
                 }
+            });
+            videoView.setOnErrorListener((player, what, extra) -> {
+                mainHandler.removeCallbacksAndMessages(null);
+                if (videoPlaybackListener != null) {
+                    videoPlaybackListener.onVideoError(what, extra);
+                }
+                return true;
             });
             return videoView;
         }
@@ -208,5 +221,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         void onVideoProgress(int currentPositionMs, int durationMs);
 
         void onVideoCompleted();
+
+        void onVideoError(int what, int extra);
     }
 }

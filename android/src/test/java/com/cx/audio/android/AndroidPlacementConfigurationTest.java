@@ -56,6 +56,9 @@ public final class AndroidPlacementConfigurationTest {
         assertThrows(IllegalArgumentException.class, () -> StickyPlayerRequest.builder(" "));
         assertThrows(IllegalArgumentException.class, () -> BackgroundAudioRequest.builder("file:///tmp/vast.xml"));
         assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialRequest.builder("ftp://example.com/vast.xml"));
+        assertThrows(IllegalArgumentException.class, () -> StickyPlayerRequest.builder(null, "https://ads.example.com/vast.xml"));
+        assertThrows(IllegalArgumentException.class, () -> BackgroundAudioRequest.builder(null, "https://ads.example.com/vast.xml"));
+        assertThrows(IllegalArgumentException.class, () -> FullscreenInterstitialRequest.builder(null, "https://ads.example.com/vast.xml"));
     }
 
     @Test

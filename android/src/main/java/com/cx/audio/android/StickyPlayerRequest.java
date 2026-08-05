@@ -41,6 +41,16 @@ public final class StickyPlayerRequest {
         return new Builder(vastTagUrl);
     }
 
+    public static Builder builder(Context context, String vastTagUrl) {
+        if (context == null) {
+            throw new IllegalArgumentException("context must not be null");
+        }
+        Context applicationContext = context.getApplicationContext();
+        Builder builder = new Builder(vastTagUrl);
+        builder.userAgent = defaultUserAgent(applicationContext);
+        return builder;
+    }
+
     public static Builder builder(ConsumableAdRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("request must not be null");

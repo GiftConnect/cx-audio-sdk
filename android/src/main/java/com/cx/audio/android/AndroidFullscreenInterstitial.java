@@ -158,6 +158,19 @@ public final class AndroidFullscreenInterstitial {
                     public void onVideoCompleted() {
                         handle.completeVideo();
                     }
+
+                    @Override
+                    public void onVideoError(int what, int extra) {
+                        VastMediaFile mediaFile = interstitialAd.getMediaFile();
+                        String mediaType = mediaFile == null ? "unknown" : mediaFile.getType();
+                        handle.fail(new IllegalStateException(
+                                "Fullscreen video playback failed with what="
+                                        + what
+                                        + ", extra="
+                                        + extra
+                                        + ", mediaType="
+                                        + mediaType));
+                    }
                 });
         overlayView.setOnDismissListener(() -> {
             handle.markDismissed();
