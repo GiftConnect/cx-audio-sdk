@@ -32,10 +32,14 @@ Use the source checkout or the artifact supplied by CX:
 - **Android:** add the `:android` module to the Gradle build, or build an AAR
   with `./gradlew :android:assemble` and add that AAR to the app.
 - **iOS:** add the repository root as a Swift Package and select the
-  `CxAudioSDK` product.
+  `CxAudioSDK` product, or install the native `CxAudioSDK` CocoaPod. Until the
+  pod is published, reference the repository checkout with `:path`.
 - **React Native:** add the repository/package as a dependency, then rebuild
   the Android or iOS app so the native module is linked. React Native 0.71+
-  is supported. iOS autolinking uses the included CocoaPods specification.
+  is supported. iOS autolinking uses `cx-audio-sdk.podspec`, whose bridge
+  depends on the separate native `CxAudioSDK` pod. Until the native pod is
+  published, add `pod 'CxAudioSDK', :path => '../node_modules/cx-audio-sdk'`
+  to the host Podfile.
 - **Unity:** add the `unity` directory as a local Unity package, build the
   Android AAR with `./gradlew :android:assembleRelease`, and place
   `android/build/outputs/aar/android-release.aar` under

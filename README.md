@@ -629,7 +629,9 @@ StickyPlayerHandle handle = AndroidStickyPlayer.show(
 Call `handle.dismiss()` from the host app when the placement should be removed programmatically. Dismissal stops sticky audio playback and removes the overlay.
 
 ## iOS
-The iOS target is implemented as a Swift Package in `Package.swift`, with source under `ios/Sources/CxAudioSDK`.
+The native iOS target is available through the Swift Package in `Package.swift`
+and the `CxAudioSDK.podspec`, with source under `ios/Sources/CxAudioSDK`.
+Neither native distribution depends on React Native.
 
 Minimum iOS: 15
 
@@ -811,7 +813,13 @@ Runtime peer dependencies: `react` and `react-native`
 The React Native Android bridge compiles against the React Native Android SDK
 artifact `com.facebook.react:react-android`, which is normally supplied by a
 React Native app build. The iOS bridge is linked through CocoaPods using the
-included `cx-audio-sdk.podspec`.
+included `cx-audio-sdk.podspec`. That bridge pod contains only the React Native
+adapter and depends on the separate native `CxAudioSDK` pod. Until the native
+pod is published, iOS host Podfiles must also reference it locally:
+
+```ruby
+pod 'CxAudioSDK', :path => '../node_modules/cx-audio-sdk'
+```
 
 ### Events
 ```js

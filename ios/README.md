@@ -11,11 +11,29 @@ Native iOS implementation for the CX audio ad SDK.
 
 ## Installation
 
+### Swift Package Manager
+
 Add the Swift package from the repository root:
 
 1. In Xcode, choose **File > Add Package Dependencies**.
 2. Select this repository URL or local package checkout.
 3. Add the `CxAudioSDK` product to the host iOS app target.
+
+### CocoaPods
+
+The native `CxAudioSDK` pod contains only the iOS SDK and has no React Native
+dependency. Until the pod is published to CocoaPods Trunk, reference a local
+checkout:
+
+```ruby
+pod 'CxAudioSDK', :path => '../cx-audio-sdk'
+```
+
+After publication, use the released version:
+
+```ruby
+pod 'CxAudioSDK', '~> 0.1'
+```
 
 ## Placements
 

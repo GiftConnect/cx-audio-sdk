@@ -20,6 +20,7 @@
     "unity/package.json",
     "unity/Runtime",
     "react-native.config.js",
+    "CxAudioSDK.podspec",
     "cx-audio-sdk.podspec",
     "react-native/src",
     "react-native/android/build.gradle",
