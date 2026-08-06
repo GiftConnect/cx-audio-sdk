@@ -224,7 +224,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
             Bitmap companionBitmap,
             OnClickListener companionClickListener) {
         FrameLayout companionContainer = new FrameLayout(getContext());
-        companionContainer.setBackgroundColor(Color.rgb(18, 18, 18));
+        companionContainer.setBackgroundColor(Color.TRANSPARENT);
 
         ImageView companionImage = new ImageView(getContext());
         companionImage.setImageBitmap(companionBitmap);
