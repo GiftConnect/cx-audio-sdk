@@ -1,0 +1,16 @@
+PODS:
+  - CxAudioSDK (0.1.0)
+
+DEPENDENCIES:
+  - CxAudioSDK (from `../..`)
+
+EXTERNAL SOURCES:
+  CxAudioSDK:
+    :path: "../.."
+
+SPEC CHECKSUMS:
+  CxAudioSDK: 7aa8d4f5e610b6a335ba377677af12f931b9737b
+
+PODFILE CHECKSUM: aa0ae5d689789c7cdf4d4ec4653e89c857e67929
+
+COCOAPODS: 1.16.2

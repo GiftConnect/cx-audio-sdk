@@ -1,0 +1,9 @@
+platform :ios, '15.0'
+
+project 'CxFlappyBird.xcodeproj'
+
+target 'CxFlappyBird' do
+  use_frameworks!
+
+  pod 'CxAudioSDK', :path => '../..'
+end

@@ -25,6 +25,9 @@ final class GameViewController: UIViewController {
     private var hasRequestedReadySticky = false
     private var lastInterstitialRequestAt: Date?
     private var readyStickyWorkItem: DispatchWorkItem?
+#if DEBUG
+    private var didRequestDebugInterstitial = false
+#endif
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -36,6 +39,17 @@ final class GameViewController: UIViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-ShowInterstitialOnLaunch"),
+           !didRequestDebugInterstitial {
+            didRequestDebugInterstitial = true
+            cancelReadySticky()
+            DispatchQueue.main.async { [weak self] in
+                self?.showPostGameInterstitial()
+            }
+            return
+        }
+#endif
         if gameView.state == .ready {
             scheduleReadySticky()
         }

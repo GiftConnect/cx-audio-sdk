@@ -3,26 +3,29 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AF555A85A0EBE136BE3DD1BE /* Pods_CxFlappyBird.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A4DBA0D9A50F0106C043CEC /* Pods_CxFlappyBird.framework */; };
 		FB0000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000011 /* AppDelegate.swift */; };
 		FB0000000000000000000002 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000012 /* SceneDelegate.swift */; };
 		FB0000000000000000000003 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000013 /* GameViewController.swift */; };
 		FB0000000000000000000004 /* FlappyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000014 /* FlappyGameView.swift */; };
 		FB0000000000000000000005 /* GameAdController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000015 /* GameAdController.swift */; };
-		FB0000000000000000000006 /* CxAudioSDK in Frameworks */ = {isa = PBXBuildFile; productRef = FB0000000000000000000031 /* CxAudioSDK */; };
-		FB0000000000000000000007 /* blobfish.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000017 /* blobfish.png */; };
-		FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000018 /* blobfish-smile-fins-up.png */; };
-		FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000019 /* blobfish-smile-fins-down.png */; };
-		FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001A /* blobfish-frown-fins-up.png */; };
-		FB000000000000000000000B /* blobfish-grin-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001B /* blobfish-grin-fins-up.png */; };
-		FB000000000000000000000C /* blobfish-grin-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001C /* blobfish-grin-fins-down.png */; };
-		FB000000000000000000000D /* blobfish-crying-front.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001D /* blobfish-crying-front.png */; };
+		FB0000000000000000000007 /* Assets/blobfish.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000017 /* Assets/blobfish.png */; };
+		FB0000000000000000000008 /* Assets/blobfish-smile-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000018 /* Assets/blobfish-smile-fins-up.png */; };
+		FB0000000000000000000009 /* Assets/blobfish-smile-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000019 /* Assets/blobfish-smile-fins-down.png */; };
+		FB000000000000000000000A /* Assets/blobfish-frown-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001A /* Assets/blobfish-frown-fins-up.png */; };
+		FB000000000000000000000B /* Assets/blobfish-grin-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001B /* Assets/blobfish-grin-fins-up.png */; };
+		FB000000000000000000000C /* Assets/blobfish-grin-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001C /* Assets/blobfish-grin-fins-down.png */; };
+		FB000000000000000000000D /* Assets/blobfish-crying-front.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001D /* Assets/blobfish-crying-front.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0A9E913BE39A412EC9AD9D0C /* Pods-CxFlappyBird.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CxFlappyBird.debug.xcconfig"; path = "Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird.debug.xcconfig"; sourceTree = "<group>"; };
+		3E96273FADC97D24A6F9D77A /* Pods-CxFlappyBird.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CxFlappyBird.release.xcconfig"; path = "Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird.release.xcconfig"; sourceTree = "<group>"; };
+		6A4DBA0D9A50F0106C043CEC /* Pods_CxFlappyBird.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CxFlappyBird.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB0000000000000000000010 /* CxFlappyBird.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CxFlappyBird.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB0000000000000000000011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		FB0000000000000000000012 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -30,13 +33,13 @@
 		FB0000000000000000000014 /* FlappyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlappyGameView.swift; sourceTree = "<group>"; };
 		FB0000000000000000000015 /* GameAdController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAdController.swift; sourceTree = "<group>"; };
 		FB0000000000000000000016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		FB0000000000000000000017 /* blobfish.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish.png; sourceTree = "<group>"; };
-		FB0000000000000000000018 /* blobfish-smile-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-smile-fins-up.png; sourceTree = "<group>"; };
-		FB0000000000000000000019 /* blobfish-smile-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-smile-fins-down.png; sourceTree = "<group>"; };
-		FB000000000000000000001A /* blobfish-frown-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-frown-fins-up.png; sourceTree = "<group>"; };
-		FB000000000000000000001B /* blobfish-grin-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-grin-fins-up.png; sourceTree = "<group>"; };
-		FB000000000000000000001C /* blobfish-grin-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-grin-fins-down.png; sourceTree = "<group>"; };
-		FB000000000000000000001D /* blobfish-crying-front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish-crying-front.png; sourceTree = "<group>"; };
+		FB0000000000000000000017 /* Assets/blobfish.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish.png; sourceTree = "<group>"; };
+		FB0000000000000000000018 /* Assets/blobfish-smile-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-up.png"; sourceTree = "<group>"; };
+		FB0000000000000000000019 /* Assets/blobfish-smile-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-down.png"; sourceTree = "<group>"; };
+		FB000000000000000000001A /* Assets/blobfish-frown-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-frown-fins-up.png"; sourceTree = "<group>"; };
+		FB000000000000000000001B /* Assets/blobfish-grin-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-up.png"; sourceTree = "<group>"; };
+		FB000000000000000000001C /* Assets/blobfish-grin-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-down.png"; sourceTree = "<group>"; };
+		FB000000000000000000001D /* Assets/blobfish-crying-front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-crying-front.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,18 +47,37 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FB0000000000000000000006 /* CxAudioSDK in Frameworks */,
+				AF555A85A0EBE136BE3DD1BE /* Pods_CxFlappyBird.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3AE1F6D7F0E0911D73F745D2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6A4DBA0D9A50F0106C043CEC /* Pods_CxFlappyBird.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7AF3BEC888B28E064DCD42FA /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				0A9E913BE39A412EC9AD9D0C /* Pods-CxFlappyBird.debug.xcconfig */,
+				3E96273FADC97D24A6F9D77A /* Pods-CxFlappyBird.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		FB0000000000000000000040 = {
 			isa = PBXGroup;
 			children = (
 				FB0000000000000000000041 /* CxFlappyBird */,
 				FB0000000000000000000042 /* Products */,
+				7AF3BEC888B28E064DCD42FA /* Pods */,
+				3AE1F6D7F0E0911D73F745D2 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -68,13 +90,13 @@
 				FB0000000000000000000014 /* FlappyGameView.swift */,
 				FB0000000000000000000015 /* GameAdController.swift */,
 				FB0000000000000000000016 /* Info.plist */,
-				FB0000000000000000000017 /* blobfish.png */,
-				FB0000000000000000000018 /* blobfish-smile-fins-up.png */,
-				FB0000000000000000000019 /* blobfish-smile-fins-down.png */,
-				FB000000000000000000001A /* blobfish-frown-fins-up.png */,
-				FB000000000000000000001B /* blobfish-grin-fins-up.png */,
-				FB000000000000000000001C /* blobfish-grin-fins-down.png */,
-				FB000000000000000000001D /* blobfish-crying-front.png */,
+				FB0000000000000000000017 /* Assets/blobfish.png */,
+				FB0000000000000000000018 /* Assets/blobfish-smile-fins-up.png */,
+				FB0000000000000000000019 /* Assets/blobfish-smile-fins-down.png */,
+				FB000000000000000000001A /* Assets/blobfish-frown-fins-up.png */,
+				FB000000000000000000001B /* Assets/blobfish-grin-fins-up.png */,
+				FB000000000000000000001C /* Assets/blobfish-grin-fins-down.png */,
+				FB000000000000000000001D /* Assets/blobfish-crying-front.png */,
 			);
 			path = CxFlappyBird;
 			sourceTree = "<group>";
@@ -94,18 +116,17 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = FB0000000000000000000060 /* Build configuration list for PBXNativeTarget "CxFlappyBird" */;
 			buildPhases = (
+				3B7D4760AE005B97B0DF8753 /* [CP] Check Pods Manifest.lock */,
 				FB0000000000000000000070 /* Sources */,
 				FB0000000000000000000020 /* Frameworks */,
 				FB0000000000000000000071 /* Resources */,
+				93069B12B718FBF31E0A4269 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			name = CxFlappyBird;
-			packageProductDependencies = (
-				FB0000000000000000000031 /* CxAudioSDK */,
-			);
 			productName = CxFlappyBird;
 			productReference = FB0000000000000000000010 /* CxFlappyBird.app */;
 			productType = "com.apple.product-type.application";
@@ -134,9 +155,6 @@
 				Base,
 			);
 			mainGroup = FB0000000000000000000040;
-			packageReferences = (
-				FB0000000000000000000030 /* XCLocalSwiftPackageReference "../.." */,
-			);
 			productRefGroup = FB0000000000000000000042 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -151,17 +169,63 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FB0000000000000000000007 /* blobfish.png in Resources */,
-				FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */,
-				FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */,
-				FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */,
-				FB000000000000000000000B /* blobfish-grin-fins-up.png in Resources */,
-				FB000000000000000000000C /* blobfish-grin-fins-down.png in Resources */,
-				FB000000000000000000000D /* blobfish-crying-front.png in Resources */,
+				FB0000000000000000000007 /* Assets/blobfish.png in Resources */,
+				FB0000000000000000000008 /* Assets/blobfish-smile-fins-up.png in Resources */,
+				FB0000000000000000000009 /* Assets/blobfish-smile-fins-down.png in Resources */,
+				FB000000000000000000000A /* Assets/blobfish-frown-fins-up.png in Resources */,
+				FB000000000000000000000B /* Assets/blobfish-grin-fins-up.png in Resources */,
+				FB000000000000000000000C /* Assets/blobfish-grin-fins-down.png in Resources */,
+				FB000000000000000000000D /* Assets/blobfish-crying-front.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3B7D4760AE005B97B0DF8753 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-CxFlappyBird-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		93069B12B718FBF31E0A4269 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		FB0000000000000000000070 /* Sources */ = {
@@ -295,9 +359,11 @@
 		};
 		FB00000000000000000000B0 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0A9E913BE39A412EC9AD9D0C /* Pods-CxFlappyBird.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XLH8MX4NB6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CxFlappyBird/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -310,9 +376,11 @@
 		};
 		FB00000000000000000000B1 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3E96273FADC97D24A6F9D77A /* Pods-CxFlappyBird.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XLH8MX4NB6;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CxFlappyBird/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
@@ -345,21 +413,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCLocalSwiftPackageReference section */
-		FB0000000000000000000030 /* XCLocalSwiftPackageReference "../.." */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = ../..;
-		};
-/* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		FB0000000000000000000031 /* CxAudioSDK */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = FB0000000000000000000030 /* XCLocalSwiftPackageReference "../.." */;
-			productName = CxAudioSDK;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FB0000000000000000000080 /* Project object */;
 }

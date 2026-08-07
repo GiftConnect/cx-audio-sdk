@@ -75,7 +75,7 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
             )
             statusHandler("Interstitial loading")
         } catch {
-            finishInterstitial(status: "Interstitial request failed")
+            finishInterstitial(status: failureStatus("Interstitial request failed", error: error))
         }
     }
 
@@ -111,7 +111,7 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
     }
 
     func fullscreenInterstitialDidFail(_ error: Error) {
-        finishInterstitial(status: "Interstitial failed")
+        finishInterstitial(status: failureStatus("Interstitial failed", error: error))
     }
 
     func stickyPlayerDidLoad(_ handle: StickyPlayerHandle) {
@@ -139,7 +139,7 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
 
     func stickyPlayerDidFail(_ error: Error) {
         stickyHandle = nil
-        statusHandler("Ready-screen ad failed")
+        statusHandler(failureStatus("Ready-screen ad failed", error: error))
     }
 
     private func request(for placement: ConsumablePlacement) throws -> VastRequest {
@@ -170,6 +170,12 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
             existingHandler?()
             handler()
         }
+    }
+
+    private func failureStatus(_ prefix: String, error: Error) -> String {
+        let status = "\(prefix): \(error.localizedDescription)"
+        print("[CxFlappyBird] \(status)")
+        return status
     }
 
     private func finishInterstitial(status: String) {

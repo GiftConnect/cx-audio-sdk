@@ -11,6 +11,7 @@ xcuserdata/
 *.iml
 local.properties
 node_modules/
+samples/flappy-ios/Pods/
 
 # Local agent and architecture guidance
 /.agents/

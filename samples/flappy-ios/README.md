@@ -75,7 +75,19 @@ Interstitial requests are separated by at least 90 seconds. Sticky and interstit
 
 ## Run the Sample
 
-Open [`CxFlappyBird.xcworkspace`](CxFlappyBird.xcworkspace) in Xcode and run the `CxFlappyBird` scheme, or build from the repository root:
+Install the native SDK through the local `CxAudioSDK` CocoaPod before opening
+the workspace:
+
+```sh
+cd samples/flappy-ios
+pod install
+```
+
+The sample's [`Podfile`](Podfile) references the repository root, so it tests
+the native pod without requiring a published CocoaPods release or React
+Native. Open [`CxFlappyBird.xcworkspace`](CxFlappyBird.xcworkspace) in Xcode
+and run the `CxFlappyBird` scheme, or build from the repository root after
+running `pod install`:
 
 ```sh
 xcodebuild \
