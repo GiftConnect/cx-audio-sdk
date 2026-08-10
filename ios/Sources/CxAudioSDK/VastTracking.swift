@@ -280,9 +280,16 @@ internal final class TrackingBeaconDispatcher {
         url: URL,
         completion: @escaping Completion
     ) {
-        var request = URLRequest(url: url, timeoutInterval: 2)
+        let enforcedURL: URL
+        do {
+            enforcedURL = try PrivacyEnforcer.enforce(url, purpose: .trackingBeacon)
+        } catch {
+            completion(.failure(error))
+            return
+        }
+        var request = URLRequest(url: enforcedURL, timeoutInterval: 2)
         request.httpMethod = "GET"
-        URLSession.shared.dataTask(with: request) { _, response, error in
+        PrivacyNetworkClient.shared.data(request: request, purpose: .trackingBeacon) { _, response, error in
             if let error {
                 completion(.failure(error))
                 return
@@ -293,7 +300,7 @@ internal final class TrackingBeaconDispatcher {
                 return
             }
             completion(.success(()))
-        }.resume()
+        }
     }
 
     private static func validHTTPURL(_ value: String) -> URL? {

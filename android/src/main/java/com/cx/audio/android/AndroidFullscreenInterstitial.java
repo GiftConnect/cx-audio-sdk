@@ -16,11 +16,16 @@ import android.widget.FrameLayout;
 import com.cx.audio.android.internal.FullscreenInterstitialOverlayView;
 import com.cx.audio.android.internal.PerAdTrackingState;
 import com.cx.audio.android.internal.VastAdLoader;
+import com.cx.audio.android.internal.PrivacyEnforcer;
+import com.cx.audio.android.internal.PrivacyRequestPurpose;
 import com.cx.audio.android.internal.VastCompanion;
 import com.cx.audio.android.internal.VastInterstitialAd;
 import com.cx.audio.android.internal.VastMediaFile;
 
 import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
+import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -64,11 +69,28 @@ public final class AndroidFullscreenInterstitial {
                 VastInterstitialAd interstitialAd = VastAdLoader.loadInterstitial(request);
                 Bitmap mediaBitmap = loadMediaBitmapIfNeeded(interstitialAd, request);
                 Bitmap companionBitmap = loadCompanionBitmapIfNeeded(interstitialAd, request);
+                List<File> localMediaFiles = new ArrayList<>();
+                String localMediaUrl = null;
+                String localAudioUrl = null;
+                VastMediaFile visualMedia = interstitialAd.getMediaFile();
+                if (visualMedia != null && !visualMedia.isImage()) {
+                    File file = VastAdLoader.downloadMedia(appContext, visualMedia.getUrl(), request);
+                    localMediaFiles.add(file);
+                    localMediaUrl = file.toURI().toString();
+                }
+                VastMediaFile audioMedia = interstitialAd.getAudioMediaFile();
+                if (audioMedia != null && (visualMedia == null || !visualMedia.isVideo())) {
+                    File file = VastAdLoader.downloadMedia(appContext, audioMedia.getUrl(), request);
+                    localMediaFiles.add(file);
+                    localAudioUrl = file.toURI().toString();
+                }
+                VastInterstitialAd localizedAd = interstitialAd.withLocalMedia(localMediaUrl, localAudioUrl);
                 mainHandler.post(() -> attachOverlay(
                         activity,
                         appContext,
                         request,
-                        interstitialAd,
+                        localizedAd,
+                        localMediaFiles,
                         mediaBitmap,
                         companionBitmap,
                         resolvedOptions,
@@ -118,17 +140,20 @@ public final class AndroidFullscreenInterstitial {
             Context appContext,
             FullscreenInterstitialRequest request,
             VastInterstitialAd interstitialAd,
+            List<File> localMediaFiles,
             Bitmap mediaBitmap,
             Bitmap companionBitmap,
             FullscreenInterstitialOptions options,
             FullscreenInterstitialListener listener,
             PendingFullscreenInterstitialHandle handle) {
         if (handle.isDismissed() || activity.isFinishing() || activity.isDestroyed()) {
+            deleteFiles(localMediaFiles);
             return;
         }
 
         FrameLayout decorView = activity.findViewById(android.R.id.content);
         if (decorView == null) {
+            deleteFiles(localMediaFiles);
             listener.onFullscreenInterstitialFailed(
                     new IllegalStateException("Activity content view is unavailable"));
             return;
@@ -181,6 +206,7 @@ public final class AndroidFullscreenInterstitial {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
         handle.setTrackingState(new PerAdTrackingState(interstitialAd.getTracking()));
+        handle.setTemporaryMediaFiles(localMediaFiles);
         handle.setOverlayView(overlayView);
         listener.onFullscreenInterstitialLoaded(handle);
         handle.notifyAdRendered();
@@ -228,7 +254,9 @@ public final class AndroidFullscreenInterstitial {
             });
             mediaPlayer.setDataSource(
                     context,
-                    Uri.parse(mediaFile.getUrl()),
+                    Uri.parse(PrivacyEnforcer.enforce(
+                            new java.net.URL(mediaFile.getUrl()),
+                            PrivacyRequestPurpose.CREATIVE_ASSET).toString()),
                     Collections.singletonMap("User-Agent", request.getUserAgent()));
             mediaPlayer.prepareAsync();
         } catch (Throwable error) {
@@ -288,6 +316,7 @@ public final class AndroidFullscreenInterstitial {
         private FullscreenInterstitialOverlayView overlayView;
         private MediaPlayer mediaPlayer;
         private PerAdTrackingState trackingState;
+        private List<File> temporaryMediaFiles = Collections.emptyList();
         private boolean dismissed;
         private boolean completed;
         private boolean failed;
@@ -355,6 +384,11 @@ public final class AndroidFullscreenInterstitial {
             this.trackingState = trackingState;
         }
 
+        private void setTemporaryMediaFiles(List<File> files) {
+            if (isInactive()) { deleteFiles(files); return; }
+            temporaryMediaFiles = new ArrayList<>(files);
+        }
+
         private void setMediaPlayer(MediaPlayer mediaPlayer) {
             if (isInactive()) {
                 mediaPlayer.release();
@@ -407,6 +441,7 @@ public final class AndroidFullscreenInterstitial {
             listener.onFullscreenInterstitialAudioCompleted();
             listener.onFullscreenInterstitialCompleted();
             removeOverlay();
+            cleanTemporaryMedia();
             listener.onFullscreenInterstitialDismissed();
         }
 
@@ -420,6 +455,7 @@ public final class AndroidFullscreenInterstitial {
             }
             listener.onFullscreenInterstitialCompleted();
             removeOverlay();
+            cleanTemporaryMedia();
             listener.onFullscreenInterstitialDismissed();
         }
 
@@ -474,6 +510,7 @@ public final class AndroidFullscreenInterstitial {
             if (player != null) {
                 player.release();
             }
+            cleanTemporaryMedia();
         }
 
         private void removeOverlay() {
@@ -485,5 +522,15 @@ public final class AndroidFullscreenInterstitial {
                 ((ViewGroup) parent).removeView(overlayView);
             }
         }
+
+        private void cleanTemporaryMedia() {
+            deleteFiles(temporaryMediaFiles);
+            temporaryMediaFiles = Collections.emptyList();
+        }
+    }
+
+    private static void deleteFiles(List<File> files) {
+        if (files == null) return;
+        for (File file : files) if (file != null) file.delete();
     }
 }

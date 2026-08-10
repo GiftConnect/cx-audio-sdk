@@ -98,16 +98,25 @@ public enum CxFullscreenInterstitial {
                 loadImages(for: interstitialAd, request: request) { imageResult in
                     DispatchQueue.main.async {
                         guard !handle.isDismissed else {
+                            if case .success(let assets) = imageResult {
+                                [assets.mediaURL, assets.audioURL].compactMap { $0 }
+                                    .forEach { try? FileManager.default.removeItem(at: $0) }
+                            }
                             return
                         }
 
                         switch imageResult {
-                        case .success(let images):
+                        case .success(let assets):
+                            let localizedAd = interstitialAd.withLocalMedia(
+                                mediaURL: assets.mediaURL,
+                                audioURL: assets.audioURL
+                            )
                             attachOverlay(
                                 from: viewController,
-                                interstitialAd: interstitialAd,
-                                mediaImage: images.mediaImage,
-                                companionImage: images.companionImage,
+                                interstitialAd: localizedAd,
+                                mediaImage: assets.mediaImage,
+                                companionImage: assets.companionImage,
+                                temporaryMediaURLs: [assets.mediaURL, assets.audioURL].compactMap { $0 },
                                 options: options,
                                 listener: listener,
                                 handle: handle
@@ -132,11 +141,13 @@ public enum CxFullscreenInterstitial {
         interstitialAd: VastInterstitialAd,
         mediaImage: UIImage?,
         companionImage: UIImage?,
+        temporaryMediaURLs: [URL],
         options: FullscreenInterstitialOptions,
         listener: FullscreenInterstitialListener,
         handle: FullscreenInterstitialHandleImpl
     ) {
         guard viewController.isViewLoaded else {
+            temporaryMediaURLs.forEach { try? FileManager.default.removeItem(at: $0) }
             listener.fullscreenInterstitialDidFail(CxAudioError.activityUnavailable)
             return
         }
@@ -151,7 +162,9 @@ public enum CxFullscreenInterstitial {
                 handle.fireClickTracking()
                 listener.fullscreenInterstitialWasClicked(interstitialAd.companion?.clickThroughURL)
                 if let clickThroughURL = interstitialAd.companion?.clickThroughURL {
-                    UIApplication.shared.open(clickThroughURL)
+                    if let enforcedURL = try? PrivacyEnforcer.enforce(clickThroughURL, purpose: .clickThrough) {
+                        UIApplication.shared.open(enforcedURL)
+                    }
                 }
             },
             onVideoStarted: {
@@ -177,6 +190,7 @@ public enum CxFullscreenInterstitial {
             overlay.bottomAnchor.constraint(equalTo: viewController.view.bottomAnchor)
         ])
         handle.attach(overlay: overlay)
+        handle.attach(temporaryMediaURLs: temporaryMediaURLs)
         listener.fullscreenInterstitialDidLoad(handle)
         handle.notifyAdRendered()
         if let audioMediaFile = interstitialAd.audioMediaFile,
@@ -192,13 +206,17 @@ public enum CxFullscreenInterstitial {
     private static func loadImages(
         for interstitialAd: VastInterstitialAd,
         request: VastRequest,
-        completion: @escaping (Result<(mediaImage: UIImage?, companionImage: UIImage?), Error>) -> Void
+        completion: @escaping (Result<(
+            mediaImage: UIImage?, companionImage: UIImage?, mediaURL: URL?, audioURL: URL?
+        ), Error>) -> Void
     ) {
         let group = DispatchGroup()
         let lock = NSLock()
         var firstError: Error?
         var mediaImage: UIImage?
         var companionImage: UIImage?
+        var mediaURL: URL?
+        var audioURL: URL?
 
         if let mediaFile = interstitialAd.mediaFile, mediaFile.isImage {
             group.enter()
@@ -236,11 +254,37 @@ public enum CxFullscreenInterstitial {
             }
         }
 
+        if let mediaFile = interstitialAd.mediaFile, !mediaFile.isImage {
+            group.enter()
+            VastAdLoader.shared.loadMedia(url: mediaFile.url, request: request) { result in
+                lock.lock()
+                defer { lock.unlock(); group.leave() }
+                switch result {
+                case .success(let url): mediaURL = url
+                case .failure(let error): firstError = firstError ?? error
+                }
+            }
+        }
+
+        if let audioMediaFile = interstitialAd.audioMediaFile,
+           interstitialAd.mediaFile?.isVideo != true {
+            group.enter()
+            VastAdLoader.shared.loadMedia(url: audioMediaFile.url, request: request) { result in
+                lock.lock()
+                defer { lock.unlock(); group.leave() }
+                switch result {
+                case .success(let url): audioURL = url
+                case .failure(let error): firstError = firstError ?? error
+                }
+            }
+        }
+
         group.notify(queue: .global()) {
             if let firstError {
+                [mediaURL, audioURL].compactMap { $0 }.forEach { try? FileManager.default.removeItem(at: $0) }
                 completion(.failure(firstError))
             } else {
-                completion(.success((mediaImage: mediaImage, companionImage: companionImage)))
+                completion(.success((mediaImage, companionImage, mediaURL, audioURL)))
             }
         }
     }
@@ -253,6 +297,7 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
     private var completionObserver: NSObjectProtocol?
     private var progressObserver: Any?
     private var trackingState: PerAdTrackingState?
+    private var temporaryMediaURLs: [URL] = []
     private(set) var isDismissed = false
     private var completed = false
     private var failed = false
@@ -278,6 +323,7 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         isDismissed = true
         releasePlayer()
         overlay?.dismiss()
+        cleanTemporaryMedia()
         listener.fullscreenInterstitialDidDismiss()
     }
 
@@ -291,6 +337,10 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
 
     func attach(trackingState: PerAdTrackingState) {
         self.trackingState = trackingState
+    }
+
+    func attach(temporaryMediaURLs: [URL]) {
+        self.temporaryMediaURLs = temporaryMediaURLs
     }
 
     func attach(player: AVPlayer) {
@@ -341,6 +391,7 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         trackingState?.fireComplete()
         listener.fullscreenInterstitialDidComplete()
         overlay?.dismiss()
+        cleanTemporaryMedia()
         listener.fullscreenInterstitialDidDismiss()
     }
 
@@ -355,6 +406,7 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
         listener.fullscreenInterstitialDidCompleteAudio()
         listener.fullscreenInterstitialDidComplete()
         overlay?.dismiss()
+        cleanTemporaryMedia()
         listener.fullscreenInterstitialDidDismiss()
     }
 
@@ -382,6 +434,11 @@ private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHand
             NotificationCenter.default.removeObserver(completionObserver)
             self.completionObserver = nil
         }
+    }
+
+    private func cleanTemporaryMedia() {
+        temporaryMediaURLs.forEach { try? FileManager.default.removeItem(at: $0) }
+        temporaryMediaURLs.removeAll()
     }
 
 }

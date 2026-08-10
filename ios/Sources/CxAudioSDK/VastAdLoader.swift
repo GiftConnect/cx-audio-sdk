@@ -4,13 +4,10 @@ import UIKit
 internal final class VastAdLoader {
     static let shared = VastAdLoader()
 
-    private let session: URLSession
     private let parser = VastParser()
     private let maxWrapperDepth = 5
 
-    init(session: URLSession = .shared) {
-        self.session = session
-    }
+    init() {}
 
     func loadAudioAd(
         request: VastRequest,
@@ -114,8 +111,14 @@ internal final class VastAdLoader {
         request: VastRequest,
         completion: @escaping (Result<UIImage, Error>) -> Void
     ) {
-        let urlRequest = makeURLRequest(url: url, request: request)
-        session.dataTask(with: urlRequest) { data, response, error in
+        let urlRequest: URLRequest
+        do {
+            urlRequest = try makeURLRequest(url: url, request: request, purpose: .creativeAsset)
+        } catch {
+            completion(.failure(error))
+            return
+        }
+        PrivacyNetworkClient.shared.data(request: urlRequest, purpose: .creativeAsset) { data, response, error in
             if let error {
                 completion(.failure(error))
                 return
@@ -130,7 +133,24 @@ internal final class VastAdLoader {
                 return
             }
             completion(.success(image))
-        }.resume()
+        }
+    }
+
+    func loadMedia(
+        url: URL,
+        request: VastRequest,
+        completion: @escaping (Result<URL, Error>) -> Void
+    ) {
+        do {
+            let urlRequest = try makeURLRequest(url: url, request: request, purpose: .creativeAsset)
+            PrivacyNetworkClient.shared.download(
+                request: urlRequest,
+                purpose: .creativeAsset,
+                completion: completion
+            )
+        } catch {
+            completion(.failure(error))
+        }
     }
 
     private func resolve<T>(
@@ -186,8 +206,14 @@ internal final class VastAdLoader {
         request: VastRequest,
         completion: @escaping (Result<VastDocument, Error>) -> Void
     ) {
-        let urlRequest = makeURLRequest(url: url, request: request)
-        session.dataTask(with: urlRequest) { [parser] data, response, error in
+        let urlRequest: URLRequest
+        do {
+            urlRequest = try makeURLRequest(url: url, request: request, purpose: .vastWrapper)
+        } catch {
+            completion(.failure(error))
+            return
+        }
+        PrivacyNetworkClient.shared.data(request: urlRequest, purpose: .vastWrapper) { [parser] data, response, error in
             if let error {
                 completion(.failure(error))
                 return
@@ -207,11 +233,16 @@ internal final class VastAdLoader {
             } catch {
                 completion(.failure(error))
             }
-        }.resume()
+        }
     }
 
-    private func makeURLRequest(url: URL, request: VastRequest) -> URLRequest {
-        var urlRequest = URLRequest(url: url, timeoutInterval: request.timeoutInterval)
+    private func makeURLRequest(
+        url: URL,
+        request: VastRequest,
+        purpose: PrivacyRequestPurpose
+    ) throws -> URLRequest {
+        let enforcedURL = try PrivacyEnforcer.enforce(url, purpose: purpose)
+        var urlRequest = URLRequest(url: enforcedURL, timeoutInterval: request.timeoutInterval)
         urlRequest.setValue(request.userAgent, forHTTPHeaderField: "User-Agent")
         return urlRequest
     }

@@ -382,6 +382,21 @@ Minimum SDK: 23
 
 Runtime dependencies: none beyond the Android platform.
 
+After the first Maven Central release, apps can install the Android SDK with:
+
+```groovy
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "io.github.giftconnect:cx-audio-sdk:0.1.0"
+}
+```
+
+See [Publishing](docs/PUBLISHING.md) for Maven Central and CocoaPods release
+configuration and commands.
+
 Prerequisites:
 
 - JDK 17 or 21 for running Gradle.

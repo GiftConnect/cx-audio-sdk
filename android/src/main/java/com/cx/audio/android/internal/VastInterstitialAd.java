@@ -40,4 +40,12 @@ public final class VastInterstitialAd {
     public VastTracking getTracking() {
         return tracking;
     }
+
+    public VastInterstitialAd withLocalMedia(String mediaUrl, String audioUrl) {
+        return new VastInterstitialAd(
+                mediaUrl == null || mediaFile == null ? mediaFile : mediaFile.withUrl(mediaUrl),
+                audioUrl == null || audioMediaFile == null ? audioMediaFile : audioMediaFile.withUrl(audioUrl),
+                companion,
+                tracking);
+    }
 }

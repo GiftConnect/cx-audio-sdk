@@ -68,26 +68,34 @@ public enum CxBackgroundAudio {
         }
 
         VastAdLoader.shared.loadAudioAd(request: request) { result in
-            DispatchQueue.main.async {
-                guard !handle.isInactive else {
-                    return
-                }
-
-                switch result {
-                case .success(let audioAd):
-                    let player = AVPlayer(url: audioAd.mediaFile.url)
+            switch result {
+            case .success(let audioAd):
+                VastAdLoader.shared.loadMedia(url: audioAd.mediaFile.url, request: request) { mediaResult in
+                    DispatchQueue.main.async {
+                        guard !handle.isInactive else {
+                            if case .success(let url) = mediaResult { try? FileManager.default.removeItem(at: url) }
+                            return
+                        }
+                        switch mediaResult {
+                        case .success(let playerURL):
+                    let player = AVPlayer(url: playerURL)
                     handle.attach(
                         player: player,
-                        trackingState: PerAdTrackingState(tracking: audioAd.tracking)
+                                trackingState: PerAdTrackingState(tracking: audioAd.tracking),
+                                temporaryMediaURL: playerURL
                     )
                     player.volume = options.volume
                     player.play()
                     handle.notifyStarted()
                     listener.backgroundAudioDidStart(handle)
-                case .failure(let error):
-                    handle.fail(error)
+                        case .failure(let error):
+                            handle.fail(error)
+                        }
+                    }
                 }
-            }
+            case .failure(let error):
+                DispatchQueue.main.async { handle.fail(error) }
+                }
         }
 
         return handle
@@ -100,6 +108,7 @@ private final class BackgroundAudioHandleImpl: BackgroundAudioHandle {
     private var completionObserver: NSObjectProtocol?
     private var progressObserver: Any?
     private var trackingState: PerAdTrackingState?
+    private var temporaryMediaURL: URL?
     private var stopped = false
     private var completed = false
     private var failed = false
@@ -141,13 +150,14 @@ private final class BackgroundAudioHandleImpl: BackgroundAudioHandle {
         player?.volume = volume
     }
 
-    func attach(player: AVPlayer, trackingState: PerAdTrackingState) {
+    func attach(player: AVPlayer, trackingState: PerAdTrackingState, temporaryMediaURL: URL) {
         guard !isInactive else {
             return
         }
 
         self.player = player
         self.trackingState = trackingState
+        self.temporaryMediaURL = temporaryMediaURL
         player.volume = volume
         completionObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
@@ -214,6 +224,10 @@ private final class BackgroundAudioHandleImpl: BackgroundAudioHandle {
 
         player?.pause()
         player = nil
+        if let temporaryMediaURL {
+            try? FileManager.default.removeItem(at: temporaryMediaURL)
+            self.temporaryMediaURL = nil
+        }
 
         if let completionObserver {
             NotificationCenter.default.removeObserver(completionObserver)

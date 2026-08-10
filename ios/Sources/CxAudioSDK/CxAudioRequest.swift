@@ -239,6 +239,7 @@ public enum CxAudioError: Error, LocalizedError, Equatable {
     case imageDecodeFailed(URL)
     case activityUnavailable
     case volumeTooLow(Float)
+    case privacyBlocked(String)
     case playbackFailed(String)
 
     public var errorDescription: String? {
@@ -267,6 +268,8 @@ public enum CxAudioError: Error, LocalizedError, Equatable {
             return "A visible view controller is required for this placement"
         case .volumeTooLow(let threshold):
             return "Device output volume is below \(threshold)"
+        case .privacyBlocked(let message):
+            return message
         case .playbackFailed(let message):
             return message
         }

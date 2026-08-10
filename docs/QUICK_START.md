@@ -26,11 +26,10 @@ not display consent UI.
 
 ## Install the SDK
 
-No Maven, npm, or Unity registry coordinates are defined in this repository.
-Use the source checkout or the artifact supplied by CX:
-
-- **Android:** add the `:android` module to the Gradle build, or build an AAR
-  with `./gradlew :android:assemble` and add that AAR to the app.
+- **Android:** after the first Maven Central release, add
+  `io.github.giftconnect:cx-audio-sdk:0.1.0` from `mavenCentral()`. Until that
+  release is available, add the `:android` module to the Gradle build or build
+  an AAR with `./gradlew :android:assemble` and add it to the app.
 - **iOS:** add the repository root as a Swift Package and select the
   `CxAudioSDK` product, or install the native `CxAudioSDK` CocoaPod. Until the
   pod is published, reference the repository checkout with `:path`.
@@ -44,6 +43,9 @@ Use the source checkout or the artifact supplied by CX:
   Android AAR with `./gradlew :android:assembleRelease`, and place
   `android/build/outputs/aar/android-release.aar` under
   `Assets/Plugins/Android/`.
+
+Android release packaging and CocoaPods Trunk instructions are documented in
+[Publishing](PUBLISHING.md).
 
 ## Android
 

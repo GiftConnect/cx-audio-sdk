@@ -135,14 +135,24 @@ public final class TrackingBeaconDispatcher {
     private static final class HttpBeaconSender implements BeaconSender {
         @Override
         public void send(TrackingEvent event, String adIdentifier, URL url) throws IOException {
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-            connection.setReadTimeout(READ_TIMEOUT_MS);
-            connection.setInstanceFollowRedirects(true);
-            try {
+            URL current = url;
+            for (int redirects = 0; redirects <= 5; redirects++) {
+                URL enforcedUrl = PrivacyEnforcer.enforce(current, PrivacyRequestPurpose.TRACKING_BEACON);
+                HttpURLConnection connection = (HttpURLConnection) enforcedUrl.openConnection();
+                connection.setRequestMethod("GET");
+                connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
+                connection.setReadTimeout(READ_TIMEOUT_MS);
+                connection.setInstanceFollowRedirects(false);
                 int statusCode = connection.getResponseCode();
+                if (statusCode >= 300 && statusCode < 400) {
+                    String location = connection.getHeaderField("Location");
+                    connection.disconnect();
+                    if (location == null || location.trim().isEmpty()) throw new IOException("Redirect missing Location");
+                    current = new URL(enforcedUrl, location);
+                    continue;
+                }
                 if (statusCode < 200 || statusCode >= 400) {
+                    connection.disconnect();
                     throw new IOException("HTTP " + statusCode);
                 }
                 try (InputStream inputStream = connection.getInputStream()) {
@@ -150,10 +160,12 @@ public final class TrackingBeaconDispatcher {
                     while (inputStream.read(buffer) != -1) {
                         // Drain the response so the connection can be reused.
                     }
+                } finally {
+                    connection.disconnect();
                 }
-            } finally {
-                connection.disconnect();
+                return;
             }
+            throw new IOException("HTTP redirect depth exceeded");
         }
     }
 }

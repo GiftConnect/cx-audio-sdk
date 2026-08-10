@@ -67,6 +67,10 @@ internal struct VastMediaFile {
         matches(typePrefix: "video/", extensions: ["mp4", "m4v", "webm", "3gp"])
     }
 
+    func withURL(_ url: URL) -> VastMediaFile {
+        VastMediaFile(url: url, type: type, delivery: delivery, bitrate: bitrate, width: width, height: height)
+    }
+
     private func matches(typePrefix: String, extensions: Set<String>) -> Bool {
         if let type, type.lowercased().hasPrefix(typePrefix) {
             return true
@@ -99,6 +103,15 @@ internal struct VastInterstitialAd {
         self.audioMediaFile = audioMediaFile
         self.companion = companion
         self.tracking = tracking
+    }
+
+    func withLocalMedia(mediaURL: URL?, audioURL: URL?) -> VastInterstitialAd {
+        VastInterstitialAd(
+            mediaFile: mediaURL.flatMap { mediaFile?.withURL($0) } ?? mediaFile,
+            audioMediaFile: audioURL.flatMap { audioMediaFile?.withURL($0) } ?? audioMediaFile,
+            companion: companion,
+            tracking: tracking
+        )
     }
 }
 

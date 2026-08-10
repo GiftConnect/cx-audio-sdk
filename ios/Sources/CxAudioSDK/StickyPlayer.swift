@@ -96,12 +96,20 @@ public enum CxStickyPlayer {
         VastAdLoader.shared.loadStickyPlayerAd(request: request) { result in
             switch result {
             case .success(let stickyAd):
-                VastAdLoader.shared.loadImage(
+                VastAdLoader.shared.loadMedia(url: stickyAd.mediaFile.url, request: request) { mediaResult in
+                    guard case .success(let localMediaURL) = mediaResult else {
+                        if case .failure(let error) = mediaResult {
+                            DispatchQueue.main.async { listener.stickyPlayerDidFail(error) }
+                        }
+                        return
+                    }
+                    VastAdLoader.shared.loadImage(
                     url: stickyAd.companion.staticResourceURL,
                     request: request
                 ) { imageResult in
                     DispatchQueue.main.async {
                         guard !handle.isDismissed else {
+                            try? FileManager.default.removeItem(at: localMediaURL)
                             return
                         }
 
@@ -110,15 +118,18 @@ public enum CxStickyPlayer {
                             attachOverlay(
                                 in: viewController,
                                 stickyAd: stickyAd,
+                                localMediaURL: localMediaURL,
                                 image: image,
                                 options: options,
                                 listener: listener,
                                 handle: handle
                             )
                         case .failure(let error):
+                            try? FileManager.default.removeItem(at: localMediaURL)
                             listener.stickyPlayerDidFail(error)
                         }
                     }
+                }
                 }
             case .failure(let error):
                 DispatchQueue.main.async {
@@ -133,12 +144,14 @@ public enum CxStickyPlayer {
     private static func attachOverlay(
         in viewController: UIViewController,
         stickyAd: VastStickyPlayerAd,
+        localMediaURL: URL,
         image: UIImage,
         options: StickyPlayerOptions,
         listener: StickyPlayerListener,
         handle: StickyPlayerHandleImpl
     ) {
         guard viewController.isViewLoaded else {
+            try? FileManager.default.removeItem(at: localMediaURL)
             listener.stickyPlayerDidFail(CxAudioError.activityUnavailable)
             return
         }
@@ -151,7 +164,9 @@ public enum CxStickyPlayer {
                 handle.fireClickTracking()
                 listener.stickyPlayerWasClicked(stickyAd.companion.clickThroughURL)
                 if let clickThroughURL = stickyAd.companion.clickThroughURL {
-                    UIApplication.shared.open(clickThroughURL)
+                    if let enforcedURL = try? PrivacyEnforcer.enforce(clickThroughURL, purpose: .clickThrough) {
+                        UIApplication.shared.open(enforcedURL)
+                    }
                 }
             },
             onDismiss: {
@@ -176,13 +191,14 @@ public enum CxStickyPlayer {
         }
 
         NSLayoutConstraint.activate(constraints)
-        let player = AVPlayer(url: stickyAd.mediaFile.url)
+        let player = AVPlayer(url: localMediaURL)
         player.volume = options.volume
         handle.attach(overlay: overlay)
         handle.attach(
             player: player,
             volume: options.volume,
-            trackingState: PerAdTrackingState(tracking: stickyAd.tracking)
+            trackingState: PerAdTrackingState(tracking: stickyAd.tracking),
+            temporaryMediaURL: localMediaURL
         )
         listener.stickyPlayerDidLoad(handle)
         player.play()
@@ -198,6 +214,7 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
     private var completionObserver: NSObjectProtocol?
     private var progressObserver: Any?
     private var trackingState: PerAdTrackingState?
+    private var temporaryMediaURL: URL?
     private(set) var isDismissed = false
     private var completed = false
     private var failed = false
@@ -234,7 +251,12 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
         self.overlay = overlay
     }
 
-    func attach(player: AVPlayer, volume: Float, trackingState: PerAdTrackingState) {
+    func attach(
+        player: AVPlayer,
+        volume: Float,
+        trackingState: PerAdTrackingState,
+        temporaryMediaURL: URL
+    ) {
         guard !isInactive else {
             player.pause()
             return
@@ -242,6 +264,7 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
 
         self.player = player
         self.trackingState = trackingState
+        self.temporaryMediaURL = temporaryMediaURL
         player.volume = volume
         completionObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
@@ -304,6 +327,10 @@ private final class StickyPlayerHandleImpl: StickyPlayerHandle {
 
         player?.pause()
         player = nil
+        if let temporaryMediaURL {
+            try? FileManager.default.removeItem(at: temporaryMediaURL)
+            self.temporaryMediaURL = nil
+        }
 
         if let completionObserver {
             NotificationCenter.default.removeObserver(completionObserver)

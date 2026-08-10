@@ -53,7 +53,7 @@ public final class VastMediaFile {
         return matchesTypeOrExtension("video/", ".mp4", ".m4v", ".webm", ".3gp");
     }
 
-    VastMediaFile withUrl(String url) {
+    public VastMediaFile withUrl(String url) {
         return new VastMediaFile(url, type, delivery, bitrate, width, height);
     }
 

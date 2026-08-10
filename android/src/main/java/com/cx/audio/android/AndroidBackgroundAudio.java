@@ -10,9 +10,12 @@ import android.os.Looper;
 
 import com.cx.audio.android.internal.VastAdLoader;
 import com.cx.audio.android.internal.PerAdTrackingState;
+import com.cx.audio.android.internal.PrivacyEnforcer;
+import com.cx.audio.android.internal.PrivacyRequestPurpose;
 import com.cx.audio.android.internal.VastAudioAd;
 
 import java.util.Collections;
+import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -53,7 +56,9 @@ public final class AndroidBackgroundAudio {
         EXECUTOR.execute(() -> {
             try {
                 VastAudioAd audioAd = VastAdLoader.loadAudioAd(request);
-                mainHandler.post(() -> preparePlayer(appContext, request, audioAd, handle));
+                File localMedia = VastAdLoader.downloadMedia(
+                        appContext, audioAd.getMediaFile().getUrl(), request);
+                mainHandler.post(() -> preparePlayer(appContext, request, audioAd, localMedia, handle));
             } catch (Throwable error) {
                 mainHandler.post(() -> handle.fail(error));
             }
@@ -73,10 +78,13 @@ public final class AndroidBackgroundAudio {
             Context context,
             BackgroundAudioRequest request,
             VastAudioAd audioAd,
+            File localMedia,
             PendingBackgroundAudioHandle handle) {
         if (handle.isInactive()) {
+            localMedia.delete();
             return;
         }
+        handle.setTemporaryMediaFile(localMedia);
         handle.setTrackingState(new PerAdTrackingState(audioAd.getTracking()));
 
         MediaPlayer mediaPlayer = new MediaPlayer();
@@ -107,7 +115,7 @@ public final class AndroidBackgroundAudio {
             });
             mediaPlayer.setDataSource(
                     context,
-                    Uri.parse(audioAd.getMediaFile().getUrl()),
+                    Uri.fromFile(localMedia),
                     Collections.singletonMap("User-Agent", request.getUserAgent()));
             mediaPlayer.prepareAsync();
         } catch (Throwable error) {
@@ -146,6 +154,7 @@ public final class AndroidBackgroundAudio {
         private final Handler mainHandler;
         private MediaPlayer mediaPlayer;
         private PerAdTrackingState trackingState;
+        private File temporaryMediaFile;
         private boolean stopped;
         private boolean completed;
         private boolean failed;
@@ -210,6 +219,11 @@ public final class AndroidBackgroundAudio {
             this.trackingState = trackingState;
         }
 
+        private void setTemporaryMediaFile(File file) {
+            if (isInactive()) { file.delete(); return; }
+            temporaryMediaFile = file;
+        }
+
         private float getVolume() {
             return volume;
         }
@@ -244,6 +258,7 @@ public final class AndroidBackgroundAudio {
                 mediaPlayer = null;
             }
             player.release();
+            cleanTemporaryMedia();
             listener.onBackgroundAudioCompleted();
         }
 
@@ -258,6 +273,7 @@ public final class AndroidBackgroundAudio {
             if (player != null) {
                 player.release();
             }
+            cleanTemporaryMedia();
             listener.onBackgroundAudioFailed(error);
         }
 
@@ -293,6 +309,7 @@ public final class AndroidBackgroundAudio {
             if (player != null) {
                 player.release();
             }
+            cleanTemporaryMedia();
             if (!failed) {
                 listener.onBackgroundAudioStopped();
             }
@@ -308,6 +325,12 @@ public final class AndroidBackgroundAudio {
             } catch (IllegalStateException ignored) {
                 // The player may have completed or failed while this update was queued.
             }
+        }
+
+        private void cleanTemporaryMedia() {
+            File file = temporaryMediaFile;
+            temporaryMediaFile = null;
+            if (file != null) file.delete();
         }
     }
 }
