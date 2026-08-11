@@ -7,15 +7,25 @@ namespace Cx.Audio.Unity
         public BackgroundAudioOptions()
         {
             Volume = 0.2f;
+            MinDeviceVolume = 0.1f;
         }
 
         public float Volume { get; set; }
+
+        public float MinDeviceVolume { get; set; }
 
         internal void Validate()
         {
             if (float.IsNaN(Volume) || Volume < 0.0f || Volume > 1.0f)
             {
                 throw new ArgumentOutOfRangeException("Volume", "volume must be between 0.0 and 1.0");
+            }
+
+            if (float.IsNaN(MinDeviceVolume) || MinDeviceVolume < 0.0f || MinDeviceVolume > 1.0f)
+            {
+                throw new ArgumentOutOfRangeException(
+                    "MinDeviceVolume",
+                    "minDeviceVolume must be between 0.0 and 1.0");
             }
         }
     }
@@ -31,29 +41,31 @@ namespace Cx.Audio.Unity
         public StickyPlayerOptions()
         {
             Position = StickyPlayerPosition.Bottom;
-            HeightDp = 72;
-            HorizontalPaddingDp = 12;
             ShowCloseButton = true;
+            Volume = 0.2f;
+            MinDeviceVolume = 0.1f;
         }
 
         public StickyPlayerPosition Position { get; set; }
 
-        public int HeightDp { get; set; }
-
-        public int HorizontalPaddingDp { get; set; }
-
         public bool ShowCloseButton { get; set; }
+
+        public float Volume { get; set; }
+
+        public float MinDeviceVolume { get; set; }
 
         internal void Validate()
         {
-            if (HeightDp < 48)
+            if (float.IsNaN(Volume) || Volume < 0.0f || Volume > 1.0f)
             {
-                throw new ArgumentOutOfRangeException("HeightDp", "heightDp must be at least 48");
+                throw new ArgumentOutOfRangeException("Volume", "volume must be between 0.0 and 1.0");
             }
 
-            if (HorizontalPaddingDp < 0)
+            if (float.IsNaN(MinDeviceVolume) || MinDeviceVolume < 0.0f || MinDeviceVolume > 1.0f)
             {
-                throw new ArgumentOutOfRangeException("HorizontalPaddingDp", "horizontalPaddingDp must be >= 0");
+                throw new ArgumentOutOfRangeException(
+                    "MinDeviceVolume",
+                    "minDeviceVolume must be between 0.0 and 1.0");
             }
         }
     }
@@ -63,29 +75,31 @@ namespace Cx.Audio.Unity
         public FullscreenInterstitialOptions()
         {
             ShowCloseButton = true;
-            CompanionHeightDp = 250;
-            CompanionMaxWidthDp = 300;
             AutoPlayVideo = true;
+            Volume = 0.2f;
+            MinDeviceVolume = 0.1f;
         }
 
         public bool ShowCloseButton { get; set; }
 
-        public int CompanionHeightDp { get; set; }
-
-        public int CompanionMaxWidthDp { get; set; }
-
         public bool AutoPlayVideo { get; set; }
+
+        public float Volume { get; set; }
+
+        public float MinDeviceVolume { get; set; }
 
         internal void Validate()
         {
-            if (CompanionHeightDp < 48)
+            if (float.IsNaN(Volume) || Volume < 0.0f || Volume > 1.0f)
             {
-                throw new ArgumentOutOfRangeException("CompanionHeightDp", "companionHeightDp must be at least 48");
+                throw new ArgumentOutOfRangeException("Volume", "volume must be between 0.0 and 1.0");
             }
 
-            if (CompanionMaxWidthDp < 48)
+            if (float.IsNaN(MinDeviceVolume) || MinDeviceVolume < 0.0f || MinDeviceVolume > 1.0f)
             {
-                throw new ArgumentOutOfRangeException("CompanionMaxWidthDp", "companionMaxWidthDp must be at least 48");
+                throw new ArgumentOutOfRangeException(
+                    "MinDeviceVolume",
+                    "minDeviceVolume must be between 0.0 and 1.0");
             }
         }
     }

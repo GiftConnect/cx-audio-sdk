@@ -96,6 +96,28 @@ namespace Cx.Audio.Unity
             });
         }
 
+        public void onStickyPlayerAudioStarted(AndroidJavaObject nativeHandle)
+        {
+            CxAudioRuntime.Dispatch(callbackContext, () =>
+            {
+                if (listener != null)
+                {
+                    listener.OnStickyPlayerAudioStarted(getHandle());
+                }
+            });
+        }
+
+        public void onStickyPlayerAudioCompleted()
+        {
+            CxAudioRuntime.Dispatch(callbackContext, () =>
+            {
+                if (listener != null)
+                {
+                    listener.OnStickyPlayerAudioCompleted();
+                }
+            });
+        }
+
         public void onStickyPlayerClicked(string clickThroughUrl)
         {
             CxAudioRuntime.Dispatch(callbackContext, () =>
@@ -155,6 +177,28 @@ namespace Cx.Audio.Unity
                 if (listener != null)
                 {
                     listener.OnFullscreenInterstitialLoaded(getHandle());
+                }
+            });
+        }
+
+        public void onFullscreenInterstitialAudioStarted(AndroidJavaObject nativeHandle)
+        {
+            CxAudioRuntime.Dispatch(callbackContext, () =>
+            {
+                if (listener != null)
+                {
+                    listener.OnFullscreenInterstitialAudioStarted(getHandle());
+                }
+            });
+        }
+
+        public void onFullscreenInterstitialAudioCompleted()
+        {
+            CxAudioRuntime.Dispatch(callbackContext, () =>
+            {
+                if (listener != null)
+                {
+                    listener.OnFullscreenInterstitialAudioCompleted();
                 }
             });
         }

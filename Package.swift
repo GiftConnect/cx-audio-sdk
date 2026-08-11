@@ -5,7 +5,7 @@ import PackageDescription
 let package = Package(
     name: "CxAudioSDK",
     platforms: [
-        .iOS(.v13)
+        .iOS(.v15)
     ],
     products: [
         .library(
@@ -16,7 +16,15 @@ let package = Package(
     targets: [
         .target(
             name: "CxAudioSDK",
-            path: "ios/Sources/CxAudioSDK"
+            path: "ios/Sources/CxAudioSDK",
+            resources: [
+                .process("PrivacyInfo.xcprivacy")
+            ]
+        ),
+        .testTarget(
+            name: "CxAudioSDKTests",
+            dependencies: ["CxAudioSDK"],
+            path: "ios/Tests/CxAudioSDKTests"
         )
     ]
 )

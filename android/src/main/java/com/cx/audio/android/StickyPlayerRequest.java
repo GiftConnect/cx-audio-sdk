@@ -1,9 +1,14 @@
 package com.cx.audio.android;
 
+import android.content.Context;
+import android.webkit.WebSettings;
+
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public final class StickyPlayerRequest {
+    private static final String DEFAULT_USER_AGENT = "cx-audio-sdk-android/0.1";
+
     private final URL vastTagUrl;
     private final int connectTimeoutMs;
     private final int readTimeoutMs;
@@ -36,11 +41,57 @@ public final class StickyPlayerRequest {
         return new Builder(vastTagUrl);
     }
 
+    public static Builder builder(Context context, String vastTagUrl) {
+        if (context == null) {
+            throw new IllegalArgumentException("context must not be null");
+        }
+        Context applicationContext = context.getApplicationContext();
+        Builder builder = new Builder(vastTagUrl);
+        builder.userAgent = defaultUserAgent(applicationContext);
+        return builder;
+    }
+
+    public static Builder builder(ConsumableAdRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("request must not be null");
+        }
+        return new Builder(request.toURLString(
+                ConsumableAdRequest.PlacementType.STICKY_PLAYER,
+                null,
+                DEFAULT_USER_AGENT));
+    }
+
+    public static Builder builder(Context context, ConsumableAdRequest request) {
+        if (context == null) {
+            throw new IllegalArgumentException("context must not be null");
+        }
+        if (request == null) {
+            throw new IllegalArgumentException("request must not be null");
+        }
+        Context applicationContext = context.getApplicationContext();
+        String userAgent = defaultUserAgent(applicationContext);
+        Builder builder = new Builder(request.toURLString(
+                ConsumableAdRequest.PlacementType.STICKY_PLAYER,
+                applicationContext,
+                userAgent));
+        builder.userAgent = userAgent;
+        return builder;
+    }
+
+    private static String defaultUserAgent(Context context) {
+        try {
+            String userAgent = WebSettings.getDefaultUserAgent(context);
+            return userAgent == null || userAgent.trim().isEmpty() ? DEFAULT_USER_AGENT : userAgent;
+        } catch (RuntimeException error) {
+            return DEFAULT_USER_AGENT;
+        }
+    }
+
     public static final class Builder {
         private final URL vastTagUrl;
         private int connectTimeoutMs = 5000;
         private int readTimeoutMs = 8000;
-        private String userAgent = "cx-audio-sdk-android/0.1";
+        private String userAgent = DEFAULT_USER_AGENT;
 
         private Builder(String vastTagUrl) {
             if (vastTagUrl == null || vastTagUrl.trim().isEmpty()) {
@@ -70,14 +121,6 @@ public final class StickyPlayerRequest {
                 throw new IllegalArgumentException("readTimeoutMs must be > 0");
             }
             this.readTimeoutMs = readTimeoutMs;
-            return this;
-        }
-
-        public Builder userAgent(String userAgent) {
-            if (userAgent == null || userAgent.trim().isEmpty()) {
-                throw new IllegalArgumentException("userAgent must not be blank");
-            }
-            this.userAgent = userAgent;
             return this;
         }
 

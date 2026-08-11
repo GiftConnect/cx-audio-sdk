@@ -1,22 +1,25 @@
 import AVFoundation
 import UIKit
 
+private let fullscreenCompanionHeight: CGFloat = 250
+private let fullscreenCompanionMaxWidth: CGFloat = 300
+
 public struct FullscreenInterstitialOptions: Equatable {
     public let showCloseButton: Bool
-    public let companionHeight: CGFloat
-    public let companionMaxWidth: CGFloat
     public let autoPlayVideo: Bool
+    public let volume: Float
+    public let minDeviceVolume: Float
 
     public init(
         showCloseButton: Bool = true,
-        companionHeight: CGFloat = 250,
-        companionMaxWidth: CGFloat = 300,
-        autoPlayVideo: Bool = true
+        autoPlayVideo: Bool = true,
+        volume: Float = 0.2,
+        minDeviceVolume: Float = 0.1
     ) {
         self.showCloseButton = showCloseButton
-        self.companionHeight = companionHeight
-        self.companionMaxWidth = companionMaxWidth
         self.autoPlayVideo = autoPlayVideo
+        self.volume = volume
+        self.minDeviceVolume = minDeviceVolume
     }
 }
 
@@ -29,11 +32,25 @@ public protocol FullscreenInterstitialHandle: AnyObject {
 public protocol FullscreenInterstitialListener: AnyObject {
     func fullscreenInterstitialDidLoad(_ handle: FullscreenInterstitialHandle)
 
+    func fullscreenInterstitialDidStartAudio(_ handle: FullscreenInterstitialHandle)
+
+    func fullscreenInterstitialDidCompleteAudio()
+
+    func fullscreenInterstitialDidComplete()
+
     func fullscreenInterstitialWasClicked(_ clickThroughURL: URL?)
 
     func fullscreenInterstitialDidDismiss()
 
     func fullscreenInterstitialDidFail(_ error: Error)
+}
+
+public extension FullscreenInterstitialListener {
+    func fullscreenInterstitialDidStartAudio(_ handle: FullscreenInterstitialHandle) {}
+
+    func fullscreenInterstitialDidCompleteAudio() {}
+
+    func fullscreenInterstitialDidComplete() {}
 }
 
 public enum CxFullscreenInterstitial {
@@ -46,22 +63,60 @@ public enum CxFullscreenInterstitial {
     ) -> FullscreenInterstitialHandle {
         let handle = FullscreenInterstitialHandleImpl(listener: listener)
 
+        guard !options.volume.isNaN && options.volume >= 0 && options.volume <= 1 else {
+            DispatchQueue.main.async {
+                listener.fullscreenInterstitialDidFail(
+                    CxAudioError.invalidOption("volume must be between 0.0 and 1.0")
+                )
+            }
+            return handle
+        }
+
+        guard !options.minDeviceVolume.isNaN
+            && options.minDeviceVolume >= 0
+            && options.minDeviceVolume <= 1 else {
+            DispatchQueue.main.async {
+                listener.fullscreenInterstitialDidFail(
+                    CxAudioError.invalidOption("minDeviceVolume must be between 0.0 and 1.0")
+                )
+            }
+            return handle
+        }
+
+        guard DeviceVolumeMonitor.isDeviceVolumeAllowed(
+            minDeviceVolume: options.minDeviceVolume
+        ) else {
+            DispatchQueue.main.async {
+                listener.fullscreenInterstitialDidFail(CxAudioError.volumeTooLow(options.minDeviceVolume))
+            }
+            return handle
+        }
+
         VastAdLoader.shared.loadInterstitial(request: request) { result in
             switch result {
             case .success(let interstitialAd):
                 loadImages(for: interstitialAd, request: request) { imageResult in
                     DispatchQueue.main.async {
                         guard !handle.isDismissed else {
+                            if case .success(let assets) = imageResult {
+                                [assets.mediaURL, assets.audioURL].compactMap { $0 }
+                                    .forEach { try? FileManager.default.removeItem(at: $0) }
+                            }
                             return
                         }
 
                         switch imageResult {
-                        case .success(let images):
+                        case .success(let assets):
+                            let localizedAd = interstitialAd.withLocalMedia(
+                                mediaURL: assets.mediaURL,
+                                audioURL: assets.audioURL
+                            )
                             attachOverlay(
                                 from: viewController,
-                                interstitialAd: interstitialAd,
-                                mediaImage: images.mediaImage,
-                                companionImage: images.companionImage,
+                                interstitialAd: localizedAd,
+                                mediaImage: assets.mediaImage,
+                                companionImage: assets.companionImage,
+                                temporaryMediaURLs: [assets.mediaURL, assets.audioURL].compactMap { $0 },
                                 options: options,
                                 listener: listener,
                                 handle: handle
@@ -86,29 +141,43 @@ public enum CxFullscreenInterstitial {
         interstitialAd: VastInterstitialAd,
         mediaImage: UIImage?,
         companionImage: UIImage?,
+        temporaryMediaURLs: [URL],
         options: FullscreenInterstitialOptions,
         listener: FullscreenInterstitialListener,
         handle: FullscreenInterstitialHandleImpl
     ) {
         guard viewController.isViewLoaded else {
+            temporaryMediaURLs.forEach { try? FileManager.default.removeItem(at: $0) }
             listener.fullscreenInterstitialDidFail(CxAudioError.activityUnavailable)
             return
         }
 
+        handle.attach(trackingState: PerAdTrackingState(tracking: interstitialAd.tracking))
         let overlay = FullscreenInterstitialOverlayView(
             interstitialAd: interstitialAd,
             mediaImage: mediaImage,
             companionImage: companionImage,
             options: options,
             onCompanionClick: {
+                handle.fireClickTracking()
                 listener.fullscreenInterstitialWasClicked(interstitialAd.companion?.clickThroughURL)
                 if let clickThroughURL = interstitialAd.companion?.clickThroughURL {
-                    UIApplication.shared.open(clickThroughURL)
+                    if let enforcedURL = try? PrivacyEnforcer.enforce(clickThroughURL, purpose: .clickThrough) {
+                        UIApplication.shared.open(enforcedURL)
+                    }
                 }
             },
+            onVideoStarted: {
+                handle.notifyAdRendered()
+            },
+            onVideoProgress: { currentPosition, duration in
+                handle.trackProgress(currentPosition: currentPosition, duration: duration)
+            },
+            onVideoCompleted: {
+                handle.completeVideo()
+            },
             onDismiss: {
-                handle.markDismissed()
-                listener.fullscreenInterstitialDidDismiss()
+                handle.dismiss()
             }
         )
 
@@ -121,19 +190,33 @@ public enum CxFullscreenInterstitial {
             overlay.bottomAnchor.constraint(equalTo: viewController.view.bottomAnchor)
         ])
         handle.attach(overlay: overlay)
+        handle.attach(temporaryMediaURLs: temporaryMediaURLs)
         listener.fullscreenInterstitialDidLoad(handle)
+        handle.notifyAdRendered()
+        if let audioMediaFile = interstitialAd.audioMediaFile,
+           interstitialAd.mediaFile?.isVideo != true {
+            let player = AVPlayer(url: audioMediaFile.url)
+            player.volume = options.volume
+            handle.attach(player: player)
+            player.play()
+            listener.fullscreenInterstitialDidStartAudio(handle)
+        }
     }
 
     private static func loadImages(
         for interstitialAd: VastInterstitialAd,
         request: VastRequest,
-        completion: @escaping (Result<(mediaImage: UIImage?, companionImage: UIImage?), Error>) -> Void
+        completion: @escaping (Result<(
+            mediaImage: UIImage?, companionImage: UIImage?, mediaURL: URL?, audioURL: URL?
+        ), Error>) -> Void
     ) {
         let group = DispatchGroup()
         let lock = NSLock()
         var firstError: Error?
         var mediaImage: UIImage?
         var companionImage: UIImage?
+        var mediaURL: URL?
+        var audioURL: URL?
 
         if let mediaFile = interstitialAd.mediaFile, mediaFile.isImage {
             group.enter()
@@ -171,11 +254,37 @@ public enum CxFullscreenInterstitial {
             }
         }
 
+        if let mediaFile = interstitialAd.mediaFile, !mediaFile.isImage {
+            group.enter()
+            VastAdLoader.shared.loadMedia(url: mediaFile.url, request: request) { result in
+                lock.lock()
+                defer { lock.unlock(); group.leave() }
+                switch result {
+                case .success(let url): mediaURL = url
+                case .failure(let error): firstError = firstError ?? error
+                }
+            }
+        }
+
+        if let audioMediaFile = interstitialAd.audioMediaFile,
+           interstitialAd.mediaFile?.isVideo != true {
+            group.enter()
+            VastAdLoader.shared.loadMedia(url: audioMediaFile.url, request: request) { result in
+                lock.lock()
+                defer { lock.unlock(); group.leave() }
+                switch result {
+                case .success(let url): audioURL = url
+                case .failure(let error): firstError = firstError ?? error
+                }
+            }
+        }
+
         group.notify(queue: .global()) {
             if let firstError {
+                [mediaURL, audioURL].compactMap { $0 }.forEach { try? FileManager.default.removeItem(at: $0) }
                 completion(.failure(firstError))
             } else {
-                completion(.success((mediaImage: mediaImage, companionImage: companionImage)))
+                completion(.success((mediaImage, companionImage, mediaURL, audioURL)))
             }
         }
     }
@@ -184,43 +293,165 @@ public enum CxFullscreenInterstitial {
 private final class FullscreenInterstitialHandleImpl: FullscreenInterstitialHandle {
     private let listener: FullscreenInterstitialListener
     private weak var overlay: FullscreenInterstitialOverlayView?
+    private var player: AVPlayer?
+    private var completionObserver: NSObjectProtocol?
+    private var progressObserver: Any?
+    private var trackingState: PerAdTrackingState?
+    private var temporaryMediaURLs: [URL] = []
     private(set) var isDismissed = false
+    private var completed = false
+    private var failed = false
+    private var rendered = false
 
     init(listener: FullscreenInterstitialListener) {
         self.listener = listener
     }
 
     var isShowing: Bool {
-        overlay?.superview != nil && !isDismissed
+        overlay?.superview != nil && !isInactive
+    }
+
+    private var isInactive: Bool {
+        isDismissed || completed || failed
     }
 
     func dismiss() {
-        guard !isDismissed else {
+        guard !isInactive else {
             return
         }
 
         isDismissed = true
-        overlay?.removeFromSuperview()
+        releasePlayer()
+        overlay?.dismiss()
+        cleanTemporaryMedia()
         listener.fullscreenInterstitialDidDismiss()
     }
 
     func attach(overlay: FullscreenInterstitialOverlayView) {
-        guard !isDismissed else {
+        guard !isInactive else {
             overlay.removeFromSuperview()
             return
         }
         self.overlay = overlay
     }
 
-    func markDismissed() {
-        isDismissed = true
+    func attach(trackingState: PerAdTrackingState) {
+        self.trackingState = trackingState
     }
+
+    func attach(temporaryMediaURLs: [URL]) {
+        self.temporaryMediaURLs = temporaryMediaURLs
+    }
+
+    func attach(player: AVPlayer) {
+        guard !isInactive else {
+            player.pause()
+            return
+        }
+
+        self.player = player
+        completionObserver = NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player.currentItem,
+            queue: .main
+        ) { [weak self] _ in
+            self?.completeAudio()
+        }
+        progressObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
+            queue: .main
+        ) { [weak self] time in
+            self?.trackAudioProgress(time)
+        }
+    }
+
+    func notifyAdRendered() {
+        guard !isInactive, !rendered else {
+            return
+        }
+
+        rendered = true
+        trackingState?.fireImpression()
+        trackingState?.fireStart()
+    }
+
+    func fireClickTracking() {
+        trackingState?.fireClick()
+    }
+
+    func trackProgress(currentPosition: TimeInterval, duration: TimeInterval) {
+        trackingState?.fireProgress(currentPosition: currentPosition, duration: duration)
+    }
+
+    func completeVideo() {
+        guard !isInactive else {
+            return
+        }
+        completed = true
+        trackingState?.fireComplete()
+        listener.fullscreenInterstitialDidComplete()
+        overlay?.dismiss()
+        cleanTemporaryMedia()
+        listener.fullscreenInterstitialDidDismiss()
+    }
+
+    private func completeAudio() {
+        guard !isInactive else {
+            return
+        }
+
+        completed = true
+        trackingState?.fireComplete()
+        releasePlayer()
+        listener.fullscreenInterstitialDidCompleteAudio()
+        listener.fullscreenInterstitialDidComplete()
+        overlay?.dismiss()
+        cleanTemporaryMedia()
+        listener.fullscreenInterstitialDidDismiss()
+    }
+
+    private func trackAudioProgress(_ time: CMTime) {
+        guard !isInactive,
+              let duration = player?.currentItem?.duration.seconds,
+              duration.isFinite,
+              duration > 0,
+              time.seconds.isFinite else {
+            return
+        }
+        trackingState?.fireProgress(currentPosition: time.seconds, duration: duration)
+    }
+
+    private func releasePlayer() {
+        if let progressObserver, let player {
+            player.removeTimeObserver(progressObserver)
+            self.progressObserver = nil
+        }
+
+        player?.pause()
+        player = nil
+
+        if let completionObserver {
+            NotificationCenter.default.removeObserver(completionObserver)
+            self.completionObserver = nil
+        }
+    }
+
+    private func cleanTemporaryMedia() {
+        temporaryMediaURLs.forEach { try? FileManager.default.removeItem(at: $0) }
+        temporaryMediaURLs.removeAll()
+    }
+
 }
 
 private final class FullscreenInterstitialOverlayView: UIView {
     private let onCompanionClick: () -> Void
+    private let onVideoStarted: () -> Void
+    private let onVideoProgress: (TimeInterval, TimeInterval) -> Void
+    private let onVideoCompleted: () -> Void
     private let onDismiss: () -> Void
     private var player: AVPlayer?
+    private var progressObserver: Any?
+    private var completionObserver: NSObjectProtocol?
 
     init(
         interstitialAd: VastInterstitialAd,
@@ -228,9 +459,15 @@ private final class FullscreenInterstitialOverlayView: UIView {
         companionImage: UIImage?,
         options: FullscreenInterstitialOptions,
         onCompanionClick: @escaping () -> Void,
+        onVideoStarted: @escaping () -> Void,
+        onVideoProgress: @escaping (TimeInterval, TimeInterval) -> Void,
+        onVideoCompleted: @escaping () -> Void,
         onDismiss: @escaping () -> Void
     ) {
         self.onCompanionClick = onCompanionClick
+        self.onVideoStarted = onVideoStarted
+        self.onVideoProgress = onVideoProgress
+        self.onVideoCompleted = onVideoCompleted
         self.onDismiss = onDismiss
 
         super.init(frame: .zero)
@@ -263,10 +500,10 @@ private final class FullscreenInterstitialOverlayView: UIView {
         if let companionImage, interstitialAd.companion != nil {
             let companionContainer = makeCompanionView(
                 image: companionImage,
-                maxWidth: options.companionMaxWidth
+                maxWidth: fullscreenCompanionMaxWidth
             )
             contentStack.addArrangedSubview(companionContainer)
-            companionContainer.heightAnchor.constraint(equalToConstant: options.companionHeight).isActive = true
+            companionContainer.heightAnchor.constraint(equalToConstant: fullscreenCompanionHeight).isActive = true
         }
 
         if options.showCloseButton {
@@ -309,9 +546,30 @@ private final class FullscreenInterstitialOverlayView: UIView {
             let player = AVPlayer(url: mediaFile.url)
             let videoContainer = VideoPlayerView(player: player)
             self.player = player
+            completionObserver = NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: player.currentItem,
+                queue: .main
+            ) { [weak self] _ in
+                self?.onVideoCompleted()
+            }
+            progressObserver = player.addPeriodicTimeObserver(
+                forInterval: CMTime(seconds: 0.5, preferredTimescale: 600),
+                queue: .main
+            ) { [weak self, weak player] time in
+                guard let self,
+                      let duration = player?.currentItem?.duration.seconds,
+                      duration.isFinite,
+                      duration > 0,
+                      time.seconds.isFinite else {
+                    return
+                }
+                self.onVideoProgress(time.seconds, duration)
+            }
 
             if autoPlayVideo {
                 player.play()
+                onVideoStarted()
             }
 
             return videoContainer
@@ -327,7 +585,7 @@ private final class FullscreenInterstitialOverlayView: UIView {
 
     private func makeCompanionView(image: UIImage, maxWidth: CGFloat) -> UIView {
         let container = UIView()
-        container.backgroundColor = UIColor(white: 0.07, alpha: 1)
+        container.backgroundColor = .clear
 
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFit
@@ -353,8 +611,29 @@ private final class FullscreenInterstitialOverlayView: UIView {
     }
 
     @objc private func handleDismiss() {
-        player?.pause()
         onDismiss()
+    }
+
+    func dismiss() {
+        releaseVideoPlayer()
+        removeFromSuperview()
+    }
+
+    private func releaseVideoPlayer() {
+        if let progressObserver, let player {
+            player.removeTimeObserver(progressObserver)
+            self.progressObserver = nil
+        }
+        if let completionObserver {
+            NotificationCenter.default.removeObserver(completionObserver)
+            self.completionObserver = nil
+        }
+        player?.pause()
+        player = nil
+    }
+
+    deinit {
+        releaseVideoPlayer()
     }
 }
 

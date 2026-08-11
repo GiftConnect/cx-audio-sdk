@@ -1,0 +1,25 @@
+{
+  "name": "flappy-blob-react-native",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "prebuild": "expo prebuild"
+  },
+  "dependencies": {
+    "cx-audio-sdk": "file:../..",
+    "expo": "~57.0.12",
+    "expo-dev-client": "~57.0.11",
+    "react": "19.2.8",
+    "react-native": "0.86.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0"
+  },
+  "engines": {
+    "node": ">=20.19.4"
+  }
+}

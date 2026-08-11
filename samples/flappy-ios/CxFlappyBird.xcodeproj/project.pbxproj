@@ -1,0 +1,414 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AF555A85A0EBE136BE3DD1BE /* Pods_CxFlappyBird.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6A4DBA0D9A50F0106C043CEC /* Pods_CxFlappyBird.framework */; };
+		FB0000000000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000011 /* AppDelegate.swift */; };
+		FB0000000000000000000002 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000012 /* SceneDelegate.swift */; };
+		FB0000000000000000000003 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000013 /* GameViewController.swift */; };
+		FB0000000000000000000004 /* FlappyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000014 /* FlappyGameView.swift */; };
+		FB0000000000000000000005 /* GameAdController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000015 /* GameAdController.swift */; };
+		FB0000000000000000000007 /* blobfish.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000017 /* blobfish.png */; };
+		FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000018 /* blobfish-smile-fins-up.png */; };
+		FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000019 /* blobfish-smile-fins-down.png */; };
+		FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001A /* blobfish-frown-fins-up.png */; };
+		FB000000000000000000000B /* blobfish-grin-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001B /* blobfish-grin-fins-up.png */; };
+		FB000000000000000000000C /* blobfish-grin-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001C /* blobfish-grin-fins-down.png */; };
+		FB000000000000000000000D /* blobfish-crying-front.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001D /* blobfish-crying-front.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0A9E913BE39A412EC9AD9D0C /* Pods-CxFlappyBird.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CxFlappyBird.debug.xcconfig"; path = "Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird.debug.xcconfig"; sourceTree = "<group>"; };
+		3E96273FADC97D24A6F9D77A /* Pods-CxFlappyBird.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CxFlappyBird.release.xcconfig"; path = "Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird.release.xcconfig"; sourceTree = "<group>"; };
+		6A4DBA0D9A50F0106C043CEC /* Pods_CxFlappyBird.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_CxFlappyBird.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB0000000000000000000010 /* CxFlappyBird.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CxFlappyBird.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB0000000000000000000011 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		FB0000000000000000000012 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
+		FB0000000000000000000013 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
+		FB0000000000000000000014 /* FlappyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlappyGameView.swift; sourceTree = "<group>"; };
+		FB0000000000000000000015 /* GameAdController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAdController.swift; sourceTree = "<group>"; };
+		FB0000000000000000000016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		FB0000000000000000000017 /* blobfish.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish.png; sourceTree = "<group>"; };
+		FB0000000000000000000018 /* blobfish-smile-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-up.png"; sourceTree = "<group>"; };
+		FB0000000000000000000019 /* blobfish-smile-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-down.png"; sourceTree = "<group>"; };
+		FB000000000000000000001A /* blobfish-frown-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-frown-fins-up.png"; sourceTree = "<group>"; };
+		FB000000000000000000001B /* blobfish-grin-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-up.png"; sourceTree = "<group>"; };
+		FB000000000000000000001C /* blobfish-grin-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-down.png"; sourceTree = "<group>"; };
+		FB000000000000000000001D /* blobfish-crying-front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-crying-front.png"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		FB0000000000000000000020 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF555A85A0EBE136BE3DD1BE /* Pods_CxFlappyBird.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3AE1F6D7F0E0911D73F745D2 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6A4DBA0D9A50F0106C043CEC /* Pods_CxFlappyBird.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7AF3BEC888B28E064DCD42FA /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				0A9E913BE39A412EC9AD9D0C /* Pods-CxFlappyBird.debug.xcconfig */,
+				3E96273FADC97D24A6F9D77A /* Pods-CxFlappyBird.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+		FB0000000000000000000040 = {
+			isa = PBXGroup;
+			children = (
+				FB0000000000000000000041 /* CxFlappyBird */,
+				FB0000000000000000000042 /* Products */,
+				7AF3BEC888B28E064DCD42FA /* Pods */,
+				3AE1F6D7F0E0911D73F745D2 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		FB0000000000000000000041 /* CxFlappyBird */ = {
+			isa = PBXGroup;
+			children = (
+				FB0000000000000000000011 /* AppDelegate.swift */,
+				FB0000000000000000000012 /* SceneDelegate.swift */,
+				FB0000000000000000000013 /* GameViewController.swift */,
+				FB0000000000000000000014 /* FlappyGameView.swift */,
+				FB0000000000000000000015 /* GameAdController.swift */,
+				FB0000000000000000000016 /* Info.plist */,
+				FB0000000000000000000017 /* blobfish.png */,
+				FB0000000000000000000018 /* blobfish-smile-fins-up.png */,
+				FB0000000000000000000019 /* blobfish-smile-fins-down.png */,
+				FB000000000000000000001A /* blobfish-frown-fins-up.png */,
+				FB000000000000000000001B /* blobfish-grin-fins-up.png */,
+				FB000000000000000000001C /* blobfish-grin-fins-down.png */,
+				FB000000000000000000001D /* blobfish-crying-front.png */,
+			);
+			path = CxFlappyBird;
+			sourceTree = "<group>";
+		};
+		FB0000000000000000000042 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FB0000000000000000000010 /* CxFlappyBird.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		FB0000000000000000000050 /* CxFlappyBird */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FB0000000000000000000060 /* Build configuration list for PBXNativeTarget "CxFlappyBird" */;
+			buildPhases = (
+				3B7D4760AE005B97B0DF8753 /* [CP] Check Pods Manifest.lock */,
+				FB0000000000000000000070 /* Sources */,
+				FB0000000000000000000020 /* Frameworks */,
+				FB0000000000000000000071 /* Resources */,
+				93069B12B718FBF31E0A4269 /* [CP] Embed Pods Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CxFlappyBird;
+			productName = CxFlappyBird;
+			productReference = FB0000000000000000000010 /* CxFlappyBird.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FB0000000000000000000080 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					FB0000000000000000000050 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = FB0000000000000000000090 /* Build configuration list for PBXProject "CxFlappyBird" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = FB0000000000000000000040;
+			productRefGroup = FB0000000000000000000042 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FB0000000000000000000050 /* CxFlappyBird */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		FB0000000000000000000071 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB0000000000000000000007 /* blobfish.png in Resources */,
+				FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */,
+				FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */,
+				FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */,
+				FB000000000000000000000B /* blobfish-grin-fins-up.png in Resources */,
+				FB000000000000000000000C /* blobfish-grin-fins-down.png in Resources */,
+				FB000000000000000000000D /* blobfish-crying-front.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		3B7D4760AE005B97B0DF8753 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-CxFlappyBird-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		93069B12B718FBF31E0A4269 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FB0000000000000000000070 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FB0000000000000000000001 /* AppDelegate.swift in Sources */,
+				FB0000000000000000000002 /* SceneDelegate.swift in Sources */,
+				FB0000000000000000000003 /* GameViewController.swift in Sources */,
+				FB0000000000000000000004 /* FlappyGameView.swift in Sources */,
+				FB0000000000000000000005 /* GameAdController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		FB00000000000000000000A0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		FB00000000000000000000A1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		FB00000000000000000000B0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0A9E913BE39A412EC9AD9D0C /* Pods-CxFlappyBird.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XLH8MX4NB6;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CxFlappyBird/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cx.audio.flappy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		FB00000000000000000000B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 3E96273FADC97D24A6F9D77A /* Pods-CxFlappyBird.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = XLH8MX4NB6;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CxFlappyBird/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.cx.audio.flappy;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FB0000000000000000000060 /* Build configuration list for PBXNativeTarget "CxFlappyBird" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB00000000000000000000B0 /* Debug */,
+				FB00000000000000000000B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FB0000000000000000000090 /* Build configuration list for PBXProject "CxFlappyBird" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FB00000000000000000000A0 /* Debug */,
+				FB00000000000000000000A1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = FB0000000000000000000080 /* Project object */;
+}

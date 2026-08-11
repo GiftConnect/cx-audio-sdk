@@ -1,6 +1,7 @@
 package com.cx.audio.android;
 
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -8,9 +9,13 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.cx.audio.android.internal.VastAdLoader;
-import com.cx.audio.android.internal.VastMediaFile;
+import com.cx.audio.android.internal.PerAdTrackingState;
+import com.cx.audio.android.internal.PrivacyEnforcer;
+import com.cx.audio.android.internal.PrivacyRequestPurpose;
+import com.cx.audio.android.internal.VastAudioAd;
 
 import java.util.Collections;
+import java.io.File;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,10 +46,19 @@ public final class AndroidBackgroundAudio {
                 resolvedOptions.getVolume(),
                 mainHandler);
 
+        if (!isDeviceVolumeAllowed(appContext, resolvedOptions.getMinDeviceVolume())) {
+            mainHandler.post(() -> handle.fail(new IllegalStateException(
+                    "VOLUME_TOO_LOW: device media volume is below "
+                            + resolvedOptions.getMinDeviceVolume())));
+            return handle;
+        }
+
         EXECUTOR.execute(() -> {
             try {
-                VastMediaFile mediaFile = VastAdLoader.loadAudioMediaFile(request);
-                mainHandler.post(() -> preparePlayer(appContext, request, mediaFile, handle));
+                VastAudioAd audioAd = VastAdLoader.loadAudioAd(request);
+                File localMedia = VastAdLoader.downloadMedia(
+                        appContext, audioAd.getMediaFile().getUrl(), request);
+                mainHandler.post(() -> preparePlayer(appContext, request, audioAd, localMedia, handle));
             } catch (Throwable error) {
                 mainHandler.post(() -> handle.fail(error));
             }
@@ -63,11 +77,15 @@ public final class AndroidBackgroundAudio {
     private static void preparePlayer(
             Context context,
             BackgroundAudioRequest request,
-            VastMediaFile mediaFile,
+            VastAudioAd audioAd,
+            File localMedia,
             PendingBackgroundAudioHandle handle) {
         if (handle.isInactive()) {
+            localMedia.delete();
             return;
         }
+        handle.setTemporaryMediaFile(localMedia);
+        handle.setTrackingState(new PerAdTrackingState(audioAd.getTracking()));
 
         MediaPlayer mediaPlayer = new MediaPlayer();
         handle.setMediaPlayer(mediaPlayer);
@@ -97,7 +115,7 @@ public final class AndroidBackgroundAudio {
             });
             mediaPlayer.setDataSource(
                     context,
-                    Uri.parse(mediaFile.getUrl()),
+                    Uri.fromFile(localMedia),
                     Collections.singletonMap("User-Agent", request.getUserAgent()));
             mediaPlayer.prepareAsync();
         } catch (Throwable error) {
@@ -111,15 +129,43 @@ public final class AndroidBackgroundAudio {
         }
     }
 
+    private static boolean isDeviceVolumeAllowed(Context context, float minDeviceVolume) {
+        validateVolume(minDeviceVolume);
+        if (minDeviceVolume <= 0.0f) {
+            return true;
+        }
+
+        AudioManager audioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager == null) {
+            return true;
+        }
+
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        if (maxVolume <= 0) {
+            return true;
+        }
+
+        int currentVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+        return currentVolume / (float) maxVolume >= minDeviceVolume;
+    }
+
     private static final class PendingBackgroundAudioHandle implements BackgroundAudioHandle {
         private final BackgroundAudioListener listener;
         private final Handler mainHandler;
         private MediaPlayer mediaPlayer;
+        private PerAdTrackingState trackingState;
+        private File temporaryMediaFile;
         private boolean stopped;
         private boolean completed;
         private boolean failed;
         private boolean started;
         private float volume;
+        private final Runnable progressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                trackProgress();
+            }
+        };
 
         private PendingBackgroundAudioHandle(
                 BackgroundAudioListener listener,
@@ -169,6 +215,15 @@ public final class AndroidBackgroundAudio {
             this.mediaPlayer = mediaPlayer;
         }
 
+        private void setTrackingState(PerAdTrackingState trackingState) {
+            this.trackingState = trackingState;
+        }
+
+        private void setTemporaryMediaFile(File file) {
+            if (isInactive()) { file.delete(); return; }
+            temporaryMediaFile = file;
+        }
+
         private float getVolume() {
             return volume;
         }
@@ -182,6 +237,11 @@ public final class AndroidBackgroundAudio {
                 return;
             }
             started = true;
+            if (trackingState != null) {
+                trackingState.fireImpression();
+                trackingState.fireStart();
+            }
+            scheduleProgressTracking();
             listener.onBackgroundAudioStarted(this);
         }
 
@@ -190,10 +250,15 @@ public final class AndroidBackgroundAudio {
                 return;
             }
             completed = true;
+            mainHandler.removeCallbacks(progressRunnable);
+            if (trackingState != null) {
+                trackingState.fireComplete();
+            }
             if (mediaPlayer == player) {
                 mediaPlayer = null;
             }
             player.release();
+            cleanTemporaryMedia();
             listener.onBackgroundAudioCompleted();
         }
 
@@ -202,12 +267,35 @@ public final class AndroidBackgroundAudio {
                 return;
             }
             failed = true;
+            mainHandler.removeCallbacks(progressRunnable);
             MediaPlayer player = mediaPlayer;
             mediaPlayer = null;
             if (player != null) {
                 player.release();
             }
+            cleanTemporaryMedia();
             listener.onBackgroundAudioFailed(error);
+        }
+
+        private void scheduleProgressTracking() {
+            mainHandler.removeCallbacks(progressRunnable);
+            mainHandler.post(progressRunnable);
+        }
+
+        private void trackProgress() {
+            if (isInactive() || mediaPlayer == null || trackingState == null) {
+                return;
+            }
+
+            try {
+                trackingState.fireProgress(mediaPlayer.getCurrentPosition(), mediaPlayer.getDuration());
+            } catch (IllegalStateException ignored) {
+                return;
+            }
+
+            if (!isInactive()) {
+                mainHandler.postDelayed(progressRunnable, 500);
+            }
         }
 
         private void stopOnMainThread() {
@@ -215,11 +303,13 @@ public final class AndroidBackgroundAudio {
                 return;
             }
             stopped = true;
+            mainHandler.removeCallbacks(progressRunnable);
             MediaPlayer player = mediaPlayer;
             mediaPlayer = null;
             if (player != null) {
                 player.release();
             }
+            cleanTemporaryMedia();
             if (!failed) {
                 listener.onBackgroundAudioStopped();
             }
@@ -235,6 +325,12 @@ public final class AndroidBackgroundAudio {
             } catch (IllegalStateException ignored) {
                 // The player may have completed or failed while this update was queued.
             }
+        }
+
+        private void cleanTemporaryMedia() {
+            File file = temporaryMediaFile;
+            temporaryMediaFile = null;
+            if (file != null) file.delete();
         }
     }
 }

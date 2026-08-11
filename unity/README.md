@@ -22,6 +22,32 @@ Build the Android SDK AAR from the repository root:
 
 Then include `android/build/outputs/aar/android-release.aar` as an Android plugin in the Unity project, for example under `Assets/Plugins/Android/`.
 
+## Advertising Identifiers
+
+The Unity package does not automatically collect advertising identifiers. For Android player builds, the host game is responsible for retrieving the Google advertising ID when available and permitted, declaring `com.google.android.gms.permission.AD_ID` for Android 13/API 33 or newer targets, and applying any required consent or privacy controls.
+
+Pass the advertising ID as both `Gadid(...)` and `Ifa(...)` when the ad endpoint expects OpenRTB-style IFA. If the ID is deleted, limited, unavailable, or all zeros, omit `Gadid(...)` and `Ifa(...)` and call `LimitAdTracking(true)`. Do not fall back to fingerprinting or another persistent device identifier for advertising.
+
+## SDK Identity, User Agent, and IP Parameters
+
+When a `ConsumableAdRequest` is converted into a `VastRequest`, the Unity wrapper automatically supplies the SDK user agent as the `u` query parameter.
+
+Structured requests also include `sdk=Consumable Audio` and the current SDK
+build version in `sdkv`. Both values are percent-encoded by the request
+builder. An approved branded or mirrored distribution can override the SDK
+name without changing the SDK version:
+
+```csharp
+ConsumableAdRequest request = new ConsumableAdRequest("YOUR_PLACEMENT_HASH")
+    .SdkName("Radio.com Audio");
+```
+
+The package does not compute the `i` query parameter on device. Android can expose local network interface addresses, but it cannot reliably know the public/NAT IP seen by an ad server without an external lookup. Prefer server-side inference from the request source address at the Consumable endpoint or proxy. Pass `IpAddress(...)` only when the host game has a trusted server-provided value.
+
+## Placement Request Routing
+
+Pass the matching `ConsumablePlacement` when constructing a request. The wrapper automatically maps background audio, sticky player, and fullscreen interstitial to the internal Consumable placement codes `1`, `2`, and `3`. Code `3` requests a video-compatible response for the interstitial renderer. The code is an internal protocol detail and is not publisher-configurable. The one-argument structured constructor defaults to background audio for compatibility; raw VAST URL constructors remain unchanged.
+
 ## Background Audio
 
 ```csharp
@@ -34,11 +60,24 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
 
     public void PlayBackgroundAudio()
     {
+        string advertisingId = null; // Host game supplies GAID/AAID when available and permitted.
+        bool limitAdTracking = string.IsNullOrEmpty(advertisingId);
+
+        ConsumableAdRequest consumableRequest = new ConsumableAdRequest("YOUR_PLACEMENT_HASH")
+            .AppName("Example Game")
+            .AppBundle("com.example.game")
+            .AppStoreUrl("https://play.google.com/store/apps/details?id=com.example.game")
+            .Gadid(advertisingId)
+            .Ifa(advertisingId)
+            .LimitAdTracking(limitAdTracking)
+            .Gdpr(false);
+
         backgroundAudio = BackgroundAudio.Play(
-            new VastRequest("https://ads.example.com/vast.xml"),
+            new VastRequest(consumableRequest, ConsumablePlacement.BackgroundAudio),
             new BackgroundAudioOptions
             {
-                Volume = 0.2f
+                Volume = 0.2f,
+                MinDeviceVolume = 0.1f
             },
             this);
     }
@@ -60,6 +99,8 @@ public sealed class AudioAds : MonoBehaviour, IBackgroundAudioListener
 }
 ```
 
+Use `new VastRequest("https://...")` for QA tags or non-Consumable ad servers. Use `new VastRequest(new ConsumableAdRequest(...), ConsumablePlacement.BackgroundAudio)` when the SDK should generate the Consumable API URL.
+
 ## Sticky Player
 
 ```csharp
@@ -72,13 +113,15 @@ public sealed class StickyAd : MonoBehaviour, IStickyPlayerListener
 
     public void ShowStickyPlayer()
     {
+        ConsumableAdRequest request = new ConsumableAdRequest("YOUR_PLACEMENT_HASH");
         stickyPlayer = StickyPlayer.Show(
-            new VastRequest("https://ads.example.com/vast.xml"),
+            new VastRequest(request, ConsumablePlacement.StickyPlayer),
             new StickyPlayerOptions
             {
                 Position = StickyPlayerPosition.Bottom,
-                HeightDp = 72,
-                ShowCloseButton = true
+                ShowCloseButton = true,
+                Volume = 0.2f,
+                MinDeviceVolume = 0.1f
             },
             this);
     }
@@ -94,6 +137,8 @@ public sealed class StickyAd : MonoBehaviour, IStickyPlayerListener
     }
 
     public void OnStickyPlayerLoaded(StickyPlayerHandle handle) {}
+    public void OnStickyPlayerAudioStarted(StickyPlayerHandle handle) {}
+    public void OnStickyPlayerAudioCompleted() {}
     public void OnStickyPlayerClicked(string clickThroughUrl) {}
     public void OnStickyPlayerDismissed() {}
     public void OnStickyPlayerFailed(CxAudioError error) {}
@@ -112,14 +157,15 @@ public sealed class InterstitialAd : MonoBehaviour, IFullscreenInterstitialListe
 
     public void ShowInterstitial()
     {
+        ConsumableAdRequest request = new ConsumableAdRequest("YOUR_PLACEMENT_HASH");
         interstitial = FullscreenInterstitial.Show(
-            new VastRequest("https://ads.example.com/vast.xml"),
+            new VastRequest(request, ConsumablePlacement.FullscreenInterstitial),
             new FullscreenInterstitialOptions
             {
                 ShowCloseButton = true,
-                CompanionHeightDp = 250,
-                CompanionMaxWidthDp = 300,
-                AutoPlayVideo = true
+                AutoPlayVideo = true,
+                Volume = 0.2f,
+                MinDeviceVolume = 0.1f
             },
             this);
     }
@@ -135,6 +181,8 @@ public sealed class InterstitialAd : MonoBehaviour, IFullscreenInterstitialListe
     }
 
     public void OnFullscreenInterstitialLoaded(FullscreenInterstitialHandle handle) {}
+    public void OnFullscreenInterstitialAudioStarted(FullscreenInterstitialHandle handle) {}
+    public void OnFullscreenInterstitialAudioCompleted() {}
     public void OnFullscreenInterstitialClicked(string clickThroughUrl) {}
     public void OnFullscreenInterstitialDismissed() {}
     public void OnFullscreenInterstitialFailed(CxAudioError error) {}

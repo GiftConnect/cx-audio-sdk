@@ -6,22 +6,30 @@
   "react-native": "react-native/src/index.js",
   "types": "react-native/src/index.d.ts",
   "files": [
+    "LICENSE",
     "README.md",
+    "docs/ADVANCED_USAGE.md",
+    "docs/PRIVACY.md",
+    "docs/QUICK_START.md",
     "Package.swift",
     "android/src/main/java",
     "ios/README.md",
     "ios/Sources",
+    "ios/Tests",
     "unity/README.md",
     "unity/package.json",
     "unity/Runtime",
     "react-native.config.js",
+    "CxAudioSDK.podspec",
+    "cx-audio-sdk.podspec",
     "react-native/src",
     "react-native/android/build.gradle",
     "react-native/android/consumer-rules.pro",
-    "react-native/android/src/main"
+    "react-native/android/src/main",
+    "react-native/ios"
   ],
   "scripts": {
-    "check:react-native": "node --check react-native/src/index.js"
+    "check:react-native": "node --check react-native/src/index.js && node --check react-native/src/consumableRequest.js && node --test react-native/test/consumableRequest.test.js"
   },
   "peerDependencies": {
     "react": ">=18.2.0",
@@ -34,5 +42,5 @@
     "react-native",
     "unity"
   ],
-  "license": "UNLICENSED"
+  "license": "Apache-2.0"
 }

@@ -15,6 +15,10 @@ namespace Cx.Audio.Unity
     {
         void OnStickyPlayerLoaded(StickyPlayerHandle handle);
 
+        void OnStickyPlayerAudioStarted(StickyPlayerHandle handle);
+
+        void OnStickyPlayerAudioCompleted();
+
         void OnStickyPlayerClicked(string clickThroughUrl);
 
         void OnStickyPlayerDismissed();
@@ -25,6 +29,10 @@ namespace Cx.Audio.Unity
     public interface IFullscreenInterstitialListener
     {
         void OnFullscreenInterstitialLoaded(FullscreenInterstitialHandle handle);
+
+        void OnFullscreenInterstitialAudioStarted(FullscreenInterstitialHandle handle);
+
+        void OnFullscreenInterstitialAudioCompleted();
 
         void OnFullscreenInterstitialClicked(string clickThroughUrl);
 

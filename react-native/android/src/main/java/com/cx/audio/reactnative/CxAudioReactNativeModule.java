@@ -9,6 +9,7 @@ import com.cx.audio.android.BackgroundAudioHandle;
 import com.cx.audio.android.BackgroundAudioListener;
 import com.cx.audio.android.BackgroundAudioOptions;
 import com.cx.audio.android.BackgroundAudioRequest;
+import com.cx.audio.android.CxAudio;
 import com.cx.audio.android.FullscreenInterstitialHandle;
 import com.cx.audio.android.FullscreenInterstitialListener;
 import com.cx.audio.android.FullscreenInterstitialOptions;
@@ -51,6 +52,7 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
     public CxAudioReactNativeModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
+        CxAudio.initialize(reactContext);
     }
 
     @Override
@@ -155,6 +157,16 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
                         }
 
                         @Override
+                        public void onStickyPlayerAudioStarted(StickyPlayerHandle handle) {
+                            sendEvent("started", STICKY_PLAYER, handleId, null, null);
+                        }
+
+                        @Override
+                        public void onStickyPlayerAudioCompleted() {
+                            sendEvent("completed", STICKY_PLAYER, handleId, null, null);
+                        }
+
+                        @Override
                         public void onStickyPlayerClicked(String clickThroughUrl) {
                             sendEvent("clicked", STICKY_PLAYER, handleId, clickThroughUrl, null);
                         }
@@ -213,6 +225,21 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
                         public void onFullscreenInterstitialLoaded(
                                 FullscreenInterstitialHandle handle) {
                             sendEvent("loaded", FULLSCREEN_INTERSTITIAL, handleId, null, null);
+                        }
+
+                        @Override
+                        public void onFullscreenInterstitialAudioStarted(
+                                FullscreenInterstitialHandle handle) {
+                            sendEvent("started", FULLSCREEN_INTERSTITIAL, handleId, null, null);
+                        }
+
+                        @Override
+                        public void onFullscreenInterstitialAudioCompleted() {
+                        }
+
+                        @Override
+                        public void onFullscreenInterstitialCompleted() {
+                            sendEvent("completed", FULLSCREEN_INTERSTITIAL, handleId, null, null);
                         }
 
                         @Override
@@ -307,24 +334,30 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
                 .emit(EVENT_NAME, event);
     }
 
-    private static BackgroundAudioRequest readBackgroundAudioRequest(ReadableMap requestMap) {
+    private BackgroundAudioRequest readBackgroundAudioRequest(ReadableMap requestMap) {
         BackgroundAudioRequest.Builder builder =
-                BackgroundAudioRequest.builder(requiredString(requestMap, "vastTagUrl"));
+                BackgroundAudioRequest.builder(
+                        reactContext,
+                        requiredString(requestMap, "vastTagUrl"));
         applyBackgroundAudioNetworkOptions(builder, requestMap);
         return builder.build();
     }
 
-    private static StickyPlayerRequest readStickyPlayerRequest(ReadableMap requestMap) {
+    private StickyPlayerRequest readStickyPlayerRequest(ReadableMap requestMap) {
         StickyPlayerRequest.Builder builder =
-                StickyPlayerRequest.builder(requiredString(requestMap, "vastTagUrl"));
+                StickyPlayerRequest.builder(
+                        reactContext,
+                        requiredString(requestMap, "vastTagUrl"));
         applyStickyPlayerNetworkOptions(builder, requestMap);
         return builder.build();
     }
 
-    private static FullscreenInterstitialRequest readFullscreenInterstitialRequest(
+    private FullscreenInterstitialRequest readFullscreenInterstitialRequest(
             ReadableMap requestMap) {
         FullscreenInterstitialRequest.Builder builder =
-                FullscreenInterstitialRequest.builder(requiredString(requestMap, "vastTagUrl"));
+                FullscreenInterstitialRequest.builder(
+                        reactContext,
+                        requiredString(requestMap, "vastTagUrl"));
         applyFullscreenInterstitialNetworkOptions(builder, requestMap);
         return builder.build();
     }
@@ -338,9 +371,6 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(requestMap, "readTimeoutMs")) {
             builder.readTimeoutMs(intValue(requestMap, "readTimeoutMs"));
         }
-        if (hasValue(requestMap, "userAgent")) {
-            builder.userAgent(requestMap.getString("userAgent"));
-        }
     }
 
     private static void applyStickyPlayerNetworkOptions(
@@ -351,9 +381,6 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         }
         if (hasValue(requestMap, "readTimeoutMs")) {
             builder.readTimeoutMs(intValue(requestMap, "readTimeoutMs"));
-        }
-        if (hasValue(requestMap, "userAgent")) {
-            builder.userAgent(requestMap.getString("userAgent"));
         }
     }
 
@@ -366,15 +393,15 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(requestMap, "readTimeoutMs")) {
             builder.readTimeoutMs(intValue(requestMap, "readTimeoutMs"));
         }
-        if (hasValue(requestMap, "userAgent")) {
-            builder.userAgent(requestMap.getString("userAgent"));
-        }
     }
 
     private static BackgroundAudioOptions readBackgroundAudioOptions(ReadableMap optionsMap) {
         BackgroundAudioOptions.Builder builder = BackgroundAudioOptions.builder();
         if (hasValue(optionsMap, "volume")) {
             builder.volume((float) optionsMap.getDouble("volume"));
+        }
+        if (hasValue(optionsMap, "minDeviceVolume")) {
+            builder.minDeviceVolume((float) optionsMap.getDouble("minDeviceVolume"));
         }
         return builder.build();
     }
@@ -384,14 +411,14 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(optionsMap, "position")) {
             builder.position(readStickyPlayerPosition(optionsMap.getString("position")));
         }
-        if (hasValue(optionsMap, "heightDp")) {
-            builder.heightDp(intValue(optionsMap, "heightDp"));
-        }
-        if (hasValue(optionsMap, "horizontalPaddingDp")) {
-            builder.horizontalPaddingDp(intValue(optionsMap, "horizontalPaddingDp"));
-        }
         if (hasValue(optionsMap, "showCloseButton")) {
             builder.showCloseButton(optionsMap.getBoolean("showCloseButton"));
+        }
+        if (hasValue(optionsMap, "volume")) {
+            builder.volume((float) optionsMap.getDouble("volume"));
+        }
+        if (hasValue(optionsMap, "minDeviceVolume")) {
+            builder.minDeviceVolume((float) optionsMap.getDouble("minDeviceVolume"));
         }
         return builder.build();
     }
@@ -402,14 +429,14 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
         if (hasValue(optionsMap, "showCloseButton")) {
             builder.showCloseButton(optionsMap.getBoolean("showCloseButton"));
         }
-        if (hasValue(optionsMap, "companionHeightDp")) {
-            builder.companionHeightDp(intValue(optionsMap, "companionHeightDp"));
-        }
-        if (hasValue(optionsMap, "companionMaxWidthDp")) {
-            builder.companionMaxWidthDp(intValue(optionsMap, "companionMaxWidthDp"));
-        }
         if (hasValue(optionsMap, "autoPlayVideo")) {
             builder.autoPlayVideo(optionsMap.getBoolean("autoPlayVideo"));
+        }
+        if (hasValue(optionsMap, "volume")) {
+            builder.volume((float) optionsMap.getDouble("volume"));
+        }
+        if (hasValue(optionsMap, "minDeviceVolume")) {
+            builder.minDeviceVolume((float) optionsMap.getDouble("minDeviceVolume"));
         }
         return builder.build();
     }

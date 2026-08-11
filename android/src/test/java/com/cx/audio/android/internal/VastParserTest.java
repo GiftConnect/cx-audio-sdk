@@ -3,6 +3,8 @@ package com.cx.audio.android.internal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+
 import org.junit.Test;
 
 public final class VastParserTest {
@@ -51,6 +53,42 @@ public final class VastParserTest {
         assertEquals(1280, mediaFile.getWidth());
         assertEquals(720, mediaFile.getHeight());
         assertTrue(mediaFile.isVideo());
+    }
+
+    @Test
+    public void trackingParserExtractsMultipleImpressionsEventsAndClickTracking()
+            throws Exception {
+        VastTracking tracking = parser.parseTracking(
+                "<VAST><Ad id=\"ad-42\"><InLine>"
+                        + "<Impression>https://track.example.com/imp1</Impression>"
+                        + "<Impression><![CDATA[https://track.example.com/imp2?a=1&b=2]]></Impression>"
+                        + "<Creatives><Creative><Linear>"
+                        + "<TrackingEvents>"
+                        + "<Tracking event=\"start\">https://track.example.com/start</Tracking>"
+                        + "<Tracking event=\"firstQuartile\">https://track.example.com/q1</Tracking>"
+                        + "<Tracking event=\"firstQuartile\">https://track.example.com/q1b</Tracking>"
+                        + "<Tracking event=\"midpoint\">https://track.example.com/q2</Tracking>"
+                        + "<Tracking event=\"thirdQuartile\">https://track.example.com/q3</Tracking>"
+                        + "<Tracking event=\"complete\">https://track.example.com/q4</Tracking>"
+                        + "</TrackingEvents>"
+                        + "<VideoClicks>"
+                        + "<ClickThrough>https://click.example.com/open</ClickThrough>"
+                        + "<ClickTracking>https://track.example.com/click1</ClickTracking>"
+                        + "<ClickTracking>https://track.example.com/click2</ClickTracking>"
+                        + "</VideoClicks>"
+                        + "</Linear></Creative></Creatives>"
+                        + "</InLine></Ad></VAST>");
+
+        assertEquals("ad-42", tracking.getAdIdentifier());
+        assertEquals(
+                Arrays.asList("https://track.example.com/imp1", "https://track.example.com/imp2?a=1&b=2"),
+                tracking.getImpressionUrls());
+        assertEquals(
+                Arrays.asList("https://track.example.com/q1", "https://track.example.com/q1b"),
+                tracking.getUrls(TrackingEvent.FIRST_QUARTILE));
+        assertEquals(
+                Arrays.asList("https://track.example.com/click1", "https://track.example.com/click2"),
+                tracking.getClickTrackingUrls());
     }
 
     private static String vastWithCompanions(String... companions) {

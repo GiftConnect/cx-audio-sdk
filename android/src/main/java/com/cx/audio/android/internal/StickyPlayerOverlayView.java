@@ -13,6 +13,8 @@ import android.widget.ImageView;
 import com.cx.audio.android.StickyPlayerOptions;
 
 public final class StickyPlayerOverlayView extends FrameLayout {
+    private static final int HEIGHT_DP = 72;
+    private static final int HORIZONTAL_PADDING_DP = 12;
     private Runnable onDismissListener;
 
     public StickyPlayerOverlayView(Context context) {
@@ -30,19 +32,30 @@ public final class StickyPlayerOverlayView extends FrameLayout {
         removeAllViews();
         setContentDescription("Advertisement");
 
+        ImageView backgroundImage = new ImageView(getContext());
+        backgroundImage.setImageBitmap(bitmap);
+        backgroundImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        backgroundImage.setAlpha(0.32f);
+        addView(backgroundImage, new LayoutParams(
+                LayoutParams.MATCH_PARENT,
+                LayoutParams.MATCH_PARENT));
+
         ImageView companionImage = new ImageView(getContext());
         companionImage.setImageBitmap(bitmap);
         companionImage.setAdjustViewBounds(true);
         companionImage.setScaleType(ImageView.ScaleType.FIT_CENTER);
 
-        int imageWidthDp = companion.getWidth() > 0 && companion.getHeight() > 0
-                ? Math.round(options.getHeightDp() * (companion.getWidth() / (float) companion.getHeight()))
+        int aspectWidthDp = companion.getWidth() > 0 && companion.getHeight() > 0
+                ? Math.round(HEIGHT_DP * (companion.getWidth() / (float) companion.getHeight()))
                 : 86;
+        int imageWidthDp = Math.min(
+                Math.max(86, aspectWidthDp),
+                Math.max(86, Math.round(HEIGHT_DP * 1.35f)));
         LayoutParams imageParams = new LayoutParams(
                 Math.max(dp(56), dp(imageWidthDp)),
                 LayoutParams.MATCH_PARENT);
         imageParams.gravity = Gravity.CENTER;
-        int horizontalPadding = dp(options.getHorizontalPaddingDp());
+        int horizontalPadding = dp(HORIZONTAL_PADDING_DP);
         companionImage.setPadding(horizontalPadding, dp(6), horizontalPadding, dp(6));
         addView(companionImage, imageParams);
 

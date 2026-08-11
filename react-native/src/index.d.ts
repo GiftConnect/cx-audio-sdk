@@ -29,25 +29,60 @@ export interface VastRequest {
   vastTagUrl: string;
   connectTimeoutMs?: number;
   readTimeoutMs?: number;
-  userAgent?: string;
+}
+
+export interface ConsumableAdRequest {
+  placementHash: string;
+  placement?: CxAudioPlacement;
+  ipAddress?: string;
+  locale?: string;
+  sdkName?: string;
+  contentCategories?: string[];
+  blockedCategories?: string[];
+  blockedAdvertisers?: string[];
+  limitAdTracking?: boolean;
+  doNotTrack?: boolean;
+  appStoreUrl?: string;
+  appName?: string;
+  appVersion?: string;
+  appBundle?: string;
+  idfa?: string;
+  aid?: string;
+  gadid?: string;
+  ifa?: string;
+  keywords?: string[];
+  longitude?: number;
+  latitude?: number;
+  coppa?: boolean;
+  gdpr?: boolean;
+  gdprConsent?: string;
+  usPrivacy?: string;
+  gpp?: string;
+  gppSectionIds?: string[];
+  contentId?: string;
+  contentGenre?: string[];
+  contentTitle?: string;
+  contentDurationSeconds?: number;
+  contentUrl?: string;
 }
 
 export interface BackgroundAudioOptions {
   volume?: number;
+  minDeviceVolume?: number;
 }
 
 export interface StickyPlayerOptions {
   position?: 'top' | 'bottom';
-  heightDp?: number;
-  horizontalPaddingDp?: number;
   showCloseButton?: boolean;
+  volume?: number;
+  minDeviceVolume?: number;
 }
 
 export interface FullscreenInterstitialOptions {
   showCloseButton?: boolean;
-  companionHeightDp?: number;
-  companionMaxWidthDp?: number;
   autoPlayVideo?: boolean;
+  volume?: number;
+  minDeviceVolume?: number;
 }
 
 export declare const StickyPlayerPosition: Readonly<{
@@ -58,6 +93,11 @@ export declare const StickyPlayerPosition: Readonly<{
 export declare function addCxAudioListener(
   listener: (event: CxAudioEvent) => void
 ): CxAudioSubscription;
+
+export declare function createConsumableVastRequest(
+  request: ConsumableAdRequest,
+  networkOptions?: Omit<VastRequest, 'vastTagUrl'>
+): VastRequest;
 
 export declare const BackgroundAudio: Readonly<{
   play(request: VastRequest, options?: BackgroundAudioOptions): Promise<string>;

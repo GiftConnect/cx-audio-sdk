@@ -3,6 +3,7 @@ import Foundation
 internal struct VastDocument {
     let mediaFiles: [VastMediaFileCandidate]
     let companions: [VastCompanionCandidate]
+    let tracking: VastTracking
     let wrapperURLString: String?
 
     func bestCompanion(baseURL: URL) -> VastCompanion? {
@@ -28,12 +29,22 @@ internal struct VastDocument {
 
     func interstitialAd(baseURL: URL) -> VastInterstitialAd? {
         let mediaFile = bestInterstitialMediaFile(baseURL: baseURL)
+        let audioMediaFile = bestAudioMediaFile(baseURL: baseURL)
         let companion = bestCompanion(baseURL: baseURL)
-        guard mediaFile != nil || companion != nil else {
+        guard mediaFile != nil || audioMediaFile != nil || companion != nil else {
             return nil
         }
-        return VastInterstitialAd(mediaFile: mediaFile, companion: companion)
+        return VastInterstitialAd(
+            mediaFile: mediaFile,
+            audioMediaFile: audioMediaFile,
+            companion: companion
+        )
     }
+}
+
+internal struct VastAudioAd {
+    let mediaFile: VastMediaFile
+    let tracking: VastTracking
 }
 
 internal struct VastMediaFile {
@@ -56,6 +67,10 @@ internal struct VastMediaFile {
         matches(typePrefix: "video/", extensions: ["mp4", "m4v", "webm", "3gp"])
     }
 
+    func withURL(_ url: URL) -> VastMediaFile {
+        VastMediaFile(url: url, type: type, delivery: delivery, bitrate: bitrate, width: width, height: height)
+    }
+
     private func matches(typePrefix: String, extensions: Set<String>) -> Bool {
         if let type, type.lowercased().hasPrefix(typePrefix) {
             return true
@@ -74,7 +89,46 @@ internal struct VastCompanion {
 
 internal struct VastInterstitialAd {
     let mediaFile: VastMediaFile?
+    let audioMediaFile: VastMediaFile?
     let companion: VastCompanion?
+    let tracking: VastTracking
+
+    init(
+        mediaFile: VastMediaFile?,
+        audioMediaFile: VastMediaFile?,
+        companion: VastCompanion?,
+        tracking: VastTracking = .empty
+    ) {
+        self.mediaFile = mediaFile
+        self.audioMediaFile = audioMediaFile
+        self.companion = companion
+        self.tracking = tracking
+    }
+
+    func withLocalMedia(mediaURL: URL?, audioURL: URL?) -> VastInterstitialAd {
+        VastInterstitialAd(
+            mediaFile: mediaURL.flatMap { mediaFile?.withURL($0) } ?? mediaFile,
+            audioMediaFile: audioURL.flatMap { audioMediaFile?.withURL($0) } ?? audioMediaFile,
+            companion: companion,
+            tracking: tracking
+        )
+    }
+}
+
+internal struct VastStickyPlayerAd {
+    let mediaFile: VastMediaFile
+    let companion: VastCompanion
+    let tracking: VastTracking
+
+    init(
+        mediaFile: VastMediaFile,
+        companion: VastCompanion,
+        tracking: VastTracking = .empty
+    ) {
+        self.mediaFile = mediaFile
+        self.companion = companion
+        self.tracking = tracking
+    }
 }
 
 internal struct VastMediaFileCandidate {

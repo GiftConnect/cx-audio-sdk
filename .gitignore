@@ -3,6 +3,37 @@ build/
 */build/
 **/build/
 .idea/
+.DS_Store
+.swiftpm/
+.build/
+*.xcuserstate
+xcuserdata/
 *.iml
 local.properties
 node_modules/
+samples/flappy-ios/Pods/
+
+# Local agent and architecture guidance
+/.agents/
+/AGENTS.md
+/docs/PRIVACY_ARCHITECTURE.md
+
+# Local credentials and signing material
+.env
+.env.*
+!.env.example
+.npmrc
+.netrc
+.pypirc
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+keystore.properties
+signing.properties
+service-account*.json
+google-services.json
+GoogleService-Info.plist

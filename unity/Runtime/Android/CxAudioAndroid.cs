@@ -15,6 +15,12 @@ namespace Cx.Audio.Unity
                     throw new System.InvalidOperationException("UnityPlayer.currentActivity is unavailable.");
                 }
 
+                using (AndroidJavaClass cxAudio =
+                    new AndroidJavaClass("com.cx.audio.android.CxAudio"))
+                {
+                    cxAudio.CallStatic("initialize", activity);
+                }
+
                 return activity;
             }
         }
@@ -46,6 +52,7 @@ namespace Cx.Audio.Unity
                 }
 
                 CallBuilder(builder, "volume", options.Volume);
+                CallBuilder(builder, "minDeviceVolume", options.MinDeviceVolume);
                 return builder.Call<AndroidJavaObject>("build");
             }
             finally
@@ -73,9 +80,9 @@ namespace Cx.Audio.Unity
                     CallBuilder(builder, "position", position);
                 }
 
-                CallBuilder(builder, "heightDp", options.HeightDp);
-                CallBuilder(builder, "horizontalPaddingDp", options.HorizontalPaddingDp);
                 CallBuilder(builder, "showCloseButton", options.ShowCloseButton);
+                CallBuilder(builder, "volume", options.Volume);
+                CallBuilder(builder, "minDeviceVolume", options.MinDeviceVolume);
                 return builder.Call<AndroidJavaObject>("build");
             }
             finally
@@ -100,9 +107,9 @@ namespace Cx.Audio.Unity
                 }
 
                 CallBuilder(builder, "showCloseButton", options.ShowCloseButton);
-                CallBuilder(builder, "companionHeightDp", options.CompanionHeightDp);
-                CallBuilder(builder, "companionMaxWidthDp", options.CompanionMaxWidthDp);
                 CallBuilder(builder, "autoPlayVideo", options.AutoPlayVideo);
+                CallBuilder(builder, "volume", options.Volume);
+                CallBuilder(builder, "minDeviceVolume", options.MinDeviceVolume);
                 return builder.Call<AndroidJavaObject>("build");
             }
             finally

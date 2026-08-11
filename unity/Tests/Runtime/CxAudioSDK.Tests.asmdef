@@ -1,0 +1,14 @@
+{
+  "name": "Cx.Audio.Unity.Tests",
+  "rootNamespace": "Cx.Audio.Unity.Tests",
+  "references": [
+    "Cx.Audio.Unity"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ],
+  "autoReferenced": false
+}

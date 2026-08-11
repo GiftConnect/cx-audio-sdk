@@ -11,6 +11,8 @@ import com.cx.audio.android.FullscreenInterstitialRequest;
 import com.cx.audio.android.StickyPlayerRequest;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -20,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 
 public final class VastAdLoader {
     private static final int MAX_VAST_BYTES = 1024 * 1024;
+    private static final int MAX_CREATIVE_BYTES = 100 * 1024 * 1024;
     private static final int MAX_WRAPPER_DEPTH = 5;
     private static final VastParser VAST_PARSER = new VastParser();
 
@@ -30,8 +33,12 @@ public final class VastAdLoader {
         return loadCompanion(RequestConfig.from(request));
     }
 
-    public static VastMediaFile loadAudioMediaFile(BackgroundAudioRequest request) throws Exception {
-        return loadAudioMediaFile(RequestConfig.from(request));
+    public static VastStickyPlayerAd loadStickyPlayerAd(StickyPlayerRequest request) throws Exception {
+        return loadStickyPlayerAd(RequestConfig.from(request));
+    }
+
+    public static VastAudioAd loadAudioAd(BackgroundAudioRequest request) throws Exception {
+        return loadAudioAd(RequestConfig.from(request));
     }
 
     public static VastInterstitialAd loadInterstitial(FullscreenInterstitialRequest request) throws Exception {
@@ -67,19 +74,73 @@ public final class VastAdLoader {
         }
     }
 
+    public static File downloadMedia(Context context, String mediaUrl, BackgroundAudioRequest request)
+            throws IOException {
+        return downloadMedia(context, mediaUrl, RequestConfig.from(request));
+    }
+
+    public static File downloadMedia(Context context, String mediaUrl, StickyPlayerRequest request)
+            throws IOException {
+        return downloadMedia(context, mediaUrl, RequestConfig.from(request));
+    }
+
+    public static File downloadMedia(Context context, String mediaUrl, FullscreenInterstitialRequest request)
+            throws IOException {
+        return downloadMedia(context, mediaUrl, RequestConfig.from(request));
+    }
+
+    private static File downloadMedia(Context context, String mediaUrl, RequestConfig request)
+            throws IOException {
+        URL source = PrivacyEnforcer.enforce(new URL(mediaUrl), PrivacyRequestPurpose.CREATIVE_ASSET);
+        HttpURLConnection connection = openConnection(source, request, PrivacyRequestPurpose.CREATIVE_ASSET);
+        requireSuccessfulResponse(connection);
+        File destination = File.createTempFile("cx-audio-", suffix(source), context.getCacheDir());
+        boolean complete = false;
+        try (InputStream input = connection.getInputStream(); FileOutputStream output = new FileOutputStream(destination)) {
+            byte[] buffer = new byte[8192];
+            int total = 0;
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                total += read;
+                if (total > MAX_CREATIVE_BYTES) throw new IOException("Creative exceeded maximum size");
+                output.write(buffer, 0, read);
+            }
+            complete = true;
+            return destination;
+        } finally {
+            connection.disconnect();
+            if (!complete) destination.delete();
+        }
+    }
+
+    private static String suffix(URL source) {
+        String path = source.getPath();
+        int dot = path.lastIndexOf('.');
+        String suffix = dot >= 0 ? path.substring(dot) : ".media";
+        return suffix.length() > 10 ? ".media" : suffix;
+    }
+
     public static void openClickThrough(Context context, String clickThroughUrl) {
         if (clickThroughUrl == null || clickThroughUrl.trim().isEmpty()) {
             return;
         }
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(clickThroughUrl));
+        final URL enforced;
+        try {
+            enforced = PrivacyEnforcer.enforce(new URL(clickThroughUrl), PrivacyRequestPurpose.CLICK_THROUGH);
+        } catch (Exception blocked) {
+            return;
+        }
+        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(enforced.toString()));
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
     }
 
     private static VastCompanion loadCompanion(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
             try {
                 return VAST_PARSER.parseBestCompanion(vastXml);
             } catch (IllegalArgumentException noCompanion) {
@@ -93,13 +154,39 @@ public final class VastAdLoader {
         throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
     }
 
-    private static VastMediaFile loadAudioMediaFile(RequestConfig request) throws Exception {
+    private static VastStickyPlayerAd loadStickyPlayerAd(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
+            VastMediaFile mediaFile = parseOptionalAudioMediaFile(vastXml, currentUrl);
+            VastCompanion companion = parseOptionalCompanion(vastXml, currentUrl);
+            if (mediaFile != null && companion != null) {
+                return new VastStickyPlayerAd(mediaFile, companion, tracking);
+            }
+
+            String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
+            if (wrapperUrl == null) {
+                throw new IllegalArgumentException(
+                        "VAST response did not include both audio media and an image companion");
+            }
+            currentUrl = new URL(currentUrl, wrapperUrl);
+        }
+        throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
+    private static VastAudioAd loadAudioAd(RequestConfig request) throws Exception {
+        URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
+        for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
+            String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
             try {
                 VastMediaFile mediaFile = VAST_PARSER.parseBestAudioMediaFile(vastXml);
-                return mediaFile.withUrl(new URL(currentUrl, mediaFile.getUrl()).toString());
+                return new VastAudioAd(
+                        mediaFile.withUrl(new URL(currentUrl, mediaFile.getUrl()).toString()),
+                        tracking);
             } catch (IllegalArgumentException noMediaFile) {
                 String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
                 if (wrapperUrl == null) {
@@ -113,12 +200,15 @@ public final class VastAdLoader {
 
     private static VastInterstitialAd loadInterstitial(RequestConfig request) throws Exception {
         URL currentUrl = request.vastTagUrl;
+        VastTracking tracking = VastTracking.empty();
         for (int depth = 0; depth <= MAX_WRAPPER_DEPTH; depth++) {
             String vastXml = readUrl(currentUrl, request, MAX_VAST_BYTES);
+            tracking = tracking.merge(parseTracking(vastXml, currentUrl));
             VastMediaFile mediaFile = parseOptionalInterstitialMediaFile(vastXml, currentUrl);
+            VastMediaFile audioMediaFile = parseOptionalAudioMediaFile(vastXml, currentUrl);
             VastCompanion companion = parseOptionalCompanion(vastXml, currentUrl);
-            if (mediaFile != null || companion != null) {
-                return new VastInterstitialAd(mediaFile, companion);
+            if (mediaFile != null || audioMediaFile != null || companion != null) {
+                return new VastInterstitialAd(mediaFile, audioMediaFile, companion, tracking);
             }
 
             String wrapperUrl = VAST_PARSER.parseWrapperUrl(vastXml);
@@ -129,6 +219,16 @@ public final class VastAdLoader {
             currentUrl = new URL(currentUrl, wrapperUrl);
         }
         throw new IOException("VAST wrapper depth exceeded " + MAX_WRAPPER_DEPTH);
+    }
+
+    private static VastMediaFile parseOptionalAudioMediaFile(String vastXml, URL baseUrl)
+            throws Exception {
+        try {
+            VastMediaFile mediaFile = VAST_PARSER.parseBestAudioMediaFile(vastXml);
+            return mediaFile.withUrl(new URL(baseUrl, mediaFile.getUrl()).toString());
+        } catch (IllegalArgumentException noMediaFile) {
+            return null;
+        }
     }
 
     private static VastMediaFile parseOptionalInterstitialMediaFile(String vastXml, URL baseUrl)
@@ -152,8 +252,16 @@ public final class VastAdLoader {
         }
     }
 
+    private static VastTracking parseTracking(String vastXml, URL baseUrl) {
+        try {
+            return VAST_PARSER.parseTracking(vastXml).resolve(baseUrl);
+        } catch (Exception ignored) {
+            return VastTracking.empty();
+        }
+    }
+
     private static String readUrl(URL url, RequestConfig request, int maxBytes) throws IOException {
-        HttpURLConnection connection = openConnection(url, request);
+        HttpURLConnection connection = openConnection(url, request, PrivacyRequestPurpose.VAST_WRAPPER);
         requireSuccessfulResponse(connection);
         try (InputStream inputStream = connection.getInputStream()) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -174,16 +282,31 @@ public final class VastAdLoader {
     }
 
     private static HttpURLConnection openConnection(URL url, RequestConfig request) throws IOException {
-        URLConnection rawConnection = url.openConnection();
-        if (!(rawConnection instanceof HttpURLConnection)) {
-            throw new IOException("Unsupported URL protocol: " + url.getProtocol());
+        return openConnection(url, request, PrivacyRequestPurpose.CREATIVE_ASSET);
+    }
+
+    private static HttpURLConnection openConnection(
+            URL url, RequestConfig request, PrivacyRequestPurpose purpose) throws IOException {
+        URL current = url;
+        for (int redirects = 0; redirects <= 5; redirects++) {
+            URL enforcedUrl = PrivacyEnforcer.enforce(current, purpose);
+            URLConnection rawConnection = enforcedUrl.openConnection();
+            if (!(rawConnection instanceof HttpURLConnection)) {
+                throw new IOException("Unsupported URL protocol: " + current.getProtocol());
+            }
+            HttpURLConnection connection = (HttpURLConnection) rawConnection;
+            connection.setConnectTimeout(request.connectTimeoutMs);
+            connection.setReadTimeout(request.readTimeoutMs);
+            connection.setRequestProperty("User-Agent", request.userAgent);
+            connection.setInstanceFollowRedirects(false);
+            int status = connection.getResponseCode();
+            if (status < 300 || status >= 400) return connection;
+            String location = connection.getHeaderField("Location");
+            connection.disconnect();
+            if (location == null || location.trim().isEmpty()) throw new IOException("Redirect missing Location");
+            current = new URL(enforcedUrl, location);
         }
-        HttpURLConnection connection = (HttpURLConnection) rawConnection;
-        connection.setConnectTimeout(request.connectTimeoutMs);
-        connection.setReadTimeout(request.readTimeoutMs);
-        connection.setRequestProperty("User-Agent", request.userAgent);
-        connection.setInstanceFollowRedirects(true);
-        return connection;
+        throw new IOException("HTTP redirect depth exceeded");
     }
 
     private static void requireSuccessfulResponse(HttpURLConnection connection) throws IOException {

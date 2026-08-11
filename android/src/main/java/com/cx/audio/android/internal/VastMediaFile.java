@@ -1,5 +1,7 @@
 package com.cx.audio.android.internal;
 
+import java.util.Locale;
+
 public final class VastMediaFile {
     private final String url;
     private final String type;
@@ -53,16 +55,16 @@ public final class VastMediaFile {
         return matchesTypeOrExtension("video/", ".mp4", ".m4v", ".webm", ".3gp");
     }
 
-    VastMediaFile withUrl(String url) {
+    public VastMediaFile withUrl(String url) {
         return new VastMediaFile(url, type, delivery, bitrate, width, height);
     }
 
     private boolean matchesTypeOrExtension(String typePrefix, String... extensions) {
-        if (type != null && type.toLowerCase().startsWith(typePrefix)) {
+        if (type != null && type.toLowerCase(Locale.ROOT).startsWith(typePrefix)) {
             return true;
         }
 
-        String normalizedUrl = url.toLowerCase();
+        String normalizedUrl = url.toLowerCase(Locale.ROOT);
         int queryStart = normalizedUrl.indexOf('?');
         if (queryStart >= 0) {
             normalizedUrl = normalizedUrl.substring(0, queryStart);

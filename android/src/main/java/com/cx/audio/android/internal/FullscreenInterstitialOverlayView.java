@@ -1,13 +1,19 @@
 package com.cx.audio.android.internal;
 
+import android.annotation.TargetApi;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.WindowInsets;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -20,7 +26,13 @@ import com.cx.audio.android.FullscreenInterstitialOptions;
 import java.util.Collections;
 
 public final class FullscreenInterstitialOverlayView extends FrameLayout {
+    private static final int COMPANION_HEIGHT_DP = 250;
+    private static final int COMPANION_MAX_WIDTH_DP = 300;
+    private static final int CLOSE_BUTTON_MARGIN_DP = 12;
     private Runnable onDismissListener;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable videoProgressRunnable;
+    private View closeButton;
 
     public FullscreenInterstitialOverlayView(Context context) {
         super(context);
@@ -36,8 +48,12 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
             Bitmap companionBitmap,
             FullscreenInterstitialOptions options,
             String userAgent,
-            OnClickListener companionClickListener) {
+            OnClickListener companionClickListener,
+            VideoPlaybackListener videoPlaybackListener) {
         removeAllViews();
+        mainHandler.removeCallbacksAndMessages(null);
+        videoProgressRunnable = null;
+        closeButton = null;
 
         LinearLayout content = new LinearLayout(getContext());
         content.setOrientation(LinearLayout.VERTICAL);
@@ -46,7 +62,12 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT));
 
-        View mediaView = createMediaView(interstitialAd.getMediaFile(), mediaBitmap, options, userAgent);
+        View mediaView = createMediaView(
+                interstitialAd.getMediaFile(),
+                mediaBitmap,
+                options,
+                userAgent,
+                videoPlaybackListener);
         content.addView(mediaView, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 0,
@@ -55,38 +76,96 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         if (interstitialAd.getCompanion() != null && companionBitmap != null) {
             FrameLayout companionContainer = createCompanionView(
                     companionBitmap,
-                    options,
                     companionClickListener);
             content.addView(companionContainer, new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,
-                    dp(options.getCompanionHeightDp())));
+                    dp(COMPANION_HEIGHT_DP)));
         }
 
         if (options.shouldShowCloseButton()) {
-            ImageButton closeButton = new ImageButton(getContext());
-            closeButton.setBackgroundColor(Color.TRANSPARENT);
-            closeButton.setColorFilter(Color.WHITE);
-            closeButton.setContentDescription("Close advertisement");
-            closeButton.setImageDrawable(new CloseIconDrawable(Color.WHITE, dp(22), dp(2)));
-            closeButton.setOnClickListener(view -> dismissFromUserAction());
+            ImageButton button = new ImageButton(getContext());
+            button.setBackgroundColor(Color.TRANSPARENT);
+            button.setColorFilter(Color.WHITE);
+            button.setContentDescription("Close advertisement");
+            button.setImageDrawable(new CloseIconDrawable(Color.WHITE, dp(22), dp(2)));
+            button.setOnClickListener(view -> dismissFromUserAction());
 
             LayoutParams closeParams = new LayoutParams(dp(48), dp(48));
             closeParams.gravity = Gravity.TOP | Gravity.END;
-            closeParams.topMargin = dp(12);
-            closeParams.rightMargin = dp(12);
-            addView(closeButton, closeParams);
+            closeParams.topMargin = dp(CLOSE_BUTTON_MARGIN_DP);
+            closeParams.rightMargin = dp(CLOSE_BUTTON_MARGIN_DP);
+            addView(button, closeParams);
+            closeButton = button;
+            applyCloseButtonInsets(getRootWindowInsets());
         }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        // The overlay is attached to android.R.id.content, which spans behind the
+        // system bars in edge-to-edge hosts. Read insets from the window directly so
+        // the close button stays reachable even if a sibling view consumed them.
+        applyCloseButtonInsets(getRootWindowInsets());
+        requestApplyInsets();
+    }
+
+    @Override
+    public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+        applyCloseButtonInsets(insets);
+        return super.onApplyWindowInsets(insets);
+    }
+
+    private void applyCloseButtonInsets(WindowInsets insets) {
+        if (closeButton == null || insets == null) {
+            return;
+        }
+
+        int insetTop;
+        int insetRight;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            insetTop = systemBarInsetTop(insets);
+            insetRight = systemBarInsetRight(insets);
+        } else {
+            insetTop = insets.getSystemWindowInsetTop();
+            insetRight = insets.getSystemWindowInsetRight();
+        }
+
+        int topMargin = dp(CLOSE_BUTTON_MARGIN_DP) + insetTop;
+        int rightMargin = dp(CLOSE_BUTTON_MARGIN_DP) + insetRight;
+        LayoutParams params = (LayoutParams) closeButton.getLayoutParams();
+        if (params.topMargin == topMargin && params.rightMargin == rightMargin) {
+            return;
+        }
+
+        params.topMargin = topMargin;
+        params.rightMargin = rightMargin;
+        closeButton.setLayoutParams(params);
+    }
+
+    @TargetApi(Build.VERSION_CODES.R)
+    private static int systemBarInsetTop(WindowInsets insets) {
+        return insets.getInsets(
+                WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()).top;
+    }
+
+    @TargetApi(Build.VERSION_CODES.R)
+    private static int systemBarInsetRight(WindowInsets insets) {
+        return insets.getInsets(
+                WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()).right;
     }
 
     public void setOnDismissListener(Runnable onDismissListener) {
         this.onDismissListener = onDismissListener;
     }
 
+    @SuppressLint("SetTextI18n")
     private View createMediaView(
             VastMediaFile mediaFile,
             Bitmap mediaBitmap,
             FullscreenInterstitialOptions options,
-            String userAgent) {
+            String userAgent,
+            VideoPlaybackListener videoPlaybackListener) {
         if (mediaFile != null && mediaBitmap != null && mediaFile.isImage()) {
             ImageView imageView = new ImageView(getContext());
             imageView.setImageBitmap(mediaBitmap);
@@ -98,13 +177,38 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
 
         if (mediaFile != null && mediaFile.isVideo()) {
             VideoView videoView = new VideoView(getContext());
-            videoView.setBackgroundColor(Color.BLACK);
+            // VideoView renders decoded frames on a SurfaceView. An opaque background on
+            // the VideoView can be composited above that surface on emulators (and some
+            // devices), leaving audio playing behind a permanently black rectangle.
+            // The fullscreen overlay already supplies the desired black letterbox color.
+            videoView.setBackgroundColor(Color.TRANSPARENT);
+            videoView.setZOrderMediaOverlay(true);
             videoView.setVideoURI(
                     Uri.parse(mediaFile.getUrl()),
                     Collections.singletonMap("User-Agent", userAgent));
             if (options.shouldAutoPlayVideo()) {
-                videoView.setOnPreparedListener(player -> videoView.start());
+                videoView.setOnPreparedListener(player -> {
+                    videoView.setBackgroundColor(Color.TRANSPARENT);
+                    videoView.start();
+                    if (videoPlaybackListener != null) {
+                        videoPlaybackListener.onVideoStarted();
+                        scheduleVideoProgress(videoView, videoPlaybackListener);
+                    }
+                });
             }
+            videoView.setOnCompletionListener(player -> {
+                mainHandler.removeCallbacksAndMessages(null);
+                if (videoPlaybackListener != null) {
+                    videoPlaybackListener.onVideoCompleted();
+                }
+            });
+            videoView.setOnErrorListener((player, what, extra) -> {
+                mainHandler.removeCallbacksAndMessages(null);
+                if (videoPlaybackListener != null) {
+                    videoPlaybackListener.onVideoError(what, extra);
+                }
+                return true;
+            });
             return videoView;
         }
 
@@ -119,10 +223,9 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
 
     private FrameLayout createCompanionView(
             Bitmap companionBitmap,
-            FullscreenInterstitialOptions options,
             OnClickListener companionClickListener) {
         FrameLayout companionContainer = new FrameLayout(getContext());
-        companionContainer.setBackgroundColor(Color.rgb(18, 18, 18));
+        companionContainer.setBackgroundColor(Color.TRANSPARENT);
 
         ImageView companionImage = new ImageView(getContext());
         companionImage.setImageBitmap(companionBitmap);
@@ -133,7 +236,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         companionImage.setClickable(true);
 
         FrameLayout.LayoutParams imageParams = new FrameLayout.LayoutParams(
-                dp(options.getCompanionMaxWidthDp()),
+                dp(COMPANION_MAX_WIDTH_DP),
                 FrameLayout.LayoutParams.MATCH_PARENT);
         imageParams.gravity = Gravity.CENTER;
         companionContainer.addView(companionImage, imageParams);
@@ -141,6 +244,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
     }
 
     private void dismissFromUserAction() {
+        mainHandler.removeCallbacksAndMessages(null);
         ViewParent parent = getParent();
         if (parent instanceof ViewGroup) {
             ((ViewGroup) parent).removeView(this);
@@ -153,5 +257,36 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
     private int dp(int value) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(value * density);
+    }
+
+    private void scheduleVideoProgress(VideoView videoView, VideoPlaybackListener listener) {
+        mainHandler.removeCallbacksAndMessages(null);
+        videoProgressRunnable = new Runnable() {
+            @Override
+            public void run() {
+                if (videoView.getParent() == null) {
+                    return;
+                }
+                listener.onVideoProgress(videoView.getCurrentPosition(), videoView.getDuration());
+                mainHandler.postDelayed(this, 500);
+            }
+        };
+        mainHandler.post(videoProgressRunnable);
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        mainHandler.removeCallbacksAndMessages(null);
+        super.onDetachedFromWindow();
+    }
+
+    public interface VideoPlaybackListener {
+        void onVideoStarted();
+
+        void onVideoProgress(int currentPositionMs, int durationMs);
+
+        void onVideoCompleted();
+
+        void onVideoError(int what, int extra);
     }
 }
