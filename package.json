@@ -26,12 +26,7 @@
     "react-native/android/build.gradle",
     "react-native/android/consumer-rules.pro",
     "react-native/android/src/main",
-    "react-native/ios",
-    "samples/android/build.gradle",
-    "samples/android/src",
-    "samples/ios/CxAudioSample.xcodeproj/project.pbxproj",
-    "samples/ios/CxAudioSample.xcodeproj/xcshareddata",
-    "samples/ios/CxAudioSample"
+    "react-native/ios"
   ],
   "scripts": {
     "check:react-native": "node --check react-native/src/index.js && node --check react-native/src/consumableRequest.js && node --test react-native/test/consumableRequest.test.js"

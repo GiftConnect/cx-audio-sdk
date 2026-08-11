@@ -619,18 +619,16 @@ provides `CxAudioError`.
 
 ## Samples and validation
 
-The repository samples demonstrate the SDK as a host application:
-
-- [`samples/android`](../samples/android): all Android placements.
-- [`samples/ios`](../samples/ios): all iOS placements.
-- [Flappy Blob](../samples/flappy-ios/README.md): lifecycle triggers in a
-  game-style app.
+The Flappy Blob samples demonstrate the SDK as a host application, including
+the same game-state lifecycle triggers in [native Android](../samples/flappy-android/README.md),
+[native iOS](../samples/flappy-ios/README.md), and
+[React Native](../samples/flappy-react-native/README.md).
 
 Relevant repository checks:
 
 ```sh
 ./gradlew :android:test :android:assemble :android:lint
-./gradlew :sample-android:assembleDebug
+./gradlew :sample-flappy-android:assembleDebug
 npm run check:react-native
 ./gradlew :react-native-android:assemble :react-native-android:lint
 swift test

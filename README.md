@@ -334,38 +334,12 @@ audio](#android-background-audio), the complete [iOS guide](ios/README.md),
 | Full screen / interstitial | Supported | Supported | Supported on Android and iOS hosts | Supported on Android hosts |
 
 ## Sample Apps
-Native sample apps live under `samples/`. The Android and general iOS QA samples expose controls for testing all three placement types. Flappy Blob demonstrates placements triggered by host-app gameplay state.
 
-### Android Sample
-Android sample module: `:sample-android`
+Flappy Blob demonstrates the same gameplay-driven placement lifecycle across all supported app-integration approaches:
 
-Build the sample APK:
-
-```sh
-./gradlew :sample-android:assembleDebug
-```
-
-Open `samples/android` in Android Studio or install the debug APK on an emulator/device. The sample app lets you test:
-
-- Background audio playback and stop.
-- Sticky player render, click, and dismiss.
-- Full screen interstitial render, click, video/image playback, and dismiss.
-
-### iOS Sample
-iOS sample project: `samples/ios/CxAudioSample.xcodeproj`
-
-Open the project in Xcode, choose an iOS simulator or device, and run the `CxAudioSample` app target. The project links the local `CxAudioSDK` Swift package from the repository root.
-
-The sample app lets you test:
-
-- Background audio playback and stop.
-- Sticky player render, click, and dismiss.
-- Full screen interstitial render, click, video/image playback, and dismiss.
-
-### iOS Flappy Sample
-iOS game sample workspace: `samples/flappy-ios/CxFlappyBird.xcworkspace`
-
-See the [Flappy Blob sample integration guide](samples/flappy-ios/README.md) for direct links to its placement requests, SDK calls, listeners, lifecycle cleanup, and state policy.
+- [Native Android](samples/flappy-android/README.md): local `:android` SDK module.
+- [Native iOS](samples/flappy-ios/README.md): local `CxAudioSDK` CocoaPod.
+- [React Native](samples/flappy-react-native/README.md): local npm package with Android and iOS development builds.
 
 Build the sample app:
 
@@ -1004,10 +978,10 @@ npm run check:react-native
 node -e "JSON.parse(require('fs').readFileSync('unity/package.json', 'utf8'))"
 swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/DeviceVolumeMonitor.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
 npm --cache /tmp/cx-audio-sdk-npm-cache pack --dry-run
-./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint :sample-android:assembleDebug
+./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint :sample-flappy-android:assembleDebug
 ```
 
-These commands verify JavaScript syntax, Unity package metadata, iOS platform-neutral helper/parser/model typechecking, npm package contents, Android SDK unit tests/build/lint, React Native Android bridge build/lint, and Android sample app assembly. The Unity C# package must also be compiled in Unity because this environment does not include the Unity Editor or UnityEngine assemblies.
+These commands verify JavaScript syntax, Unity package metadata, iOS platform-neutral helper/parser/model typechecking, npm package contents, Android SDK unit tests/build/lint, React Native Android bridge build/lint, and the native Flappy Blob Android sample. The Unity C# package must also be compiled in Unity because this environment does not include the Unity Editor or UnityEngine assemblies.
 
 ### iOS Validation
 The full iOS target depends on Apple platform frameworks and must be built with full Xcode, not Command Line Tools alone. To validate it, use a macOS machine with:
@@ -1022,14 +996,13 @@ Suggested macOS checks from the repository root:
 ```sh
 xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' build
 xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' test
-xcodebuild -project samples/ios/CxAudioSample.xcodeproj -scheme CxAudioSample -destination 'platform=iOS Simulator,name=iPhone 15' build
+xcodebuild -workspace samples/flappy-ios/CxFlappyBird.xcworkspace -scheme CxFlappyBird -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
-The sample app includes a shared `CxAudioSample` scheme for command-line builds. Then run `samples/ios/CxAudioSample.xcodeproj` and smoke-test all three placements with known-good VAST tags:
+Run `samples/flappy-ios/CxFlappyBird.xcworkspace` and smoke-test its placement lifecycle with known-good VAST tags:
 
-- Background audio starts, stops, completes, and applies volume changes.
-- Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.
-- Full screen interstitial renders image or video media, shows the companion area when present, dismisses, and opens companion click-through URLs.
+- Sticky player renders while the game is idle, dismisses when play starts, and opens companion click-through URLs.
+- Full screen interstitial renders eligible image or video media after game-over transitions, dismisses, and opens companion click-through URLs.
 
 ## License
 

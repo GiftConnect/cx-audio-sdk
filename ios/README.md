@@ -251,11 +251,10 @@ Full iOS validation requires full Xcode because the package imports Apple platfo
 
 ```sh
 xcodebuild -scheme CxAudioSDK -destination 'platform=iOS Simulator,name=iPhone 15' build
-xcodebuild -project samples/ios/CxAudioSample.xcodeproj -scheme CxAudioSample -destination 'platform=iOS Simulator,name=iPhone 15' build
+xcodebuild -workspace samples/flappy-ios/CxFlappyBird.xcworkspace -scheme CxFlappyBird -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
 ```
 
-Then smoke-test all three placements in a host app with known-good VAST tags:
+Then smoke-test the Flappy Blob placement lifecycle with known-good VAST tags:
 
-- Background audio starts, stops, completes, and applies volume changes.
-- Sticky player renders at top and bottom, dismisses, and opens companion click-through URLs.
-- Full screen interstitial renders image or video media, dismisses, and opens companion click-through URLs.
+- Sticky player renders while the game is idle and dismisses when play starts.
+- Full screen interstitial renders after eligible game-over transitions and dismisses cleanly.
