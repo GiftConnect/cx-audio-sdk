@@ -3,13 +3,16 @@ package com.cx.audio.android.internal;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.WindowInsets;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -24,9 +27,11 @@ import java.util.Collections;
 public final class FullscreenInterstitialOverlayView extends FrameLayout {
     private static final int COMPANION_HEIGHT_DP = 250;
     private static final int COMPANION_MAX_WIDTH_DP = 300;
+    private static final int CLOSE_BUTTON_MARGIN_DP = 12;
     private Runnable onDismissListener;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private Runnable videoProgressRunnable;
+    private View closeButton;
 
     public FullscreenInterstitialOverlayView(Context context) {
         super(context);
@@ -47,6 +52,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         removeAllViews();
         mainHandler.removeCallbacksAndMessages(null);
         videoProgressRunnable = null;
+        closeButton = null;
 
         LinearLayout content = new LinearLayout(getContext());
         content.setOrientation(LinearLayout.VERTICAL);
@@ -76,19 +82,77 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         }
 
         if (options.shouldShowCloseButton()) {
-            ImageButton closeButton = new ImageButton(getContext());
-            closeButton.setBackgroundColor(Color.TRANSPARENT);
-            closeButton.setColorFilter(Color.WHITE);
-            closeButton.setContentDescription("Close advertisement");
-            closeButton.setImageDrawable(new CloseIconDrawable(Color.WHITE, dp(22), dp(2)));
-            closeButton.setOnClickListener(view -> dismissFromUserAction());
+            ImageButton button = new ImageButton(getContext());
+            button.setBackgroundColor(Color.TRANSPARENT);
+            button.setColorFilter(Color.WHITE);
+            button.setContentDescription("Close advertisement");
+            button.setImageDrawable(new CloseIconDrawable(Color.WHITE, dp(22), dp(2)));
+            button.setOnClickListener(view -> dismissFromUserAction());
 
             LayoutParams closeParams = new LayoutParams(dp(48), dp(48));
             closeParams.gravity = Gravity.TOP | Gravity.END;
-            closeParams.topMargin = dp(12);
-            closeParams.rightMargin = dp(12);
-            addView(closeButton, closeParams);
+            closeParams.topMargin = dp(CLOSE_BUTTON_MARGIN_DP);
+            closeParams.rightMargin = dp(CLOSE_BUTTON_MARGIN_DP);
+            addView(button, closeParams);
+            closeButton = button;
+            applyCloseButtonInsets(getRootWindowInsets());
         }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        // The overlay is attached to android.R.id.content, which spans behind the
+        // system bars in edge-to-edge hosts. Read insets from the window directly so
+        // the close button stays reachable even if a sibling view consumed them.
+        applyCloseButtonInsets(getRootWindowInsets());
+        requestApplyInsets();
+    }
+
+    @Override
+    public WindowInsets onApplyWindowInsets(WindowInsets insets) {
+        applyCloseButtonInsets(insets);
+        return super.onApplyWindowInsets(insets);
+    }
+
+    private void applyCloseButtonInsets(WindowInsets insets) {
+        if (closeButton == null || insets == null) {
+            return;
+        }
+
+        int insetTop;
+        int insetRight;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            insetTop = systemBarInsetTop(insets);
+            insetRight = systemBarInsetRight(insets);
+        } else {
+            insetTop = insets.getSystemWindowInsetTop();
+            insetRight = insets.getSystemWindowInsetRight();
+        }
+
+        int topMargin = dp(CLOSE_BUTTON_MARGIN_DP) + insetTop;
+        int rightMargin = dp(CLOSE_BUTTON_MARGIN_DP) + insetRight;
+        LayoutParams params = (LayoutParams) closeButton.getLayoutParams();
+        if (params.topMargin == topMargin && params.rightMargin == rightMargin) {
+            return;
+        }
+
+        params.topMargin = topMargin;
+        params.rightMargin = rightMargin;
+        closeButton.setLayoutParams(params);
+    }
+
+    private static int systemBarInsetTop(WindowInsets insets) {
+        return safeAreaInsets(insets).top;
+    }
+
+    private static int systemBarInsetRight(WindowInsets insets) {
+        return safeAreaInsets(insets).right;
+    }
+
+    private static Insets safeAreaInsets(WindowInsets insets) {
+        return insets.getInsets(
+                WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
     }
 
     public void setOnDismissListener(Runnable onDismissListener) {
@@ -160,7 +224,7 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
             Bitmap companionBitmap,
             OnClickListener companionClickListener) {
         FrameLayout companionContainer = new FrameLayout(getContext());
-        companionContainer.setBackgroundColor(Color.rgb(18, 18, 18));
+        companionContainer.setBackgroundColor(Color.TRANSPARENT);
 
         ImageView companionImage = new ImageView(getContext());
         companionImage.setImageBitmap(companionBitmap);

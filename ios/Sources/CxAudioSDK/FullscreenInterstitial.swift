@@ -585,7 +585,7 @@ private final class FullscreenInterstitialOverlayView: UIView {
 
     private func makeCompanionView(image: UIImage, maxWidth: CGFloat) -> UIView {
         let container = UIView()
-        container.backgroundColor = UIColor(white: 0.07, alpha: 1)
+        container.backgroundColor = .clear
 
         let imageView = UIImageView(image: image)
         imageView.contentMode = .scaleAspectFit
