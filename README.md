@@ -976,7 +976,7 @@ Run the repository checks from the root:
 ```sh
 npm run check:react-native
 node -e "JSON.parse(require('fs').readFileSync('unity/package.json', 'utf8'))"
-swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/DeviceVolumeMonitor.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
+swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/DeviceVolumeMonitor.swift ios/Sources/CxAudioSDK/Privacy.swift ios/Sources/CxAudioSDK/PrivacyEnforcement.swift ios/Sources/CxAudioSDK/PrivacyNetworkClient.swift ios/Sources/CxAudioSDK/VastModels.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastTracking.swift
 npm --cache /tmp/cx-audio-sdk-npm-cache pack --dry-run
 ./gradlew :android:test :android:assemble :android:lint :react-native-android:assemble :react-native-android:lint :sample-flappy-android:assembleDebug
 ```

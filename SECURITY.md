@@ -18,4 +18,3 @@ channel and include:
 
 Please allow the maintainers time to investigate and coordinate a release
 before publishing details.
-

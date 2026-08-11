@@ -244,7 +244,7 @@ The SDK selects an image or video `MediaFile` for the main area and adds a compa
 The platform-neutral VAST parser/model files can be typechecked from the repository root:
 
 ```sh
-swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/DeviceVolumeMonitor.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastModels.swift
+swiftc -typecheck ios/Sources/CxAudioSDK/CxAudioRequest.swift ios/Sources/CxAudioSDK/DeviceVolumeMonitor.swift ios/Sources/CxAudioSDK/Privacy.swift ios/Sources/CxAudioSDK/PrivacyEnforcement.swift ios/Sources/CxAudioSDK/PrivacyNetworkClient.swift ios/Sources/CxAudioSDK/VastModels.swift ios/Sources/CxAudioSDK/VastParser.swift ios/Sources/CxAudioSDK/VastTracking.swift
 ```
 
 Full iOS validation requires full Xcode because the package imports Apple platform frameworks such as `UIKit`, `AVFoundation`, and `AVAudioSession`:

@@ -5,6 +5,7 @@ import android.app.Activity;
 import com.cx.audio.android.AndroidFullscreenInterstitial;
 import com.cx.audio.android.AndroidStickyPlayer;
 import com.cx.audio.android.ConsumableAdRequest;
+import com.cx.audio.android.CxAudio;
 import com.cx.audio.android.FullscreenInterstitialHandle;
 import com.cx.audio.android.FullscreenInterstitialListener;
 import com.cx.audio.android.FullscreenInterstitialOptions;
@@ -27,6 +28,7 @@ final class GameAdController {
     GameAdController(Activity activity, StatusListener statusListener) {
         this.activity = activity;
         this.statusListener = statusListener;
+        CxAudio.initialize(activity);
     }
 
     void showReadySticky() {

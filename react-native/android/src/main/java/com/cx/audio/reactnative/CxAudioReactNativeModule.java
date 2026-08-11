@@ -9,6 +9,7 @@ import com.cx.audio.android.BackgroundAudioHandle;
 import com.cx.audio.android.BackgroundAudioListener;
 import com.cx.audio.android.BackgroundAudioOptions;
 import com.cx.audio.android.BackgroundAudioRequest;
+import com.cx.audio.android.CxAudio;
 import com.cx.audio.android.FullscreenInterstitialHandle;
 import com.cx.audio.android.FullscreenInterstitialListener;
 import com.cx.audio.android.FullscreenInterstitialOptions;
@@ -51,6 +52,7 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
     public CxAudioReactNativeModule(ReactApplicationContext reactContext) {
         super(reactContext);
         this.reactContext = reactContext;
+        CxAudio.initialize(reactContext);
     }
 
     @Override

@@ -11,6 +11,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -69,7 +70,12 @@ public final class PrivacyEnforcer {
     }
 
     private static void replace(List<QueryItem> items, String name, String value) {
-        items.removeIf(item -> item.name.equalsIgnoreCase(name));
+        Iterator<QueryItem> iterator = items.iterator();
+        while (iterator.hasNext()) {
+            if (iterator.next().name.equalsIgnoreCase(name)) {
+                iterator.remove();
+            }
+        }
         items.add(new QueryItem(name, value));
     }
     private static void append(List<QueryItem> items, String name, String value) {

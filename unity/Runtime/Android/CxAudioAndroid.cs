@@ -15,6 +15,12 @@ namespace Cx.Audio.Unity
                     throw new System.InvalidOperationException("UnityPlayer.currentActivity is unavailable.");
                 }
 
+                using (AndroidJavaClass cxAudio =
+                    new AndroidJavaClass("com.cx.audio.android.CxAudio"))
+                {
+                    cxAudio.CallStatic("initialize", activity);
+                }
+
                 return activity;
             }
         }

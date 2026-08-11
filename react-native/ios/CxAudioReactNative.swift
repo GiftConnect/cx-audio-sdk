@@ -15,6 +15,11 @@ final class CxAudioReactNative: RCTEventEmitter {
     private var fullscreenHandles: [String: FullscreenInterstitialHandle] = [:]
     private var fullscreenListeners: [String: FullscreenListener] = [:]
 
+    override init() {
+        super.init()
+        CxAudio.initialize()
+    }
+
     override static func requiresMainQueueSetup() -> Bool {
         true
     }

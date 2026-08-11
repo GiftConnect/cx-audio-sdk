@@ -18,5 +18,8 @@ Pod::Spec.new do |spec|
   spec.platform = :ios, "15.0"
   spec.swift_version = "5.9"
   spec.source_files = "ios/Sources/CxAudioSDK/**/*.{swift}"
+  spec.resource_bundles = {
+    "CxAudioSDK_Privacy" => ["ios/Sources/CxAudioSDK/PrivacyInfo.xcprivacy"]
+  }
   spec.frameworks = "AVFoundation", "UIKit"
 end

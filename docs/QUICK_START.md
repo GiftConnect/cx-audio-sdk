@@ -18,11 +18,10 @@ The host application owns its CMP, privacy prompts, ATT prompt, age-related
 declarations, location permission, and app-level audio policy. The SDK does
 not display consent UI.
 
-> [!IMPORTANT]
-> Automatic privacy-signal ingestion and centralized enforcement are accepted
-> architecture but are not fully implemented in this version. Complete the
-> production-readiness review in
-> [Privacy and consent](ADVANCED_USAGE.md#privacy-and-consent) before shipping.
+Initialize the SDK before the first ad request. Initialization reads supported
+standard privacy signals and starts from a restrictive state until resolution
+completes. See [Privacy and consent](ADVANCED_USAGE.md#privacy-and-consent) for
+age-related declarations and approved custom-CMP overrides.
 
 ## Install the SDK
 
@@ -54,7 +53,9 @@ terminal callback:
 
 ```java
 import android.app.Activity;
+import android.os.Bundle;
 
+import com.cx.audio.android.CxAudio;
 import com.cx.audio.android.AndroidBackgroundAudio;
 import com.cx.audio.android.BackgroundAudioHandle;
 import com.cx.audio.android.BackgroundAudioListener;
@@ -63,6 +64,12 @@ import com.cx.audio.android.BackgroundAudioRequest;
 import com.cx.audio.android.ConsumableAdRequest;
 
 public final class MainActivity extends Activity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        CxAudio.initialize(this);
+    }
+
     private BackgroundAudioHandle backgroundAd;
 
     private void playAudioAd() {
@@ -126,6 +133,10 @@ import CxAudioSDK
 
 final class AudioAdController: BackgroundAudioListener {
     private var backgroundAd: BackgroundAudioHandle?
+
+    init() {
+        CxAudio.initialize()
+    }
 
     func playAudioAd() throws {
         let adRequest = try ConsumableAdRequest(

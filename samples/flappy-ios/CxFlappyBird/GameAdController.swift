@@ -14,6 +14,8 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
             Bundle.main.object(forInfoDictionaryKey: "CXPlacementHash") as? String
             ?? ""
         self.statusHandler = statusHandler
+        super.init()
+        CxAudio.initialize()
     }
 
     func showReadySticky(in viewController: UIViewController) {

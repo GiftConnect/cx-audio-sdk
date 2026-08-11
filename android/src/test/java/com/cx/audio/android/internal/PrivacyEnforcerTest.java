@@ -49,6 +49,15 @@ public final class PrivacyEnforcerTest {
     }
 
     @Test
+    public void controlledValuesReplaceEveryPublisherSuppliedValue() throws Exception {
+        URL output = PrivacyEnforcer.enforce(
+                new URL("https://ads.example.test/vast?lmt=0&LMT=0&custom=ok"),
+                PrivacyRequestPurpose.AD_REQUEST,
+                CxPrivacyState.restrictive(0));
+        assertEquals("custom=ok&lmt=1&dnt=1", output.getQuery());
+    }
+
+    @Test
     public void clickCannotRetainPublisherSuppliedPrivacyControls() throws Exception {
         URL output = PrivacyEnforcer.enforce(
                 new URL("https://click.example.test/path?gdpr=0&gdpr_consent=secret&lmt=0&custom=ok"),

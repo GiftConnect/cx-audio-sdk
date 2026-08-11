@@ -62,9 +62,21 @@ Do not perform an external public-IP lookup on the device solely to populate
 an ad request. Prefer server-side inference or a trusted server-provided
 value.
 
+## Apple privacy manifest
+
+The iOS distribution includes `PrivacyInfo.xcprivacy`. It declares same-app
+and optional App Group `UserDefaults` access, the built-in
+`2.e.serverbid.com` tracking domain, and the SDK's conditional collection of
+host-supplied device identifiers, advertising interaction data, and privacy
+signals. Device identifiers remain prohibited unless the resolved privacy
+state and ATT permit them.
+
+Publishers that configure raw VAST URLs or additional demand partners are
+responsible for declaring any additional tracking domains and reconciling the
+SDK manifest with their complete App Store Connect privacy disclosures.
+
 ## Raw VAST tags
 
 Raw VAST URLs are supported only for QA tags or explicitly supported
 non-Consumable ad servers. Do not place user data, identifiers, consent
 strings, credentials, or secrets in a raw tag URL.
-

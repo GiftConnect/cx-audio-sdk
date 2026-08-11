@@ -10,6 +10,7 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -278,11 +279,11 @@ public final class VastParser {
 
     private static boolean isImageResource(Element staticResourceElement, String staticResourceUrl) {
         String creativeType = staticResourceElement.getAttribute("creativeType");
-        if (creativeType != null && creativeType.toLowerCase().startsWith("image/")) {
+        if (creativeType != null && creativeType.toLowerCase(Locale.ROOT).startsWith("image/")) {
             return true;
         }
 
-        String url = staticResourceUrl.toLowerCase();
+        String url = staticResourceUrl.toLowerCase(Locale.ROOT);
         int queryStart = url.indexOf('?');
         if (queryStart >= 0) {
             url = url.substring(0, queryStart);
@@ -299,11 +300,11 @@ public final class VastParser {
     }
 
     private static boolean isAudioResource(String type, String mediaFileUrl) {
-        if (type != null && type.toLowerCase().startsWith("audio/")) {
+        if (type != null && type.toLowerCase(Locale.ROOT).startsWith("audio/")) {
             return true;
         }
 
-        String url = mediaFileUrl.toLowerCase();
+        String url = mediaFileUrl.toLowerCase(Locale.ROOT);
         int queryStart = url.indexOf('?');
         if (queryStart >= 0) {
             url = url.substring(0, queryStart);
@@ -322,13 +323,13 @@ public final class VastParser {
 
     private static boolean isVisualResource(String type, String mediaFileUrl) {
         if (type != null) {
-            String normalizedType = type.toLowerCase();
+            String normalizedType = type.toLowerCase(Locale.ROOT);
             if (normalizedType.startsWith("video/") || normalizedType.startsWith("image/")) {
                 return true;
             }
         }
 
-        String url = mediaFileUrl.toLowerCase();
+        String url = mediaFileUrl.toLowerCase(Locale.ROOT);
         int queryStart = url.indexOf('?');
         if (queryStart >= 0) {
             url = url.substring(0, queryStart);
@@ -411,7 +412,7 @@ public final class VastParser {
             return null;
         }
         value = value.trim();
-        return value.isEmpty() ? null : value.toLowerCase();
+        return value.isEmpty() ? null : value.toLowerCase(Locale.ROOT);
     }
 
     private static int parseBitrate(Element mediaFileElement) {

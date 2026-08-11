@@ -75,8 +75,10 @@ one explicit command instead, use:
 ## iOS and CocoaPods Trunk
 
 `CxAudioSDK.podspec` publishes the native iOS SDK. The lowercase
-`cx-audio-sdk.podspec` is the separate React Native bridge and depends on the
-native pod at the same version.
+`cx-audio-sdk.podspec` is the React Native bridge bundled with the npm package;
+do not push it to CocoaPods Trunk. A React Native application's CocoaPods
+installation resolves that bridge locally from `node_modules`, where
+React Native also supplies its `React-Core` dependency.
 
 Validate the native pod from the repository checkout:
 
@@ -96,5 +98,23 @@ Publishing requires a registered and verified CocoaPods Trunk session. Check
 the current machine with `pod trunk me`; register it with `pod trunk register`
 when necessary.
 
-Do not publish the React Native bridge pod until its native `CxAudioSDK`
-dependency at the same version is available from Trunk.
+## React Native and npm
+
+The root `package.json` publishes the React Native bindings to npm. Its
+included `cx-audio-sdk.podspec` depends on the native `CxAudioSDK` pod at the
+same version, so publish the native CocoaPod before publishing the npm package.
+
+Inspect exactly what npm will receive:
+
+```sh
+npm run check:react-native
+npm pack --dry-run
+```
+
+After the matching release commit and tag are public and the native CocoaPod
+is available, authenticate with npm and publish:
+
+```sh
+npm whoami
+npm publish --access public
+```

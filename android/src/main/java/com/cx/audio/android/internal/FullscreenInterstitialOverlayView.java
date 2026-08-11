@@ -1,9 +1,10 @@
 package com.cx.audio.android.internal;
 
+import android.annotation.TargetApi;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Insets;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
@@ -142,23 +143,23 @@ public final class FullscreenInterstitialOverlayView extends FrameLayout {
         closeButton.setLayoutParams(params);
     }
 
+    @TargetApi(Build.VERSION_CODES.R)
     private static int systemBarInsetTop(WindowInsets insets) {
-        return safeAreaInsets(insets).top;
-    }
-
-    private static int systemBarInsetRight(WindowInsets insets) {
-        return safeAreaInsets(insets).right;
-    }
-
-    private static Insets safeAreaInsets(WindowInsets insets) {
         return insets.getInsets(
-                WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+                WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()).top;
+    }
+
+    @TargetApi(Build.VERSION_CODES.R)
+    private static int systemBarInsetRight(WindowInsets insets) {
+        return insets.getInsets(
+                WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout()).right;
     }
 
     public void setOnDismissListener(Runnable onDismissListener) {
         this.onDismissListener = onDismissListener;
     }
 
+    @SuppressLint("SetTextI18n")
     private View createMediaView(
             VastMediaFile mediaFile,
             Bitmap mediaBitmap,

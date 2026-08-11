@@ -16,7 +16,10 @@ let package = Package(
     targets: [
         .target(
             name: "CxAudioSDK",
-            path: "ios/Sources/CxAudioSDK"
+            path: "ios/Sources/CxAudioSDK",
+            resources: [
+                .process("PrivacyInfo.xcprivacy")
+            ]
         ),
         .testTarget(
             name: "CxAudioSDKTests",

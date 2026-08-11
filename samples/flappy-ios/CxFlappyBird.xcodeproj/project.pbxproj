@@ -13,13 +13,13 @@
 		FB0000000000000000000003 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000013 /* GameViewController.swift */; };
 		FB0000000000000000000004 /* FlappyGameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000014 /* FlappyGameView.swift */; };
 		FB0000000000000000000005 /* GameAdController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000015 /* GameAdController.swift */; };
-		FB0000000000000000000007 /* Assets/blobfish.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000017 /* Assets/blobfish.png */; };
-		FB0000000000000000000008 /* Assets/blobfish-smile-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000018 /* Assets/blobfish-smile-fins-up.png */; };
-		FB0000000000000000000009 /* Assets/blobfish-smile-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000019 /* Assets/blobfish-smile-fins-down.png */; };
-		FB000000000000000000000A /* Assets/blobfish-frown-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001A /* Assets/blobfish-frown-fins-up.png */; };
-		FB000000000000000000000B /* Assets/blobfish-grin-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001B /* Assets/blobfish-grin-fins-up.png */; };
-		FB000000000000000000000C /* Assets/blobfish-grin-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001C /* Assets/blobfish-grin-fins-down.png */; };
-		FB000000000000000000000D /* Assets/blobfish-crying-front.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001D /* Assets/blobfish-crying-front.png */; };
+		FB0000000000000000000007 /* blobfish.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000017 /* blobfish.png */; };
+		FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000018 /* blobfish-smile-fins-up.png */; };
+		FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB0000000000000000000019 /* blobfish-smile-fins-down.png */; };
+		FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001A /* blobfish-frown-fins-up.png */; };
+		FB000000000000000000000B /* blobfish-grin-fins-up.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001B /* blobfish-grin-fins-up.png */; };
+		FB000000000000000000000C /* blobfish-grin-fins-down.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001C /* blobfish-grin-fins-down.png */; };
+		FB000000000000000000000D /* blobfish-crying-front.png in Resources */ = {isa = PBXBuildFile; fileRef = FB000000000000000000001D /* blobfish-crying-front.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -33,13 +33,13 @@
 		FB0000000000000000000014 /* FlappyGameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlappyGameView.swift; sourceTree = "<group>"; };
 		FB0000000000000000000015 /* GameAdController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameAdController.swift; sourceTree = "<group>"; };
 		FB0000000000000000000016 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		FB0000000000000000000017 /* Assets/blobfish.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish.png; sourceTree = "<group>"; };
-		FB0000000000000000000018 /* Assets/blobfish-smile-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-up.png"; sourceTree = "<group>"; };
-		FB0000000000000000000019 /* Assets/blobfish-smile-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-down.png"; sourceTree = "<group>"; };
-		FB000000000000000000001A /* Assets/blobfish-frown-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-frown-fins-up.png"; sourceTree = "<group>"; };
-		FB000000000000000000001B /* Assets/blobfish-grin-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-up.png"; sourceTree = "<group>"; };
-		FB000000000000000000001C /* Assets/blobfish-grin-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-down.png"; sourceTree = "<group>"; };
-		FB000000000000000000001D /* Assets/blobfish-crying-front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-crying-front.png"; sourceTree = "<group>"; };
+		FB0000000000000000000017 /* blobfish.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Assets/blobfish.png; sourceTree = "<group>"; };
+		FB0000000000000000000018 /* blobfish-smile-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-up.png"; sourceTree = "<group>"; };
+		FB0000000000000000000019 /* blobfish-smile-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-smile-fins-down.png"; sourceTree = "<group>"; };
+		FB000000000000000000001A /* blobfish-frown-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-frown-fins-up.png"; sourceTree = "<group>"; };
+		FB000000000000000000001B /* blobfish-grin-fins-up.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-up.png"; sourceTree = "<group>"; };
+		FB000000000000000000001C /* blobfish-grin-fins-down.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-grin-fins-down.png"; sourceTree = "<group>"; };
+		FB000000000000000000001D /* blobfish-crying-front.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Assets/blobfish-crying-front.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,13 +90,13 @@
 				FB0000000000000000000014 /* FlappyGameView.swift */,
 				FB0000000000000000000015 /* GameAdController.swift */,
 				FB0000000000000000000016 /* Info.plist */,
-				FB0000000000000000000017 /* Assets/blobfish.png */,
-				FB0000000000000000000018 /* Assets/blobfish-smile-fins-up.png */,
-				FB0000000000000000000019 /* Assets/blobfish-smile-fins-down.png */,
-				FB000000000000000000001A /* Assets/blobfish-frown-fins-up.png */,
-				FB000000000000000000001B /* Assets/blobfish-grin-fins-up.png */,
-				FB000000000000000000001C /* Assets/blobfish-grin-fins-down.png */,
-				FB000000000000000000001D /* Assets/blobfish-crying-front.png */,
+				FB0000000000000000000017 /* blobfish.png */,
+				FB0000000000000000000018 /* blobfish-smile-fins-up.png */,
+				FB0000000000000000000019 /* blobfish-smile-fins-down.png */,
+				FB000000000000000000001A /* blobfish-frown-fins-up.png */,
+				FB000000000000000000001B /* blobfish-grin-fins-up.png */,
+				FB000000000000000000001C /* blobfish-grin-fins-down.png */,
+				FB000000000000000000001D /* blobfish-crying-front.png */,
 			);
 			path = CxFlappyBird;
 			sourceTree = "<group>";
@@ -169,13 +169,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FB0000000000000000000007 /* Assets/blobfish.png in Resources */,
-				FB0000000000000000000008 /* Assets/blobfish-smile-fins-up.png in Resources */,
-				FB0000000000000000000009 /* Assets/blobfish-smile-fins-down.png in Resources */,
-				FB000000000000000000000A /* Assets/blobfish-frown-fins-up.png in Resources */,
-				FB000000000000000000000B /* Assets/blobfish-grin-fins-up.png in Resources */,
-				FB000000000000000000000C /* Assets/blobfish-grin-fins-down.png in Resources */,
-				FB000000000000000000000D /* Assets/blobfish-crying-front.png in Resources */,
+				FB0000000000000000000007 /* blobfish.png in Resources */,
+				FB0000000000000000000008 /* blobfish-smile-fins-up.png in Resources */,
+				FB0000000000000000000009 /* blobfish-smile-fins-down.png in Resources */,
+				FB000000000000000000000A /* blobfish-frown-fins-up.png in Resources */,
+				FB000000000000000000000B /* blobfish-grin-fins-up.png in Resources */,
+				FB000000000000000000000C /* blobfish-grin-fins-down.png in Resources */,
+				FB000000000000000000000D /* blobfish-crying-front.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -212,13 +212,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-CxFlappyBird/Pods-CxFlappyBird-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

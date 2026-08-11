@@ -21,7 +21,7 @@
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CXPlacementHash</key>
-    <string>b0816e0aa072e446e7737dd92dd34d10</string>
+    <string>YOUR_PLACEMENT_HASH</string>
     <key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>
