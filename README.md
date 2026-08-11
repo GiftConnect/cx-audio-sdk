@@ -340,8 +340,10 @@ Flappy Blob demonstrates the same gameplay-driven placement lifecycle across all
 - [Native Android](samples/flappy-android/README.md): local `:android` SDK module.
 - [Native iOS](samples/flappy-ios/README.md): local `CxAudioSDK` CocoaPod.
 - [React Native](samples/flappy-react-native/README.md): local npm package with Android and iOS development builds.
+- [Unity](samples/flappy-unity/README.md): Unity Android project using the local package and native AAR.
 
-Build the sample app:
+See each sample's README for its platform setup. For example, build the native
+iOS sample with:
 
 ```sh
 xcodebuild -workspace samples/flappy-ios/CxFlappyBird.xcworkspace -scheme CxFlappyBird -destination 'generic/platform=iOS Simulator' build CODE_SIGNING_ALLOWED=NO
