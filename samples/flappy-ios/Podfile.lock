@@ -1,5 +1,5 @@
 PODS:
-  - CxAudioSDK (0.1.0)
+  - CxAudioSDK (0.1.1)
 
 DEPENDENCIES:
   - CxAudioSDK (from `../..`)
@@ -9,7 +9,7 @@ EXTERNAL SOURCES:
     :path: "../.."
 
 SPEC CHECKSUMS:
-  CxAudioSDK: 59111b4ac3c74083157e38c1b44e00ba4f271343
+  CxAudioSDK: cdea3adfdaae2a941cacc4dfa853e4d58ceae5c1
 
 PODFILE CHECKSUM: aa0ae5d689789c7cdf4d4ec4653e89c857e67929
 

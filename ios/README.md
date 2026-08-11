@@ -2,6 +2,9 @@
 
 Native iOS implementation for the CX audio ad SDK.
 
+Built by [Consumable](https://consumable.com/). View the
+[source on GitHub](https://github.com/GiftConnect/cx-audio-sdk).
+
 ## Requirements
 
 - iOS 15 or newer.
@@ -21,15 +24,8 @@ Add the Swift package from the repository root:
 
 ### CocoaPods
 
-The native `CxAudioSDK` pod contains only the iOS SDK and has no React Native
-dependency. Until the pod is published to CocoaPods Trunk, reference a local
-checkout:
-
-```ruby
-pod 'CxAudioSDK', :path => '../cx-audio-sdk'
-```
-
-After publication, use the released version:
+The native `CxAudioSDK` pod contains only the iOS SDK. Add the released version
+to the application's `Podfile`:
 
 ```ruby
 pod 'CxAudioSDK', '~> 0.1'
@@ -37,7 +33,7 @@ pod 'CxAudioSDK', '~> 0.1'
 
 ## Placements
 
-The iOS SDK exposes the same placement types as Android:
+The iOS SDK exposes three placement types:
 
 - Background audio.
 - Sticky player.
@@ -67,9 +63,8 @@ let request = try VastRequest(
 Always pass the placement that will consume the request. The SDK automatically maps background audio, sticky player, and fullscreen interstitial to the internal Consumable placement codes `1`, `2`, and `3`. Code `3` requests a video-compatible response for the interstitial renderer. This protocol value is internal and is not publisher-configurable. Omitting `placement` remains backward-compatible and defaults to `.backgroundAudio`.
 
 Normal integrations should not manually parse consent strings or retrieve
-advertising identifiers. See
-[Privacy and consent](../docs/ADVANCED_USAGE.md#privacy-and-consent) for the
-current production-readiness constraints.
+advertising identifiers. See [Privacy and consent](https://github.com/GiftConnect/cx-audio-sdk/blob/0.1.1/docs/ADVANCED_USAGE.md#privacy-and-consent)
+for the current production-readiness constraints.
 
 Use the raw VAST URL initializer for QA tags or non-Consumable ad servers:
 
@@ -80,67 +75,21 @@ let request = try VastRequest(
 )
 ```
 
-## Advertising Identifiers
+## Privacy and Consent
 
-The iOS SDK does not automatically request App Tracking Transparency permission or read IDFA. The host app must handle ATT, privacy disclosures, and App Store Connect privacy details before passing identifiers into `ConsumableAdRequest`.
+The host application owns its CMP, privacy notices, age-related declarations,
+location permission, and any App Tracking Transparency prompt. The SDK does not
+display consent UI.
 
-On iOS there is not a separate IFA API. For ad requests, acquire IDFA through Apple's `AdSupport` framework after ATT authorization, then pass that same value as both `idfa` and `ifa` if the ad endpoint expects OpenRTB-style IFA.
+The SDK reads supported standard privacy signals, resolves them conservatively,
+and sanitizes outbound requests. COPPA and underage restrictions override every
+other signal. Missing, malformed, stale, unresolved, or conflicting signals
+remain restrictive.
 
-```swift
-import AdSupport
-import AppTrackingTransparency
-
-struct AdvertisingIds {
-    let idfa: String?
-    let ifa: String?
-    let limitAdTracking: Bool
-}
-
-@MainActor
-func loadAdvertisingIds() async -> AdvertisingIds {
-    let status = ATTrackingManager.trackingAuthorizationStatus
-    let finalStatus: ATTrackingManager.AuthorizationStatus
-
-    if status == .notDetermined {
-        finalStatus = await withCheckedContinuation { continuation in
-            ATTrackingManager.requestTrackingAuthorization { status in
-                continuation.resume(returning: status)
-            }
-        }
-    } else {
-        finalStatus = status
-    }
-
-    guard finalStatus == .authorized else {
-        return AdvertisingIds(idfa: nil, ifa: nil, limitAdTracking: true)
-    }
-
-    let uuid = ASIdentifierManager.shared().advertisingIdentifier
-    guard uuid.uuidString != "00000000-0000-0000-0000-000000000000" else {
-        return AdvertisingIds(idfa: nil, ifa: nil, limitAdTracking: true)
-    }
-
-    let value = uuid.uuidString
-    return AdvertisingIds(idfa: value, ifa: value, limitAdTracking: false)
-}
-```
-
-Pass the returned values into the SDK request:
-
-```swift
-let advertisingIds = await loadAdvertisingIds()
-
-let consumableRequest = try ConsumableAdRequest(
-    placementHash: "YOUR_PLACEMENT_HASH",
-    idfa: advertisingIds.idfa,
-    ifa: advertisingIds.ifa,
-    limitAdTracking: advertisingIds.limitAdTracking
-)
-```
-
-When ATT is denied, restricted, not determined, or IDFA is all zeros, omit `idfa` and `ifa` and set `limitAdTracking: true`. Do not fall back to fingerprinting or another persistent identifier for advertising.
-
-If the host app requests ATT, it must include `NSUserTrackingUsageDescription` in its `Info.plist`.
+Explicit privacy and advertising-identifier fields are limited to custom CMP
+integrations, controlled testing, and approved enterprise cases. Do not use
+fingerprinting, IDFV, hashed email, or another persistent fallback identifier
+for advertising.
 
 ## SDK Identity, User Agent, and IP Parameters
 

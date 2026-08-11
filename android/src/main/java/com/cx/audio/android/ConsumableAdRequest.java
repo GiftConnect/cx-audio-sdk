@@ -16,7 +16,7 @@ import java.util.Map;
 public final class ConsumableAdRequest {
     private static final String DEFAULT_ENDPOINT = "https://2.e.serverbid.com/mpb/get";
     private static final String DEFAULT_SDK_NAME = "Consumable Audio";
-    private static final String SDK_VERSION = "0.1.0";
+    private static final String SDK_VERSION = "0.1.1";
 
     private final LinkedHashMap<String, String> parameters;
 

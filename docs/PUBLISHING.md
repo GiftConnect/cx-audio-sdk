@@ -7,7 +7,7 @@ be discoverable there after its indexes update.
 
 Release versions are immutable in both registries. Before releasing, update
 every repository version together, commit the release, and create a Git tag
-whose name exactly matches the version (for example, `0.1.0`). The native
+whose name exactly matches the version (for example, `0.1.1`). The native
 CocoaPod reads its source from that tag.
 
 ## Android and Maven Central
@@ -15,7 +15,7 @@ CocoaPod reads its source from that tag.
 The Android artifact coordinates are:
 
 ```text
-io.github.giftconnect:cx-audio-sdk:0.1.0
+io.github.giftconnect:cx-audio-sdk:0.1.1
 ```
 
 The `android` module uses the Gradle Maven Publish Plugin to generate the AAR,

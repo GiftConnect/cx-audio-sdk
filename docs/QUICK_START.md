@@ -26,7 +26,7 @@ age-related declarations and approved custom-CMP overrides.
 ## Install the SDK
 
 - **Android:** after the first Maven Central release, add
-  `io.github.giftconnect:cx-audio-sdk:0.1.0` from `mavenCentral()`. Until that
+  `io.github.giftconnect:cx-audio-sdk:0.1.1` from `mavenCentral()`. Until that
   release is available, add the `:android` module to the Gradle build or build
   an AAR with `./gradlew :android:assemble` and add it to the app.
 - **iOS:** add the repository root as a Swift Package and select the
