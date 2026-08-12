@@ -16,7 +16,7 @@ An SDK for mobile app developers to integrate audio ads.  Calls out to a VAST ta
 
 The shortest complete integrations are in the
 [cross-platform quick start](docs/QUICK_START.md). Replace
-`YOUR_PLACEMENT_HASH` with the placement hash supplied by Consumable. The primary flow
+`YOUR_PLACEMENT_HASH` with the placement hash supplied by [Consumable](https://www.consumable.com). The primary flow
 does not require a raw VAST URL or advertising identifier.
 
 > [!IMPORTANT]
