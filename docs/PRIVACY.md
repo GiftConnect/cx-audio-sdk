@@ -49,6 +49,12 @@ The SDK does not silently collect advertising identifiers.
 - React Native and Unity applications must obtain any permitted identifier
   through their host integration before passing it to the request.
 
+React Native hosts must call `initialize` with the correct `ageTreatment`
+before requesting ads. Standard IAB values are read by the native SDK. Use the
+typed `privacyOverride` only for custom CMP integrations, controlled testing,
+or approved enterprise integrations; clear it with `updatePrivacyOverride(null)`
+when it no longer applies.
+
 Do not substitute Android ID, IDFV for advertising, fingerprints, hashed
 email, or another persistent fallback identifier.
 

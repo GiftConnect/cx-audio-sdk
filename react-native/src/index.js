@@ -14,6 +14,13 @@ const StickyPlayerPosition = Object.freeze({
   BOTTOM: 'bottom',
 });
 
+const AgeTreatment = Object.freeze({
+  UNSPECIFIED: 'unspecified',
+  GENERAL_AUDIENCE: 'generalAudience',
+  CHILD_DIRECTED: 'childDirected',
+  UNDER_AGE_OF_CONSENT: 'underAgeOfConsent',
+});
+
 function getNativeModule() {
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
     throw new Error('cx-audio-sdk React Native bindings support Android and iOS hosts.');
@@ -37,6 +44,14 @@ function createConsumableVastRequest(request, networkOptions) {
 function addCxAudioListener(listener) {
   const nativeModule = getNativeModule();
   return new NativeEventEmitter(nativeModule).addListener(EVENT_NAME, listener);
+}
+
+function initialize(configuration) {
+  return getNativeModule().initialize(configuration || {});
+}
+
+function updatePrivacyOverride(privacyOverride) {
+  return getNativeModule().updatePrivacyOverride(privacyOverride || null);
 }
 
 const BackgroundAudio = Object.freeze({
@@ -76,8 +91,11 @@ const FullscreenInterstitial = Object.freeze({
 module.exports = {
   addCxAudioListener,
   createConsumableVastRequest,
+  initialize,
+  updatePrivacyOverride,
   BackgroundAudio,
   StickyPlayer,
   FullscreenInterstitial,
   StickyPlayerPosition,
+  AgeTreatment,
 };

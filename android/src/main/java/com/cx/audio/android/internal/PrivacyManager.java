@@ -101,10 +101,11 @@ public final class PrivacyManager implements SharedPreferences.OnSharedPreferenc
         boolean resolved = ageResolved && regionalSignalsResolved;
         CxPrivacyResolutionStatus status = ageRestricted ? CxPrivacyResolutionStatus.RESTRICTED
                 : (resolved ? CxPrivacyResolutionStatus.RESOLVED : CxPrivacyResolutionStatus.UNRESOLVED);
-        // The core does not collect GAID/AAID and has no normal API that establishes an
-        // advertising purpose for precise location, so both capabilities remain disabled.
+        // Android has no ATT-equivalent platform gate. A host-supplied advertising identifier
+        // may be forwarded only after age and regional privacy signals resolve permissively.
+        // The core still does not collect identifiers itself.
         return new CxPrivacyState(status, config.getAgeTreatment(), gdpr, usOptOut,
-                false, personalized, false, tc, additional, gpp, sids, usp,
+                personalized, personalized, false, tc, additional, gpp, sids, usp,
                 generation, resolvedAtMillis);
     }
 

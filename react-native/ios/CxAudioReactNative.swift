@@ -28,6 +28,30 @@ final class CxAudioReactNative: RCTEventEmitter {
         [eventName]
     }
 
+    @objc(initialize:resolver:rejecter:)
+    func initialize(
+        _ configurationMap: NSDictionary,
+        resolver resolve: RCTPromiseResolveBlock,
+        rejecter reject: RCTPromiseRejectBlock
+    ) {
+        do {
+            CxAudio.initialize(configuration: try makeAudioConfiguration(configurationMap))
+            resolve(nil)
+        } catch {
+            reject("E_INITIALIZE", error.localizedDescription, error)
+        }
+    }
+
+    @objc(updatePrivacyOverride:resolver:rejecter:)
+    func updatePrivacyOverride(
+        _ privacyOverrideMap: NSDictionary?,
+        resolver resolve: RCTPromiseResolveBlock,
+        rejecter reject: RCTPromiseRejectBlock
+    ) {
+        CxAudio.updatePrivacyOverride(privacyOverrideMap.map(makePrivacyOverride))
+        resolve(nil)
+    }
+
     @objc(playBackgroundAudio:options:resolver:rejecter:)
     func playBackgroundAudio(
         _ requestMap: NSDictionary,
@@ -219,6 +243,40 @@ final class CxAudioReactNative: RCTEventEmitter {
         return try VastRequest(vastTagURLString: rawURL, timeoutInterval: timeout)
     }
 
+    private func makeAudioConfiguration(_ map: NSDictionary) throws -> CxAudioConfiguration {
+        let ageTreatment: CxAgeTreatment
+        switch nonBlankString(map["ageTreatment"]) ?? "unspecified" {
+        case "unspecified":
+            ageTreatment = .unspecified
+        case "generalAudience":
+            ageTreatment = .generalAudience
+        case "childDirected":
+            ageTreatment = .childDirected
+        case "underAgeOfConsent":
+            ageTreatment = .underAgeOfConsent
+        case let value:
+            throw CxAudioError.invalidOption("Unsupported ageTreatment: \(value)")
+        }
+
+        return CxAudioConfiguration(
+            ageTreatment: ageTreatment,
+            privacyOverride: (map["privacyOverride"] as? NSDictionary).map(makePrivacyOverride)
+        )
+    }
+
+    private func makePrivacyOverride(_ map: NSDictionary) -> CxPrivacyOverride {
+        CxPrivacyOverride(
+            gdprApplies: optionalBool(map["gdprApplies"]),
+            personalizedAdsAllowed: optionalBool(map["personalizedAdsAllowed"]),
+            usPrivacyOptOut: optionalBool(map["usPrivacyOptOut"]),
+            tcfString: nonBlankString(map["tcfString"]),
+            additionalConsent: nonBlankString(map["additionalConsent"]),
+            gppString: nonBlankString(map["gppString"]),
+            gppSectionIds: (map["gppSectionIds"] as? [NSNumber])?.map(\.intValue),
+            usPrivacyString: nonBlankString(map["usPrivacyString"])
+        )
+    }
+
     private func makeBackgroundOptions(_ map: NSDictionary) -> BackgroundAudioOptions {
         BackgroundAudioOptions(
             volume: float(map["volume"], default: 0.2),
@@ -263,6 +321,10 @@ final class CxAudioReactNative: RCTEventEmitter {
 
     private func bool(_ value: Any?, default defaultValue: Bool) -> Bool {
         number(value)?.boolValue ?? defaultValue
+    }
+
+    private func optionalBool(_ value: Any?) -> Bool? {
+        number(value)?.boolValue
     }
 
     private func nonBlankString(_ value: Any?) -> String? {

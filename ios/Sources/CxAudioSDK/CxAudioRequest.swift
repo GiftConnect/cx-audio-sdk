@@ -3,7 +3,7 @@ import Foundation
 public struct ConsumableAdRequest: Equatable {
     private static let endpointURL = URL(string: "https://2.e.serverbid.com/mpb/get")!
     private static let defaultSDKName = "Consumable Audio"
-    private static let sdkVersion = "0.1.1"
+    private static let sdkVersion = "0.1.2"
 
     let parameters: [String: String]
 

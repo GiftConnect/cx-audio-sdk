@@ -60,7 +60,7 @@ Structured Consumable requests automatically include the URL-encoded SDK
 identity:
 
 - `sdk=Consumable Audio`
-- `sdkv=0.1.1`
+- `sdkv=0.1.2`
 
 The SDK version always comes from the SDK build and is not publisher
 configuration. A branded or mirrored distribution can override only the SDK
@@ -366,7 +366,7 @@ repositories {
 }
 
 dependencies {
-    implementation "io.github.giftconnect:cx-audio-sdk:0.1.1"
+    implementation "io.github.giftconnect:cx-audio-sdk:0.1.2"
 }
 ```
 
@@ -811,6 +811,31 @@ pod is published, iOS host Podfiles must also reference it locally:
 ```ruby
 pod 'CxAudioSDK', :path => '../node_modules/cx-audio-sdk'
 ```
+
+### Privacy initialization
+
+Initialize privacy before loading an ad. The SDK remains restrictive until age
+treatment and applicable regional signals resolve. Explicit overrides are for
+custom CMP integrations, controlled testing, and approved enterprise use only.
+
+```js
+import { AgeTreatment, initialize } from 'cx-audio-sdk';
+
+await initialize({
+  ageTreatment: AgeTreatment.GENERAL_AUDIENCE,
+  privacyOverride: {
+    gdprApplies: false,
+    usPrivacyOptOut: false,
+    usPrivacyString: '1YNN',
+    personalizedAdsAllowed: true,
+  },
+});
+```
+
+On iOS, ATT still gates identifiers even when an override permits personalized
+ads. On Android, only host-supplied identifiers are forwarded, and only after
+the resolved state permits personalization. Use `updatePrivacyOverride(null)`
+to clear an explicit override when consent changes.
 
 ### Events
 ```js

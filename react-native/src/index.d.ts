@@ -25,6 +25,28 @@ export interface CxAudioSubscription {
   remove(): void;
 }
 
+export type CxAgeTreatment =
+  | 'unspecified'
+  | 'generalAudience'
+  | 'childDirected'
+  | 'underAgeOfConsent';
+
+export interface CxPrivacyOverride {
+  gdprApplies?: boolean;
+  personalizedAdsAllowed?: boolean;
+  usPrivacyOptOut?: boolean;
+  tcfString?: string;
+  additionalConsent?: string;
+  gppString?: string;
+  gppSectionIds?: number[];
+  usPrivacyString?: string;
+}
+
+export interface CxAudioConfiguration {
+  ageTreatment?: CxAgeTreatment;
+  privacyOverride?: CxPrivacyOverride;
+}
+
 export interface VastRequest {
   vastTagUrl: string;
   connectTimeoutMs?: number;
@@ -89,6 +111,19 @@ export declare const StickyPlayerPosition: Readonly<{
   TOP: 'top';
   BOTTOM: 'bottom';
 }>;
+
+export declare const AgeTreatment: Readonly<{
+  UNSPECIFIED: 'unspecified';
+  GENERAL_AUDIENCE: 'generalAudience';
+  CHILD_DIRECTED: 'childDirected';
+  UNDER_AGE_OF_CONSENT: 'underAgeOfConsent';
+}>;
+
+export declare function initialize(configuration?: CxAudioConfiguration): Promise<void>;
+
+export declare function updatePrivacyOverride(
+  privacyOverride?: CxPrivacyOverride | null
+): Promise<void>;
 
 export declare function addCxAudioListener(
   listener: (event: CxAudioEvent) => void

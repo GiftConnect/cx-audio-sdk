@@ -29,16 +29,20 @@ internal enum PrivacyEnforcer {
             throw CxAudioError.invalidURL(url.absoluteString)
         }
         var items = components.queryItems ?? []
+        let requestLimitsIdentifiers = truthy(items, name: "lmt") || truthy(items, name: "dnt")
+        let requestDoNotTrack = truthy(items, name: "dnt")
+        let identifiersAllowed = state.deviceIdentifiersAllowed && !requestLimitsIdentifiers
+        let personalizedAdsAllowed = state.personalizedAdsAllowed && !requestDoNotTrack
         items = items.compactMap { item in
             let key = item.name.lowercased()
             if controlledKeys.contains(key) { return nil }
-            if !state.deviceIdentifiersAllowed && identifierKeys.contains(key) { return nil }
+            if !identifiersAllowed && identifierKeys.contains(key) { return nil }
             if !state.preciseLocationAllowed && locationKeys.contains(key) { return nil }
             return URLQueryItem(name: item.name, value: resolveMacros(item.value, state: state))
         }
         if purpose == .adRequest || purpose == .vastWrapper || purpose == .trackingBeacon {
-            set(&items, name: "lmt", value: state.deviceIdentifiersAllowed ? "0" : "1")
-            set(&items, name: "dnt", value: state.personalizedAdsAllowed ? "0" : "1")
+            set(&items, name: "lmt", value: identifiersAllowed ? "0" : "1")
+            set(&items, name: "dnt", value: personalizedAdsAllowed ? "0" : "1")
             if state.ageTreatment == .childDirected || state.ageTreatment == .underAgeOfConsent {
                 set(&items, name: "coppa", value: "1")
             }
@@ -78,5 +82,14 @@ internal enum PrivacyEnforcer {
     private static func setOptional(_ items: inout [URLQueryItem], name: String, value: String?) {
         items.removeAll { $0.name.caseInsensitiveCompare(name) == .orderedSame }
         if let value, !value.isEmpty { items.append(URLQueryItem(name: name, value: value)) }
+    }
+
+    private static func truthy(_ items: [URLQueryItem], name: String) -> Bool {
+        items.contains { item in
+            guard item.name.caseInsensitiveCompare(name) == .orderedSame,
+                  let value = item.value?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            else { return false }
+            return ["1", "true", "yes", "y"].contains(value)
+        }
     }
 }

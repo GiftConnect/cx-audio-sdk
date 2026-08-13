@@ -3,6 +3,14 @@
 
 @interface RCT_EXTERN_MODULE(CxAudioReactNative, RCTEventEmitter)
 
+RCT_EXTERN_METHOD(initialize:(NSDictionary *)configuration
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
+RCT_EXTERN_METHOD(updatePrivacyOverride:(NSDictionary * _Nullable)privacyOverride
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 RCT_EXTERN_METHOD(playBackgroundAudio:(NSDictionary *)request
                   options:(NSDictionary *)options
                   resolver:(RCTPromiseResolveBlock)resolve

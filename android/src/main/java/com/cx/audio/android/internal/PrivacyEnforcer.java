@@ -33,18 +33,22 @@ public final class PrivacyEnforcer {
         if (url == null || !"https".equalsIgnoreCase(url.getProtocol()))
             throw new MalformedURLException("Outbound SDK requests must use HTTPS");
         List<QueryItem> items = parseQuery(url.getQuery());
+        boolean requestLimitsIdentifiers = truthy(items, "lmt") || truthy(items, "dnt");
+        boolean requestDoNotTrack = truthy(items, "dnt");
+        boolean identifiersAllowed = state.isDeviceIdentifiersAllowed() && !requestLimitsIdentifiers;
+        boolean personalizedAdsAllowed = state.isPersonalizedAdsAllowed() && !requestDoNotTrack;
         List<QueryItem> output = new ArrayList<>();
         for (QueryItem item : items) {
             String lower = item.name.toLowerCase(java.util.Locale.US);
             if (CONTROLLED.contains(lower)) continue;
-            if (!state.isDeviceIdentifiersAllowed() && IDENTIFIERS.contains(lower)) continue;
+            if (!identifiersAllowed && IDENTIFIERS.contains(lower)) continue;
             if (!state.isPreciseLocationAllowed() && LOCATION.contains(lower)) continue;
             output.add(new QueryItem(item.name, macros(item.value, state)));
         }
         if (purpose == PrivacyRequestPurpose.AD_REQUEST || purpose == PrivacyRequestPurpose.VAST_WRAPPER
                 || purpose == PrivacyRequestPurpose.TRACKING_BEACON) {
-            replace(output, "lmt", state.isDeviceIdentifiersAllowed() ? "0" : "1");
-            replace(output, "dnt", state.isPersonalizedAdsAllowed() ? "0" : "1");
+            replace(output, "lmt", identifiersAllowed ? "0" : "1");
+            replace(output, "dnt", personalizedAdsAllowed ? "0" : "1");
             if (state.getAgeTreatment() == CxAgeTreatment.CHILD_DIRECTED
                     || state.getAgeTreatment() == CxAgeTreatment.UNDER_AGE_OF_CONSENT)
                 replace(output, "coppa", "1");
@@ -80,6 +84,15 @@ public final class PrivacyEnforcer {
     }
     private static void append(List<QueryItem> items, String name, String value) {
         if (value != null && !value.trim().isEmpty()) items.add(new QueryItem(name, value));
+    }
+    private static boolean truthy(List<QueryItem> items, String name) {
+        for (QueryItem item : items) {
+            if (!item.name.equalsIgnoreCase(name) || item.value == null) continue;
+            String value = item.value.trim().toLowerCase(java.util.Locale.US);
+            if ("1".equals(value) || "true".equals(value) || "yes".equals(value)
+                    || "y".equals(value)) return true;
+        }
+        return false;
     }
     private static String macros(String value, CxPrivacyState state) {
         if (value == null) return null;

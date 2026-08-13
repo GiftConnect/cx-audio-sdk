@@ -10,6 +10,9 @@ import com.cx.audio.android.BackgroundAudioListener;
 import com.cx.audio.android.BackgroundAudioOptions;
 import com.cx.audio.android.BackgroundAudioRequest;
 import com.cx.audio.android.CxAudio;
+import com.cx.audio.android.CxAgeTreatment;
+import com.cx.audio.android.CxAudioConfiguration;
+import com.cx.audio.android.CxPrivacyOverride;
 import com.cx.audio.android.FullscreenInterstitialHandle;
 import com.cx.audio.android.FullscreenInterstitialListener;
 import com.cx.audio.android.FullscreenInterstitialOptions;
@@ -24,10 +27,13 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,6 +64,27 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
     @Override
     public String getName() {
         return MODULE_NAME;
+    }
+
+    @ReactMethod
+    public void initialize(ReadableMap configurationMap, Promise promise) {
+        try {
+            CxAudio.initialize(reactContext, readAudioConfiguration(configurationMap));
+            promise.resolve(null);
+        } catch (Throwable error) {
+            promise.reject("E_INITIALIZE", error);
+        }
+    }
+
+    @ReactMethod
+    public void updatePrivacyOverride(ReadableMap privacyOverrideMap, Promise promise) {
+        try {
+            CxAudio.updatePrivacyOverride(
+                    privacyOverrideMap == null ? null : readPrivacyOverride(privacyOverrideMap));
+            promise.resolve(null);
+        } catch (Throwable error) {
+            promise.reject("E_PRIVACY_OVERRIDE", error);
+        }
     }
 
     @ReactMethod
@@ -454,6 +481,73 @@ public final class CxAudioReactNativeModule extends ReactContextBaseJavaModule {
             return StickyPlayerPosition.BOTTOM;
         }
         throw new IllegalArgumentException("position must be top or bottom");
+    }
+
+    private static CxAudioConfiguration readAudioConfiguration(ReadableMap map) {
+        CxAudioConfiguration.Builder builder = CxAudioConfiguration.builder();
+        if (hasValue(map, "ageTreatment")) {
+            builder.ageTreatment(readAgeTreatment(map.getString("ageTreatment")));
+        }
+        if (hasValue(map, "privacyOverride")) {
+            builder.privacyOverride(readPrivacyOverride(map.getMap("privacyOverride")));
+        }
+        return builder.build();
+    }
+
+    private static CxAgeTreatment readAgeTreatment(String value) {
+        if (value == null) {
+            return CxAgeTreatment.UNSPECIFIED;
+        }
+        switch (value) {
+            case "unspecified":
+                return CxAgeTreatment.UNSPECIFIED;
+            case "generalAudience":
+                return CxAgeTreatment.GENERAL_AUDIENCE;
+            case "childDirected":
+                return CxAgeTreatment.CHILD_DIRECTED;
+            case "underAgeOfConsent":
+                return CxAgeTreatment.UNDER_AGE_OF_CONSENT;
+            default:
+                throw new IllegalArgumentException("Unsupported ageTreatment: " + value);
+        }
+    }
+
+    private static CxPrivacyOverride readPrivacyOverride(ReadableMap map) {
+        CxPrivacyOverride.Builder builder = CxPrivacyOverride.builder();
+        if (hasValue(map, "gdprApplies")) {
+            builder.gdprApplies(map.getBoolean("gdprApplies"));
+        }
+        if (hasValue(map, "personalizedAdsAllowed")) {
+            builder.personalizedAdsAllowed(map.getBoolean("personalizedAdsAllowed"));
+        }
+        if (hasValue(map, "usPrivacyOptOut")) {
+            builder.usPrivacyOptOut(map.getBoolean("usPrivacyOptOut"));
+        }
+        if (hasValue(map, "tcfString")) {
+            builder.tcfString(map.getString("tcfString"));
+        }
+        if (hasValue(map, "additionalConsent")) {
+            builder.additionalConsent(map.getString("additionalConsent"));
+        }
+        if (hasValue(map, "gppString")) {
+            builder.gppString(map.getString("gppString"));
+        }
+        if (hasValue(map, "gppSectionIds")) {
+            ReadableArray ids = map.getArray("gppSectionIds");
+            List<Integer> values = new ArrayList<>();
+            if (ids != null) {
+                for (int index = 0; index < ids.size(); index++) {
+                    if (!ids.isNull(index)) {
+                        values.add(ids.getInt(index));
+                    }
+                }
+            }
+            builder.gppSectionIds(values);
+        }
+        if (hasValue(map, "usPrivacyString")) {
+            builder.usPrivacyString(map.getString("usPrivacyString"));
+        }
+        return builder.build();
     }
 
     private static String requiredString(ReadableMap map, String key) {

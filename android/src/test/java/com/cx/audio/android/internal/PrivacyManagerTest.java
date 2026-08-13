@@ -27,12 +27,12 @@ public final class PrivacyManagerTest {
     }
 
     @Test
-    public void completeRegionalSignalsCanAllowPersonalizationButNotIdentifiersOrLocation() {
+    public void completeRegionalSignalsCanAllowPersonalizationAndHostSuppliedIdentifiers() {
         Map<String, Object> values = permissiveSignals();
         CxPrivacyState state = resolve(CxAgeTreatment.GENERAL_AUDIENCE, values);
         assertEquals(CxPrivacyResolutionStatus.RESOLVED, state.getStatus());
         assertTrue(state.isPersonalizedAdsAllowed());
-        assertFalse(state.isDeviceIdentifiersAllowed());
+        assertTrue(state.isDeviceIdentifiersAllowed());
         assertFalse(state.isPreciseLocationAllowed());
     }
 
@@ -45,6 +45,19 @@ public final class PrivacyManagerTest {
         CxPrivacyState state = PrivacyManager.resolve(config, permissiveSignals(), 3, 10);
         assertEquals(CxPrivacyResolutionStatus.RESTRICTED, state.getStatus());
         assertFalse(state.isPersonalizedAdsAllowed());
+        assertFalse(state.isDeviceIdentifiersAllowed());
+    }
+
+    @Test
+    public void explicitPersonalizationDenialBlocksIdentifiers() {
+        CxAudioConfiguration config = CxAudioConfiguration.builder()
+                .ageTreatment(CxAgeTreatment.GENERAL_AUDIENCE)
+                .privacyOverride(CxPrivacyOverride.builder().personalizedAdsAllowed(false).build())
+                .build();
+        CxPrivacyState state = PrivacyManager.resolve(config, permissiveSignals(), 4, 10);
+        assertEquals(CxPrivacyResolutionStatus.RESOLVED, state.getStatus());
+        assertFalse(state.isPersonalizedAdsAllowed());
+        assertFalse(state.isDeviceIdentifiersAllowed());
     }
 
     @Test

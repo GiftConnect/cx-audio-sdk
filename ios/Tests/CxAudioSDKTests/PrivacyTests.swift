@@ -97,6 +97,35 @@ final class PrivacyTests: XCTestCase {
         XCTAssertThrowsError(try PrivacyEnforcer.enforce(input, purpose: .adRequest))
     }
 
+    func testPublisherLimitedAdTrackingCannotBeRelaxedByPermissiveState() throws {
+        let state = CxPrivacyState(
+            status: .resolved,
+            ageTreatment: .generalAudience,
+            gdprApplies: false,
+            usPrivacyOptOut: false,
+            trackingAuthorization: .authorized,
+            deviceIdentifiersAllowed: true,
+            personalizedAdsAllowed: true,
+            preciseLocationAllowed: false,
+            tcfString: nil,
+            additionalConsent: nil,
+            gppString: nil,
+            gppSectionIds: [],
+            usPrivacyString: "1YNN",
+            generation: 1,
+            resolvedAt: Date()
+        )
+        let input = try XCTUnwrap(URL(string:
+            "https://ads.example.test/vast?idfa=device&ifa=device&lmt=1"))
+        let output = try PrivacyEnforcer.enforce(input, purpose: .adRequest, state: state)
+        let items = Dictionary(uniqueKeysWithValues:
+            (URLComponents(url: output, resolvingAgainstBaseURL: false)?.queryItems ?? [])
+                .map { ($0.name, $0.value ?? "") })
+        XCTAssertNil(items["idfa"])
+        XCTAssertNil(items["ifa"])
+        XCTAssertEqual(items["lmt"], "1")
+    }
+
     func testClickCannotRetainPublisherSuppliedPrivacyControls() throws {
         let input = try XCTUnwrap(URL(string:
             "https://click.example.test/path?gdpr=0&gdpr_consent=secret&lmt=0&custom=ok"))

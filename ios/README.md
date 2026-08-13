@@ -63,7 +63,7 @@ let request = try VastRequest(
 Always pass the placement that will consume the request. The SDK automatically maps background audio, sticky player, and fullscreen interstitial to the internal Consumable placement codes `1`, `2`, and `3`. Code `3` requests a video-compatible response for the interstitial renderer. This protocol value is internal and is not publisher-configurable. Omitting `placement` remains backward-compatible and defaults to `.backgroundAudio`.
 
 Normal integrations should not manually parse consent strings or retrieve
-advertising identifiers. See [Privacy and consent](https://github.com/GiftConnect/cx-audio-sdk/blob/0.1.1/docs/ADVANCED_USAGE.md#privacy-and-consent)
+advertising identifiers. See [Privacy and consent](https://github.com/GiftConnect/cx-audio-sdk/blob/0.1.2/docs/ADVANCED_USAGE.md#privacy-and-consent)
 for the current production-readiness constraints.
 
 Use the raw VAST URL initializer for QA tags or non-Consumable ad servers:
