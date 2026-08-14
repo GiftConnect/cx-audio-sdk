@@ -5,7 +5,10 @@ import android.app.Activity;
 import com.cx.audio.android.AndroidFullscreenInterstitial;
 import com.cx.audio.android.AndroidStickyPlayer;
 import com.cx.audio.android.ConsumableAdRequest;
+import com.cx.audio.android.CxAgeTreatment;
 import com.cx.audio.android.CxAudio;
+import com.cx.audio.android.CxAudioConfiguration;
+import com.cx.audio.android.CxPrivacyOverride;
 import com.cx.audio.android.FullscreenInterstitialHandle;
 import com.cx.audio.android.FullscreenInterstitialListener;
 import com.cx.audio.android.FullscreenInterstitialOptions;
@@ -15,6 +18,10 @@ import com.cx.audio.android.StickyPlayerListener;
 import com.cx.audio.android.StickyPlayerOptions;
 import com.cx.audio.android.StickyPlayerPosition;
 import com.cx.audio.android.StickyPlayerRequest;
+import com.google.android.gms.ads.identifier.AdvertisingIdClient;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 final class GameAdController {
     interface StatusListener { void onStatus(String status); }
@@ -24,15 +31,27 @@ final class GameAdController {
     private StickyPlayerHandle stickyHandle;
     private FullscreenInterstitialHandle interstitialHandle;
     private Runnable interstitialFinished;
+    private final ExecutorService identityExecutor = Executors.newSingleThreadExecutor();
+    private String advertisingId;
+    private boolean privacyResolutionComplete;
+    private volatile boolean destroyed;
+    private boolean pendingReadySticky;
+    private Runnable pendingInterstitialFinished;
 
     GameAdController(Activity activity, StatusListener statusListener) {
         this.activity = activity;
         this.statusListener = statusListener;
-        CxAudio.initialize(activity);
+        CxAudio.initialize(activity, configuration(false));
+        resolveAdvertisingIdentity();
     }
 
     void showReadySticky() {
         if (stickyHandle != null || interstitialHandle != null) return;
+        if (!privacyResolutionComplete) {
+            pendingReadySticky = true;
+            status("Ready-screen ad waiting for privacy resolution");
+            return;
+        }
         try {
             stickyHandle = AndroidStickyPlayer.show(
                     activity,
@@ -48,6 +67,7 @@ final class GameAdController {
     }
 
     void dismissReadySticky() {
+        pendingReadySticky = false;
         StickyPlayerHandle handle = stickyHandle;
         stickyHandle = null;
         if (handle != null) handle.dismiss();
@@ -55,6 +75,11 @@ final class GameAdController {
 
     void showInterstitial(Runnable onFinished) {
         dismissReadySticky();
+        if (!privacyResolutionComplete) {
+            pendingInterstitialFinished = onFinished;
+            status("Interstitial waiting for privacy resolution");
+            return;
+        }
         if (interstitialHandle != null) {
             Runnable existing = interstitialFinished;
             interstitialFinished = () -> { if (existing != null) existing.run(); onFinished.run(); };
@@ -76,10 +101,19 @@ final class GameAdController {
 
     void stop() {
         dismissReadySticky();
+        Runnable pendingFinished = pendingInterstitialFinished;
+        pendingInterstitialFinished = null;
         FullscreenInterstitialHandle handle = interstitialHandle;
         interstitialHandle = null;
         if (handle != null) handle.dismiss();
         finishInterstitial("Ads stopped");
+        if (pendingFinished != null) pendingFinished.run();
+    }
+
+    void destroy() {
+        destroyed = true;
+        stop();
+        identityExecutor.shutdownNow();
     }
 
     private ConsumableAdRequest request() {
@@ -87,13 +121,77 @@ final class GameAdController {
         if (placementHash.isEmpty() || "YOUR_PLACEMENT_HASH".equals(placementHash)) {
             throw new IllegalStateException("Set -PcxPlacementHash before requesting an ad");
         }
-        return ConsumableAdRequest.builder(placementHash)
-                .limitAdTracking(true)
+        String permittedId = CxAudio.getPrivacyState().isDeviceIdentifiersAllowed()
+                ? advertisingId : null;
+        ConsumableAdRequest.Builder builder = ConsumableAdRequest.builder(placementHash)
+                .limitAdTracking(permittedId == null)
                 .appName("Flappy Blob")
                 .appBundle(activity.getPackageName())
                 .contentGenre("game")
-                .contentTitle("Flappy Blob")
+                .contentTitle("Flappy Blob");
+        if (permittedId != null) builder.gadid(permittedId).ifa(permittedId);
+        return builder.build();
+    }
+
+    private void resolveAdvertisingIdentity() {
+        identityExecutor.execute(() -> {
+            String resolvedId = null;
+            try {
+                AdvertisingIdClient.Info info = AdvertisingIdClient.getAdvertisingIdInfo(activity);
+                if (info != null && !info.isLimitAdTrackingEnabled()) {
+                    resolvedId = usableAdvertisingId(info.getId());
+                }
+            } catch (Throwable ignored) {
+                // Missing Play services, deleted IDs, and restricted access all fail closed.
+            }
+            String finalId = resolvedId;
+            activity.runOnUiThread(() -> {
+                if (destroyed) return;
+                advertisingId = finalId;
+                if (BuildConfig.DEBUG) {
+                    CxAudio.updatePrivacyOverride(qaPrivacyOverride(advertisingId != null));
+                }
+                privacyResolutionComplete = true;
+                resumePendingAdRequest();
+            });
+        });
+    }
+
+    private void resumePendingAdRequest() {
+        if (pendingInterstitialFinished != null) {
+            Runnable finished = pendingInterstitialFinished;
+            pendingInterstitialFinished = null;
+            showInterstitial(finished);
+            return;
+        }
+        if (pendingReadySticky) {
+            pendingReadySticky = false;
+            showReadySticky();
+        }
+    }
+
+    private CxAudioConfiguration configuration(boolean personalizedAdsAllowed) {
+        CxAudioConfiguration.Builder builder = CxAudioConfiguration.builder()
+                .ageTreatment(CxAgeTreatment.GENERAL_AUDIENCE);
+        if (BuildConfig.DEBUG) builder.privacyOverride(qaPrivacyOverride(personalizedAdsAllowed));
+        return builder.build();
+    }
+
+    private CxPrivacyOverride qaPrivacyOverride(boolean personalizedAdsAllowed) {
+        return CxPrivacyOverride.builder()
+                .gdprApplies(false)
+                .personalizedAdsAllowed(personalizedAdsAllowed)
+                .usPrivacyOptOut(false)
+                .usPrivacyString("1YNN")
                 .build();
+    }
+
+    private static String usableAdvertisingId(String value) {
+        if (value == null) return null;
+        String normalized = value.trim();
+        if (normalized.isEmpty()
+                || "00000000-0000-0000-0000-000000000000".equals(normalized)) return null;
+        return normalized;
     }
 
     private final StickyPlayerListener stickyListener = new StickyPlayerListener() {

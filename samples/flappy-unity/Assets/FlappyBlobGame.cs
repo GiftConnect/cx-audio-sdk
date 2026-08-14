@@ -20,6 +20,10 @@ public sealed class FlappyBlobGame : MonoBehaviour, IStickyPlayerListener, IFull
     private const float LongSessionInterval = 180f;
 
     [SerializeField] private string placementHash = PlaceholderHash;
+    [Header("Debug QA advertising identity")]
+    [Tooltip("QA only: a host-supplied GAID/AAID collected after the applicable consent flow.")]
+    [SerializeField] private string advertisingId = "";
+    [SerializeField] private bool advertisingIdentifierAllowed;
 
     private readonly List<Pipe> pipes = new List<Pipe>();
     private GameState state = GameState.Ready;
@@ -62,8 +66,8 @@ public sealed class FlappyBlobGame : MonoBehaviour, IStickyPlayerListener, IFull
     {
         Application.targetFrameRate = 60;
         sessionStartedAt = Time.realtimeSinceStartup;
+        InitializeAds();
         CreateTextures();
-        CreateStyles();
     }
 
     private void Start()
@@ -217,13 +221,46 @@ public sealed class FlappyBlobGame : MonoBehaviour, IStickyPlayerListener, IFull
             throw new InvalidOperationException("Set Placement Hash on the FlappyBlobGame component.");
         }
 
+        string permittedId = PermittedAdvertisingId();
         ConsumableAdRequest request = new ConsumableAdRequest(placementHash)
-            .LimitAdTracking(true)
+            .LimitAdTracking(permittedId == null)
             .AppName("Flappy Blob Unity")
             .AppBundle(Application.identifier)
             .ContentGenre("game")
             .ContentTitle("Flappy Blob");
+        if (permittedId != null)
+        {
+            request.Gadid(permittedId).Ifa(permittedId);
+        }
         return new VastRequest(request, placement);
+    }
+
+    private void InitializeAds()
+    {
+        string permittedId = PermittedAdvertisingId();
+        CxAudioConfiguration configuration = new CxAudioConfiguration
+        {
+            AgeTreatment = CxAgeTreatment.GeneralAudience
+        };
+        if (Debug.isDebugBuild)
+        {
+            configuration.PrivacyOverride = new CxPrivacyOverride
+            {
+                GdprApplies = false,
+                PersonalizedAdsAllowed = permittedId != null,
+                UsPrivacyOptOut = false,
+                UsPrivacyString = "1YNN"
+            };
+        }
+        CxAudio.Initialize(configuration);
+        adStatus = permittedId == null ? "Ad ready (limited tracking)" : "Ad ready";
+    }
+
+    private string PermittedAdvertisingId()
+    {
+        if (!advertisingIdentifierAllowed || string.IsNullOrWhiteSpace(advertisingId)) return null;
+        string normalized = advertisingId.Trim();
+        return normalized == "00000000-0000-0000-0000-000000000000" ? null : normalized;
     }
 
     private void ShowSticky()
@@ -412,6 +449,11 @@ public sealed class FlappyBlobGame : MonoBehaviour, IStickyPlayerListener, IFull
 
     private void OnGUI()
     {
+        if (titleStyle == null)
+        {
+            CreateStyles();
+        }
+
         float scale = Screen.width / WorldWidth;
         float height = Screen.height / scale;
         Matrix4x4 previous = GUI.matrix;

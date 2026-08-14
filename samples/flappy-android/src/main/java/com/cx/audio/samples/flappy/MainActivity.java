@@ -44,8 +44,8 @@ public final class MainActivity extends Activity implements FlappyGameView.Liste
     @Override
     protected void onCreate(Bundle state) {
         super.onCreate(state);
-        ads = new GameAdController(this, status -> adStatusView.setText(status));
         setContentView(buildContent());
+        ads = new GameAdController(this, status -> adStatusView.setText(status));
         gameView.setListener(this);
         gameView.reset();
     }
@@ -62,6 +62,7 @@ public final class MainActivity extends Activity implements FlappyGameView.Liste
     }
 
     @Override protected void onDestroy() {
+        ads.destroy();
         gameView.stop();
         super.onDestroy();
     }

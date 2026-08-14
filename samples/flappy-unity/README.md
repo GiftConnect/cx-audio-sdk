@@ -19,7 +19,11 @@ runtime, so the project has no duplicated binary assets.
 5. Open `Assets/Scenes/FlappyBlob.unity`.
 6. Select the `FlappyBlobGame` object and replace `YOUR_PLACEMENT_HASH` in the
    Inspector with a CX test placement hash.
-7. Switch the build target to Android and build or run the included scene.
+7. For this controlled QA sample only, after the applicable consent flow
+   permits identifier use, supply its GAID/AAID in `Advertising Id` and enable
+   `Advertising Identifier Allowed`. Leave both unset for limited tracking and
+   do not ship a hard-coded identifier.
+8. Switch the build target to Android and build or run the included scene.
 
 The game itself runs in the Editor, but the ad bridge intentionally runs only
 in an Android player build.
@@ -35,6 +39,8 @@ in an Android player build.
 - Handles are dismissed and disposed when the application pauses or the game
   object is destroyed.
 
-The sample intentionally omits advertising identifiers and requests limited
-ad tracking. Production hosts own their CMP and privacy UI; see
-[`../../docs/PRIVACY.md`](../../docs/PRIVACY.md).
+The SDK does not collect the identifier or show consent UI. Production hosts
+must obtain the GAID/AAID through their consent and identity integration, then
+initialize the SDK before requesting an ad. The debug-only regional override
+in this sample exists for the QA placement; release builds rely on standard
+privacy signals. See [`../../docs/PRIVACY.md`](../../docs/PRIVACY.md).

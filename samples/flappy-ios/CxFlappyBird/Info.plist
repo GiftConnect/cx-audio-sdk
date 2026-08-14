@@ -22,6 +22,8 @@
     <string>1</string>
     <key>CXPlacementHash</key>
     <string>YOUR_PLACEMENT_HASH</string>
+    <key>NSUserTrackingUsageDescription</key>
+    <string>Allow tracking so Flappy Blob can request personalized test ads.</string>
     <key>UIApplicationSceneManifest</key>
     <dict>
         <key>UIApplicationSupportsMultipleScenes</key>

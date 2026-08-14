@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AppState,
+  Platform,
   Pressable,
   SafeAreaView,
   StatusBar,
@@ -9,9 +10,15 @@ import {
   View,
 } from 'react-native';
 import {
+  getAdvertisingId,
+  requestTrackingPermissionsAsync,
+} from 'expo-tracking-transparency';
+import {
+  AgeTreatment,
   addCxAudioListener,
   createConsumableVastRequest,
   FullscreenInterstitial,
+  initialize as initializeCxAudio,
   StickyPlayer,
   StickyPlayerPosition,
 } from 'cx-audio-sdk';
@@ -26,7 +33,13 @@ const BIRD_RADIUS = 20;
 const GRAVITY = 1050;
 const PLACEMENT_HASH = process.env.EXPO_PUBLIC_CX_PLACEMENT_HASH || 'YOUR_PLACEMENT_HASH';
 
-function buildRequest(placement) {
+function usableAdvertisingId(value) {
+  return typeof value === 'string'
+    && value.trim().length > 0
+    && value.toLowerCase() !== '00000000-0000-0000-0000-000000000000';
+}
+
+function buildRequest(placement, advertisingId) {
   if (!PLACEMENT_HASH.trim() || PLACEMENT_HASH === 'YOUR_PLACEMENT_HASH') {
     throw new Error('Set EXPO_PUBLIC_CX_PLACEMENT_HASH before requesting an ad');
   }
@@ -34,7 +47,10 @@ function buildRequest(placement) {
     {
       placementHash: PLACEMENT_HASH,
       placement,
-      limitAdTracking: true,
+      limitAdTracking: !advertisingId,
+      idfa: Platform.OS === 'ios' ? advertisingId : undefined,
+      gadid: Platform.OS === 'android' ? advertisingId : undefined,
+      ifa: advertisingId,
       appName: 'Flappy Blob RN',
       appBundle: 'com.cx.audio.samples.flappyreactnative',
       contentGenre: ['game'],
@@ -48,8 +64,12 @@ function useGameAds(unlockReplay) {
   const [status, setStatus] = useState('Ad idle');
   const stickyHandle = useRef(null);
   const interstitialHandle = useRef(null);
+  const privacy = useRef({ ready: false, advertisingId: null });
+  const pendingSticky = useRef(false);
+  const pendingInterstitial = useRef(false);
 
   const dismissSticky = useCallback(async () => {
+    pendingSticky.current = false;
     const handle = stickyHandle.current;
     stickyHandle.current = null;
     if (handle) {
@@ -59,10 +79,16 @@ function useGameAds(unlockReplay) {
 
   const showSticky = useCallback(async () => {
     if (stickyHandle.current || interstitialHandle.current) return;
+    if (!privacy.current.ready) {
+      pendingSticky.current = true;
+      setStatus('Waiting for privacy settings');
+      return;
+    }
+    pendingSticky.current = false;
     try {
       setStatus('Ready-screen ad loading');
       stickyHandle.current = await StickyPlayer.show(
-        buildRequest('stickyPlayer'),
+        buildRequest('stickyPlayer', privacy.current.advertisingId),
         { position: StickyPlayerPosition.BOTTOM, showCloseButton: true, volume: 0.14, minDeviceVolume: 0 }
       );
     } catch (error) {
@@ -74,10 +100,16 @@ function useGameAds(unlockReplay) {
   const showInterstitial = useCallback(async () => {
     await dismissSticky();
     if (interstitialHandle.current) return;
+    if (!privacy.current.ready) {
+      pendingInterstitial.current = true;
+      setStatus('Waiting for privacy settings');
+      return;
+    }
+    pendingInterstitial.current = false;
     try {
       setStatus('Interstitial loading');
       interstitialHandle.current = await FullscreenInterstitial.show(
-        buildRequest('fullscreenInterstitial'),
+        buildRequest('fullscreenInterstitial', privacy.current.advertisingId),
         { showCloseButton: true, autoPlayVideo: true, volume: 0.18, minDeviceVolume: 0 }
       );
     } catch (error) {
@@ -88,6 +120,8 @@ function useGameAds(unlockReplay) {
   }, [dismissSticky, unlockReplay]);
 
   const stop = useCallback(async () => {
+    pendingSticky.current = false;
+    pendingInterstitial.current = false;
     await dismissSticky();
     const handle = interstitialHandle.current;
     interstitialHandle.current = null;
@@ -96,6 +130,52 @@ function useGameAds(unlockReplay) {
     }
     unlockReplay();
   }, [dismissSticky, unlockReplay]);
+
+  useEffect(() => {
+    let active = true;
+
+    const resolvePrivacy = async () => {
+      let advertisingId = null;
+      try {
+        const { status: trackingStatus } = await requestTrackingPermissionsAsync();
+        const candidate = trackingStatus === 'granted' ? getAdvertisingId() : null;
+        advertisingId = usableAdvertisingId(candidate) ? candidate : null;
+      } catch (_) {
+        // Missing or unresolved permission and identifier state stays restrictive.
+      }
+
+      const configuration = { ageTreatment: AgeTreatment.GENERAL_AUDIENCE };
+      if (__DEV__) {
+        // QA placement inventory is region-specific. Production apps should rely
+        // on CMP/standard signals instead of supplying this regional override.
+        configuration.privacyOverride = {
+          gdprApplies: false,
+          personalizedAdsAllowed: Boolean(advertisingId),
+          usPrivacyOptOut: false,
+          usPrivacyString: '1YNN',
+        };
+      }
+      await initializeCxAudio(configuration);
+
+      if (!active) return;
+      privacy.current = { ready: true, advertisingId };
+      if (pendingInterstitial.current) {
+        showInterstitial();
+      } else if (pendingSticky.current) {
+        showSticky();
+      } else {
+        setStatus(advertisingId ? 'Ad ready' : 'Ad ready (limited tracking)');
+      }
+    };
+
+    resolvePrivacy().catch((error) => {
+      if (!active) return;
+      privacy.current = { ready: true, advertisingId: null };
+      setStatus(`Privacy initialization failed: ${error.message}`);
+      unlockReplay();
+    });
+    return () => { active = false; };
+  }, [showInterstitial, showSticky, unlockReplay]);
 
   useEffect(() => {
     const subscription = addCxAudioListener((event) => {

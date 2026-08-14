@@ -16,4 +16,10 @@ The first platform run generates the native project through Expo prebuild. The l
 
 The placement policy matches the native samples: one delayed ready-screen sticky placement, no new placements during play, and frequency-capped post-game fullscreen interstitials that lock replay until terminal callbacks.
 
-The sample intentionally omits advertising identifiers and sets limited-ad-tracking. Production hosts own their CMP/privacy UI and should not copy this fixed sample value as a production consent decision. See [`../../docs/PRIVACY.md`](../../docs/PRIVACY.md).
+The sample requests the platform tracking permission, rejects unavailable or
+all-zero advertising identifiers, and waits for privacy initialization before
+loading an ad. It passes an authorized ID as IDFA/GAID and IFA; otherwise it
+requests limited tracking. The regional override is debug-only for the QA
+placement. Production hosts own their CMP/privacy UI and should rely on the
+applicable standard signals. See
+[`../../docs/PRIVACY.md`](../../docs/PRIVACY.md).

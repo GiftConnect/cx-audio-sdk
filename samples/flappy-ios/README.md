@@ -99,8 +99,20 @@ xcodebuild \
 
 ## Production Privacy Note
 
-This sample deliberately omits advertising identifiers and sets
-`limitAdTracking: true`. A production host app must collect consent through
-its own CMP or privacy UI and pass only privacy and identifier values permitted
-by the resolved state. Do not treat the sample's fixed privacy values as
-production defaults. See [Privacy and consent](../../docs/PRIVACY.md).
+This sample requests App Tracking Transparency authorization and uses IDFA only
+when authorization succeeds and the identifier is nonzero. Otherwise it sets
+`limitAdTracking: true` and omits the identifier. The explicit regional privacy
+override is compiled only into debug builds for controlled local QA; release
+builds rely on standard host-provided privacy signals. Ad loading waits until
+the ATT choice resolves so the first request does not incorrectly go out as a
+limited-tracking request while the prompt is still visible.
+
+iOS Simulator commonly returns an all-zero IDFA. In that case the sample
+correctly remains in limited-tracking mode, and a demand source that has no
+non-personalized inventory can still return an empty VAST response. Use a real
+device with ATT allowed to validate the personalized test-ad path.
+
+A production host app must collect consent through its own CMP or privacy UI
+and pass only privacy and identifier values permitted by the resolved state. Do
+not copy the sample's debug-only override into production. See
+[Privacy and consent](../../docs/PRIVACY.md).

@@ -14,6 +14,12 @@
     },
     "plugins": [
       "expo-dev-client",
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Allow Flappy Blob to use a device advertising identifier to request and measure ads."
+        }
+      ],
       "./plugins/withCxAudioSdk"
     ]
   }

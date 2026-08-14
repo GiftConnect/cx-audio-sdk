@@ -1,6 +1,12 @@
 import CxAudioSDK
 import Foundation
 import UIKit
+#if canImport(AdSupport)
+import AdSupport
+#endif
+#if canImport(AppTrackingTransparency)
+import AppTrackingTransparency
+#endif
 
 final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPlayerListener {
     private let placementHash: String
@@ -8,6 +14,11 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
     private var interstitialHandle: FullscreenInterstitialHandle?
     private var stickyHandle: StickyPlayerHandle?
     private var interstitialFinishHandler: (() -> Void)?
+    private var advertisingIdentifier: String?
+    private var privacyResolutionComplete = false
+    private weak var pendingReadyViewController: UIViewController?
+    private weak var pendingInterstitialViewController: UIViewController?
+    private var pendingInterstitialFinishHandler: (() -> Void)?
 
     init(statusHandler: @escaping (String) -> Void) {
         placementHash =
@@ -15,11 +26,31 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
             ?? ""
         self.statusHandler = statusHandler
         super.init()
-        CxAudio.initialize()
+        #if DEBUG
+        CxAudio.initialize(
+            configuration: .init(
+                ageTreatment: .generalAudience,
+                privacyOverride: .init(
+                    gdprApplies: false,
+                    personalizedAdsAllowed: false,
+                    usPrivacyOptOut: false,
+                    usPrivacyString: "1YNN"
+                )
+            )
+        )
+        #else
+        CxAudio.initialize(configuration: .init(ageTreatment: .generalAudience))
+        #endif
+        requestAdvertisingIdentifier()
     }
 
     func showReadySticky(in viewController: UIViewController) {
         guard stickyHandle == nil, interstitialHandle == nil else {
+            return
+        }
+        guard privacyResolutionComplete else {
+            pendingReadyViewController = viewController
+            statusHandler("Ready-screen ad waiting for privacy choice")
             return
         }
 
@@ -43,6 +74,7 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
     }
 
     func dismissReadySticky() {
+        pendingReadyViewController = nil
         let activeHandle = stickyHandle
         stickyHandle = nil
         activeHandle?.dismiss()
@@ -50,6 +82,13 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
 
     func showInterstitial(from viewController: UIViewController, onFinished: @escaping () -> Void) {
         dismissReadySticky()
+
+        guard privacyResolutionComplete else {
+            pendingInterstitialViewController = viewController
+            pendingInterstitialFinishHandler = onFinished
+            statusHandler("Interstitial waiting for privacy choice")
+            return
+        }
 
         if interstitialHandle != nil {
             appendInterstitialFinishHandler(onFinished)
@@ -83,11 +122,15 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
 
     func stop() {
         dismissReadySticky()
+        pendingInterstitialViewController = nil
+        let pendingFinishHandler = pendingInterstitialFinishHandler
+        pendingInterstitialFinishHandler = nil
 
         let activeInterstitial = interstitialHandle
         interstitialHandle = nil
         activeInterstitial?.dismiss()
         finishInterstitial(status: "Ads stopped")
+        pendingFinishHandler?()
     }
 
     func fullscreenInterstitialDidLoad(_ handle: FullscreenInterstitialHandle) {
@@ -151,11 +194,28 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
                 "Set CXPlacementHash in Info.plist before requesting an ad"
             )
         }
+        let permittedIdentifier = CxAudio.privacyState.deviceIdentifiersAllowed
+            ? advertisingIdentifier
+            : nil
+        #if DEBUG
+        let privacyState = CxAudio.privacyState
+        print(
+            "[CxFlappyBird] Request placement=\(placement) "
+                + "privacyStatus=\(privacyState.status.rawValue) "
+                + "att=\(privacyState.trackingAuthorization.rawValue) "
+                + "usableIDFA=\(advertisingIdentifier != nil) "
+                + "identifiersAllowed=\(privacyState.deviceIdentifiersAllowed) "
+                + "personalizedAds=\(privacyState.personalizedAdsAllowed) "
+                + "lmt=\(permittedIdentifier == nil ? 1 : 0)"
+        )
+        #endif
         let consumableRequest = try ConsumableAdRequest(
             placementHash: placementHash,
-            limitAdTracking: true,
+            limitAdTracking: permittedIdentifier == nil,
             appName: "Flappy Blob",
             appBundle: Bundle.main.bundleIdentifier,
+            idfa: permittedIdentifier,
+            ifa: permittedIdentifier,
             contentGenre: ["game"],
             contentTitle: "Flappy Blob"
         )
@@ -164,6 +224,68 @@ final class GameAdController: NSObject, FullscreenInterstitialListener, StickyPl
             placement: placement,
             timeoutInterval: 8
         )
+    }
+
+    private func requestAdvertisingIdentifier() {
+        #if canImport(AdSupport) && canImport(AppTrackingTransparency)
+        ATTrackingManager.requestTrackingAuthorization { [weak self] status in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                let identifier = status == .authorized
+                    ? ASIdentifierManager.shared().advertisingIdentifier.uuidString
+                    : nil
+                self.advertisingIdentifier = Self.usableAdvertisingIdentifier(identifier)
+                #if DEBUG
+                CxAudio.updatePrivacyOverride(
+                    .init(
+                        gdprApplies: false,
+                        personalizedAdsAllowed: self.advertisingIdentifier != nil,
+                        usPrivacyOptOut: false,
+                        usPrivacyString: "1YNN"
+                    )
+                )
+                #endif
+                #if DEBUG
+                let privacyState = CxAudio.privacyState
+                print(
+                    "[CxFlappyBird] ATT resolved status=\(status.rawValue) "
+                        + "usableIDFA=\(self.advertisingIdentifier != nil) "
+                        + "privacyStatus=\(privacyState.status.rawValue) "
+                        + "identifiersAllowed=\(privacyState.deviceIdentifiersAllowed) "
+                        + "personalizedAds=\(privacyState.personalizedAdsAllowed)"
+                )
+                #endif
+                self.privacyResolutionComplete = true
+                self.resumePendingAdRequest()
+            }
+        }
+        #else
+        privacyResolutionComplete = true
+        #endif
+    }
+
+    private func resumePendingAdRequest() {
+        if let viewController = pendingInterstitialViewController,
+           let finishHandler = pendingInterstitialFinishHandler {
+            pendingInterstitialViewController = nil
+            pendingInterstitialFinishHandler = nil
+            showInterstitial(from: viewController, onFinished: finishHandler)
+            return
+        }
+
+        if let viewController = pendingReadyViewController {
+            pendingReadyViewController = nil
+            showReadySticky(in: viewController)
+        }
+    }
+
+    private static func usableAdvertisingIdentifier(_ value: String?) -> String? {
+        guard let value,
+              !value.isEmpty,
+              value != "00000000-0000-0000-0000-000000000000" else {
+            return nil
+        }
+        return value
     }
 
     private func appendInterstitialFinishHandler(_ handler: @escaping () -> Void) {

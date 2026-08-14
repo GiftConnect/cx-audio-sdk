@@ -28,6 +28,27 @@ The Unity package does not automatically collect advertising identifiers. For An
 
 Pass the advertising ID as both `Gadid(...)` and `Ifa(...)` when the ad endpoint expects OpenRTB-style IFA. If the ID is deleted, limited, unavailable, or all zeros, omit `Gadid(...)` and `Ifa(...)` and call `LimitAdTracking(true)`. Do not fall back to fingerprinting or another persistent device identifier for advertising.
 
+Initialize privacy before constructing or loading an ad. For example, a host
+that has already resolved its consent and advertising identifier state can use:
+
+```csharp
+CxAudio.Initialize(new CxAudioConfiguration
+{
+    AgeTreatment = CxAgeTreatment.GeneralAudience,
+    PrivacyOverride = qaBuild ? new CxPrivacyOverride
+    {
+        GdprApplies = false,
+        PersonalizedAdsAllowed = !string.IsNullOrEmpty(advertisingId),
+        UsPrivacyOptOut = false,
+        UsPrivacyString = "1YNN"
+    } : null
+});
+```
+
+The regional override above is appropriate only for a controlled QA build.
+Production integrations should rely on standard CMP/platform signals and use
+explicit overrides only for approved custom-CMP or enterprise cases.
+
 ## SDK Identity, User Agent, and IP Parameters
 
 When a `ConsumableAdRequest` is converted into a `VastRequest`, the Unity wrapper automatically supplies the SDK user agent as the `u` query parameter.
