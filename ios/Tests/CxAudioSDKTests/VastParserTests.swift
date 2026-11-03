@@ -23,7 +23,7 @@ final class VastParserTests: XCTestCase {
         )
 
         XCTAssertEqual(url.scheme, "https")
-        XCTAssertEqual(url.host, "2.e.serverbid.com")
+        XCTAssertEqual(url.host, "e.serverbid.com")
         XCTAssertEqual(items["s"], "abc123")
         XCTAssertEqual(items["rt"], "vast")
         XCTAssertEqual(items["secure"], "1")
