@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
   spec.name = "CxAudioSDK"
   spec.module_name = "CxAudioSDK"
-  spec.version = "0.1.2"
+  spec.version = "0.1.3"
   spec.summary = "Native iOS SDK for CX audio ad placements."
   spec.description = <<-DESC
     Native iOS implementation of the CX Audio SDK, including background audio,

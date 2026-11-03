@@ -17,7 +17,7 @@ namespace Cx.Audio.Unity
     {
         private const string DefaultEndpointUrl = "https://e.serverbid.com/mpb/get";
         private const string DefaultSdkName = "Consumable Audio";
-        private const string SdkVersion = "0.1.2";
+        private const string SdkVersion = "0.1.3";
         private static readonly DateTime UnixEpoch =
             new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         private readonly Dictionary<string, string> parameters = new Dictionary<string, string>();

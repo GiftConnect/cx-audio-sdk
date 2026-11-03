@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
   spec.name = "cx-audio-sdk"
   spec.module_name = "CxAudioReactNative"
-  spec.version = "0.1.2"
+  spec.version = "0.1.3"
   spec.summary = "React Native bindings for the CX Audio SDK."
   spec.description = <<-DESC
     React Native iOS bindings for the native CxAudioSDK CocoaPod.

@@ -60,7 +60,7 @@ Structured Consumable requests automatically include the URL-encoded SDK
 identity:
 
 - `sdk=Consumable Audio`
-- `sdkv=0.1.2`
+- `sdkv=0.1.3`
 
 The SDK version always comes from the SDK build and is not publisher
 configuration. A branded or mirrored distribution can override only the SDK
@@ -366,7 +366,7 @@ repositories {
 }
 
 dependencies {
-    implementation "io.github.giftconnect:cx-audio-sdk:0.1.2"
+    implementation "io.github.giftconnect:cx-audio-sdk:0.1.3"
 }
 ```
 
