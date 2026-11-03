@@ -11,6 +11,8 @@ function query(request) {
 test('defaults structured requests to background audio sdkpt', () => {
   const request = createConsumableVastRequest({ placementHash: 'abc123' });
 
+  assert.equal(new URL(request.vastTagUrl).origin, 'https://e.serverbid.com');
+  assert.equal(new URL(request.vastTagUrl).pathname, '/mpb/get');
   assert.equal(query(request).get('sdkpt'), '1');
   assert.equal(query(request).get('sdk'), 'Consumable Audio');
   assert.equal(query(request).get('sdkv'), '0.1.2');

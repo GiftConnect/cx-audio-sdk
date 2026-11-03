@@ -1,6 +1,6 @@
 'use strict';
 
-const CONSUMABLE_ENDPOINT = 'https://2.e.serverbid.com/mpb/get';
+const CONSUMABLE_ENDPOINT = 'https://e.serverbid.com/mpb/get';
 const DEFAULT_SDK_NAME = 'Consumable Audio';
 const SDK_VERSION = require('../../package.json').version;
 const DEFAULT_USER_AGENTS = Object.freeze({

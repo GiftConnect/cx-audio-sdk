@@ -73,7 +73,7 @@ public final class AndroidPlacementConfigurationTest {
                 .build();
 
         String url = consumableRequest.toURLString();
-        assertTrue(url.startsWith("https://2.e.serverbid.com/mpb/get?"));
+        assertTrue(url.startsWith("https://e.serverbid.com/mpb/get?"));
         assertTrue(url.contains("s=abc123"));
         assertTrue(url.contains("rt=vast"));
         assertTrue(url.contains("secure=1"));

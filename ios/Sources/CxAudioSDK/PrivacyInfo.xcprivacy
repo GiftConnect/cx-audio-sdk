@@ -6,7 +6,7 @@
     <true/>
     <key>NSPrivacyTrackingDomains</key>
     <array>
-        <string>2.e.serverbid.com</string>
+        <string>e.serverbid.com</string>
     </array>
     <key>NSPrivacyCollectedDataTypes</key>
     <array>

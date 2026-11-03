@@ -15,7 +15,7 @@ namespace Cx.Audio.Unity
 
     public sealed class ConsumableAdRequest
     {
-        private const string DefaultEndpointUrl = "https://2.e.serverbid.com/mpb/get";
+        private const string DefaultEndpointUrl = "https://e.serverbid.com/mpb/get";
         private const string DefaultSdkName = "Consumable Audio";
         private const string SdkVersion = "0.1.2";
         private static readonly DateTime UnixEpoch =

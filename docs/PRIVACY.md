@@ -72,7 +72,7 @@ value.
 
 The iOS distribution includes `PrivacyInfo.xcprivacy`. It declares same-app
 and optional App Group `UserDefaults` access, the built-in
-`2.e.serverbid.com` tracking domain, and the SDK's conditional collection of
+`e.serverbid.com` tracking domain, and the SDK's conditional collection of
 host-supplied device identifiers, advertising interaction data, and privacy
 signals. Device identifiers remain prohibited unless the resolved privacy
 state and ATT permit them.
