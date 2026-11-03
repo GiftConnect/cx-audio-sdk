@@ -85,7 +85,7 @@ public final class AndroidPlacementConfigurationTest {
         assertTrue(url.contains("gdpr=1"));
         assertTrue(url.contains("gdpr_consent=consent%20string"));
         assertTrue(url.contains("sdk=Consumable%20Audio"));
-        assertTrue(url.contains("sdkv=0.1.2"));
+        assertTrue(url.contains("sdkv=0.1.3"));
         assertTrue(url.contains("v_delay=-1"));
         assertTrue(url.contains("v_delivery=2"));
         assertTrue(url.contains("v_mimes=audio%2Fmpeg%2Caudio%2Fmp4%2Caudio%2Faac"));
@@ -118,7 +118,7 @@ public final class AndroidPlacementConfigurationTest {
         String url = consumableRequest.toURLString();
 
         assertTrue(url.contains("sdk=Radio.com%20Audio%20%2F%20SDK"));
-        assertTrue(url.contains("sdkv=0.1.2"));
+        assertTrue(url.contains("sdkv=0.1.3"));
     }
 
     @Test

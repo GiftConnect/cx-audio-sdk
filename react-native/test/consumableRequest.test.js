@@ -15,7 +15,7 @@ test('defaults structured requests to background audio sdkpt', () => {
   assert.equal(new URL(request.vastTagUrl).pathname, '/mpb/get');
   assert.equal(query(request).get('sdkpt'), '1');
   assert.equal(query(request).get('sdk'), 'Consumable Audio');
-  assert.equal(query(request).get('sdkv'), '0.1.2');
+  assert.equal(query(request).get('sdkv'), '0.1.3');
 });
 
 test('encodes a configured SDK name and the automatic SDK version', () => {
@@ -26,7 +26,7 @@ test('encodes a configured SDK name and the automatic SDK version', () => {
 
   assert.match(request.vastTagUrl, /sdk=Radio.com%20Audio%20%2F%20SDK/);
   assert.equal(query(request).get('sdk'), 'Radio.com Audio / SDK');
-  assert.equal(query(request).get('sdkv'), '0.1.2');
+  assert.equal(query(request).get('sdkv'), '0.1.3');
 });
 
 test('maps each explicit placement to its internal sdkpt code', () => {
